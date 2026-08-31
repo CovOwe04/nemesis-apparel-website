@@ -1,0 +1,57 @@
+{
+  "name": "Jersey",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Jersey Name"
+    },
+    "team": {
+      "type": "string",
+      "title": "Team"
+    },
+    "fitting": {
+      "type": "string",
+      "enum": [
+        "Slim",
+        "Regular",
+        "Loose"
+      ],
+      "default": "Regular"
+    },
+    "price": {
+      "type": "number",
+      "title": "Price (USD)"
+    },
+    "front_image": {
+      "type": "string",
+      "title": "Front Image URL"
+    },
+    "back_image": {
+      "type": "string",
+      "title": "Back Image URL"
+    },
+    "enable_customization": {
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Identity Lab"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "title": "Featured on Landing"
+    }
+  },
+  "required": [
+    "name",
+    "team",
+    "fitting",
+    "price",
+    "front_image",
+    "back_image"
+  ]
+}

@@ -7,6 +7,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
+import Landing from './pages/Landing';
+import Arsenal from './pages/Arsenal';
+import IdentityLab from './pages/IdentityLab';
+import Cart from './pages/Cart';
+import NexusControl from './pages/NexusControl';
+import Header from './components/Header';
+import { CartProvider } from './lib/CartContext';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,10 +40,17 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      {/* Add your page Route elements here */}
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <div className="min-h-screen bg-void">
+      <Header />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/arsenal" element={<Arsenal />} />
+        <Route path="/lab/:jerseyId" element={<IdentityLab />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/nexus-control" element={<NexusControl />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </div>
   );
 };
 
@@ -48,7 +62,9 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
-          <AuthenticatedApp />
+          <CartProvider>
+            <AuthenticatedApp />
+          </CartProvider>
         </Router>
         <Toaster />
       </QueryClientProvider>
