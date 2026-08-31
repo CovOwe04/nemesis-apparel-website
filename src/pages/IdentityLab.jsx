@@ -22,7 +22,7 @@ export default function IdentityLab() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [fontId, setFontId] = useState('block');
-  const [size, setSize] = useState(11);
+  const [size, setSize] = useState(100);
   const [curve, setCurve] = useState(0);
   const [height, setHeight] = useState(42);
   const [qty, setQty] = useState(1);
@@ -58,8 +58,8 @@ export default function IdentityLab() {
 
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const canCustomize = !!jersey.enable_customization;
-  // Size slider range -10..11 → maps to 4px..44px (max = 11% of jersey height)
-  const baseSize = 4 + ((size + 10) / 21) * 40; // 4px → 44px
+  // Size slider 0..100 → maps to 4px..44px (100% = the size that fits within the seams by the armpits)
+  const baseSize = 4 + (size / 100) * 40; // 0% → 4px, 100% → 44px
   const curveAmount = (curve / 100) * 45; // 0 → 45
   const baselineY = 100 + (height / 100) * 120; // vertical position on the back
   // Keep the name within the jersey's upper-back width so it never floats off the kit
@@ -214,8 +214,8 @@ export default function IdentityLab() {
                 </div>
                 <input
                   type="range"
-                  min="-10"
-                  max="11"
+                  min="0"
+                  max="100"
                   value={size}
                   onChange={(e) => setSize(Number(e.target.value))}
                   className="w-full"
