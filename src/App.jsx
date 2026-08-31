@@ -13,7 +13,7 @@ import IdentityLab from './pages/IdentityLab';
 import Cart from './pages/Cart';
 import NexusControl from './pages/NexusControl';
 import Header from './components/Header';
-import { CartProvider } from './lib/CartContext';
+import { CartProvider } from '@/lib/CartContext';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
