@@ -62,13 +62,34 @@ export default function IdentityLab() {
   const baseSize = 4 + (size / 100) * 40; // 0% → 4px, 100% → 44px
   const curveAmount = (curve / 100) * 45; // 0 → 45
   const baselineY = 100 + (height / 100) * 120; // vertical position on the back
-  // Keep the name within the jersey's upper-back width so it never floats off the kit
-  const ARC_WIDTH = 212; // path spans x=44..256
-  const charCount = Math.max((canCustomize ? name : '').length || (canCustomize ? 9 : 0), 1);
-  const maxFitSize = ARC_WIDTH / (charCount * 0.62);
-  const fontSize = Math.min(baseSize, maxFitSize);
-  const pathD = `M 44 ${baselineY + curveAmount / 2} Q 150 ${baselineY - curveAmount} 256 ${baselineY + curveAmount / 2}`;
+  const ARC_WIDTH = 212; // path spans x=44..256 — keep text within the jersey seams
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
+  // Word-wrap so the name stays inside the jersey seams at the chosen size.
+  // Shrink only if a single word is too wide to fit; otherwise wrap onto more lines.
+  const charFactor = 0.7;
+  const words = displayName.split(' ').filter(Boolean);
+  const longestWord = Math.max(...words.map((w) => w.length), 1);
+  const fitForLongest = ARC_WIDTH / (longestWord * charFactor);
+  const fontSize = Math.min(baseSize, fitForLongest);
+  const lineHeight = fontSize * 1.15;
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const trial = cur ? `${cur} ${w}` : w;
+    if (trial.length * fontSize * charFactor <= ARC_WIDTH) {
+      cur = trial;
+    } else {
+      if (cur) lines.push(cur);
+      cur = w;
+    }
+  }
+  if (cur) lines.push(cur);
+  const numLines = Math.max(lines.length, 1);
+  const startBase = baselineY - ((numLines - 1) / 2) * lineHeight;
+  const linePath = (i) => {
+    const y = startBase + i * lineHeight;
+    return `M 44 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 256 ${y + curveAmount / 2}`;
+  };
 
   const handleAdd = () => {
     addItem({
@@ -118,7 +139,9 @@ export default function IdentityLab() {
                   preserveAspectRatio="xMidYMid meet"
                 >
                   <defs>
-                    <path id="name-arc" d={pathD} fill="none" />
+                    {lines.map((line, i) => (
+                      <path key={i} id={`name-arc-${i}`} d={linePath(i)} fill="none" />
+                    ))}
                   </defs>
                   <text
                     fontFamily={font.family}
@@ -130,9 +153,11 @@ export default function IdentityLab() {
                     letterSpacing="1.5"
                     style={{ textTransform: 'uppercase' }}
                   >
-                    <textPath href="#name-arc" startOffset="50%" textAnchor="middle">
-                      {displayName}
-                    </textPath>
+                    {lines.map((line, i) => (
+                      <textPath key={i} href={`#name-arc-${i}`} startOffset="50%" textAnchor="middle">
+                        {line}
+                      </textPath>
+                    ))}
                   </text>
                 </svg>
               )}
