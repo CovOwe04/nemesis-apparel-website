@@ -9,6 +9,8 @@ const FONTS = [
   { id: 'block', label: 'BLOCK', family: "'Archivo Black', sans-serif" },
   { id: 'condensed', label: 'CONDENSED', family: "'Anton', sans-serif" },
   { id: 'athletic', label: 'ATHLETIC', family: "'Oswald', sans-serif" },
+  { id: 'tech', label: 'TECH', family: "'Space Grotesk', sans-serif" },
+  { id: 'clean', label: 'CLEAN', family: "'Inter', sans-serif" },
 ];
 
 export default function IdentityLab() {
@@ -55,10 +57,15 @@ export default function IdentityLab() {
 
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const canCustomize = !!jersey.enable_customization;
-  const fontSize = 20 + (size / 100) * 46; // 20px → 66px
-  const curveAmount = (curve / 100) * 70; // 0 → 70
-  const rotation = (curve - 50) / 50 * 3; // -3° → 3°
-  const pathD = `M 40 ${92 + curveAmount / 2} Q 150 ${92 - curveAmount} 260 ${92 + curveAmount / 2}`;
+  const baseSize = 16 + (size / 100) * 30; // 16px → 46px
+  const curveAmount = (curve / 100) * 45; // 0 → 45
+  // Keep the name within the jersey's upper-back width so it never floats off the kit
+  const ARC_WIDTH = 212; // path spans x=44..256
+  const charCount = Math.max((canCustomize ? name : '').length || (canCustomize ? 9 : 0), 1);
+  const maxFitSize = ARC_WIDTH / (charCount * 0.62);
+  const fontSize = Math.min(baseSize, maxFitSize);
+  const baselineY = 150;
+  const pathD = `M 44 ${baselineY + curveAmount / 2} Q 150 ${baselineY - curveAmount} 256 ${baselineY + curveAmount / 2}`;
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
 
   const handleAdd = () => {
@@ -94,10 +101,7 @@ export default function IdentityLab() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <div
-            className="relative mx-auto max-w-md"
-            style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 0.25s ease-out' }}
-          >
+          <div className="relative mx-auto max-w-md">
             <div className="relative aspect-[3/4] overflow-hidden bg-steel">
               <Image
                 src={jersey.back_image}
@@ -182,7 +186,7 @@ export default function IdentityLab() {
               {/* FONT */}
               <div>
                 <div className="mono-label text-fog/50 mb-2">FONT</div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                   {FONTS.map((f) => (
                     <button
                       key={f.id}
