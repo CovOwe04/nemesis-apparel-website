@@ -22,8 +22,9 @@ export default function IdentityLab() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [fontId, setFontId] = useState('block');
-  const [size, setSize] = useState(50);
+  const [size, setSize] = useState(11);
   const [curve, setCurve] = useState(0);
+  const [height, setHeight] = useState(42);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -57,14 +58,15 @@ export default function IdentityLab() {
 
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const canCustomize = !!jersey.enable_customization;
-  const baseSize = 16 + (size / 100) * 30; // 16px → 46px
+  // Size slider range -10..11 → maps to 4px..44px (max = 11% of jersey height)
+  const baseSize = 4 + ((size + 10) / 21) * 40; // 4px → 44px
   const curveAmount = (curve / 100) * 45; // 0 → 45
+  const baselineY = 100 + (height / 100) * 120; // vertical position on the back
   // Keep the name within the jersey's upper-back width so it never floats off the kit
   const ARC_WIDTH = 212; // path spans x=44..256
   const charCount = Math.max((canCustomize ? name : '').length || (canCustomize ? 9 : 0), 1);
   const maxFitSize = ARC_WIDTH / (charCount * 0.62);
   const fontSize = Math.min(baseSize, maxFitSize);
-  const baselineY = 150;
   const pathD = `M 44 ${baselineY + curveAmount / 2} Q 150 ${baselineY - curveAmount} 256 ${baselineY + curveAmount / 2}`;
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
 
@@ -174,12 +176,12 @@ export default function IdentityLab() {
                   id="name-input"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value.slice(0, 12))}
+                  onChange={(e) => setName(e.target.value.slice(0, 25))}
                   placeholder="ENTER NAME"
                   className="w-full bg-transparent border border-steel px-4 py-3 font-display text-lg uppercase tracking-wider text-fog placeholder:text-fog/30 focus:border-kinetic outline-none transition-colors"
                 />
                 <div className="mono-label text-fog/30 mt-1 text-right">
-                  {name.length}/12
+                  {name.length}/25
                 </div>
               </div>
 
@@ -212,8 +214,8 @@ export default function IdentityLab() {
                 </div>
                 <input
                   type="range"
-                  min="0"
-                  max="100"
+                  min="-10"
+                  max="11"
                   value={size}
                   onChange={(e) => setSize(Number(e.target.value))}
                   className="w-full"
@@ -235,6 +237,23 @@ export default function IdentityLab() {
                   onChange={(e) => setCurve(Number(e.target.value))}
                   className="w-full"
                   aria-label="Name arch curvature"
+                />
+              </div>
+
+              {/* VERTICAL POSITION */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="mono-label text-fog/50">VERTICAL POSITION</span>
+                  <span className="mono-label text-kinetic">{height}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={height}
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  className="w-full"
+                  aria-label="Name vertical position"
                 />
               </div>
             </>
