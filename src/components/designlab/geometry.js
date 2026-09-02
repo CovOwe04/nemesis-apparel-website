@@ -2,7 +2,8 @@
 // anchors plus one quadratic-bezier control handle per edge (edge i connects
 // anchors[i] -> anchors[(i+1) % N], curved via handles[i]). All coordinates are
 // in the jersey photo's native 1024x1024 space, so they align with the real
-// seams. Drag anchors to move corners; drag handles to add/adjust curve.
+// seams. Drag anchors to move corners; drag handles to add/adjust curve; tap
+// the + at an edge midpoint to insert a vertex (splitting the bezier cleanly).
 
 export const REGIONS_BY_PATTERN = {
   solid: [],
@@ -10,7 +11,6 @@ export const REGIONS_BY_PATTERN = {
   'chest-band': ['chest'],
   'shoulder-stripe': ['shoulder-left', 'shoulder-right'],
   'side-panels': ['side-left', 'side-right'],
-  'tri-tone': ['sleeve-left', 'sleeve-right', 'chest'],
 };
 
 export const REGION_COLOR = {
@@ -123,6 +123,24 @@ export const DEFAULT_GEOMETRY = {
     ],
   },
 };
+
+// Default custom shape: a centered rectangle on the chest, ready to drag out.
+export function createCustomRegion() {
+  return {
+    anchors: [
+      { x: 412, y: 474 },
+      { x: 612, y: 474 },
+      { x: 612, y: 594 },
+      { x: 412, y: 594 },
+    ],
+    handles: [
+      { x: 512, y: 474 },
+      { x: 612, y: 534 },
+      { x: 512, y: 594 },
+      { x: 412, y: 534 },
+    ],
+  };
+}
 
 export function buildPath(region) {
   const { anchors, handles } = region;

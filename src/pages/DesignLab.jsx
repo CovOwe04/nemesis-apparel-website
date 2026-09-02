@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
-import { REGIONS_BY_PATTERN, DEFAULT_GEOMETRY } from '@/components/designlab/geometry';
+import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion } from '@/components/designlab/geometry';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
 const SWATCHES = ['#FFFFFF', '#0A0A0A', '#FF1F3D', '#1E3A8A', '#15803D', '#F59E0B', '#6D28D9', '#DC2626'];
 const PRESETS = [
-  { name: 'BLACKOUT', primary: '#0A0A0A', secondary: '#FFFFFF', tertiary: '#FF1F3D', pattern: 'accent-sleeves', material: 'Polyester' },
-  { name: 'BLOOD SPORT', primary: '#0A0A0A', secondary: '#FF1F3D', tertiary: '#FFFFFF', pattern: 'tri-tone', material: 'Performance Mesh' },
-  { name: 'ICE', primary: '#FFFFFF', secondary: '#1E3A8A', tertiary: '#94A3B8', pattern: 'shoulder-stripe', material: 'Polyester' },
-  { name: 'VOLTAGE', primary: '#FFFFFF', secondary: '#F59E0B', tertiary: '#0A0A0A', pattern: 'chest-band', material: 'Tri-Blend' },
-  { name: 'STEALTH', primary: '#3F3F46', secondary: '#0A0A0A', tertiary: '#FF1F3D', pattern: 'side-panels', material: 'Cotton' },
-  { name: 'COURT KING', primary: '#1E3A8A', secondary: '#FFFFFF', tertiary: '#F59E0B', pattern: 'tri-tone', material: 'Silk' },
+  { name: 'BLACKOUT', primary: '#0A0A0A', secondary: '#FFFFFF', tertiary: '#FF1F3D', patterns: ['accent-sleeves'], material: 'Polyester' },
+  { name: 'BLOOD SPORT', primary: '#0A0A0A', secondary: '#FF1F3D', tertiary: '#FFFFFF', patterns: ['accent-sleeves', 'chest-band'], material: 'Performance Mesh' },
+  { name: 'ICE', primary: '#FFFFFF', secondary: '#1E3A8A', tertiary: '#94A3B8', patterns: ['shoulder-stripe'], material: 'Polyester' },
+  { name: 'VOLTAGE', primary: '#FFFFFF', secondary: '#F59E0B', tertiary: '#0A0A0A', patterns: ['chest-band'], material: 'Tri-Blend' },
+  { name: 'STEALTH', primary: '#3F3F46', secondary: '#0A0A0A', tertiary: '#FF1F3D', patterns: ['side-panels'], material: 'Cotton' },
+  { name: 'COURT KING', primary: '#1E3A8A', secondary: '#FFFFFF', tertiary: '#F59E0B', patterns: ['accent-sleeves', 'chest-band'], material: 'Silk' },
 ];
 
 let pid = 0;
@@ -55,7 +55,9 @@ export default function DesignLab() {
   const [primary, setPrimary] = useState('#FFFFFF');
   const [secondary, setSecondary] = useState('#FF1F3D');
   const [tertiary, setTertiary] = useState('#0A0A0A');
-  const [pattern, setPattern] = useState('accent-sleeves');
+  const [selectedPatterns, setSelectedPatterns] = useState(['accent-sleeves']);
+  const [customShapes, setCustomShapes] = useState([]);
+  const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [material, setMaterial] = useState('Polyester');
   const [logos, setLogos] = useState([]);
   const [icons, setIcons] = useState([]);
@@ -71,7 +73,10 @@ export default function DesignLab() {
     setPrimary(p.primary);
     setSecondary(p.secondary);
     setTertiary(p.tertiary);
-    setPattern(p.pattern);
+    setSelectedPatterns(p.patterns);
+    setCustomShapes([]);
+    setGeometry(DEFAULT_GEOMETRY);
+    setSelectedRegionId(null);
     setMaterial(p.material);
   };
 
@@ -87,14 +92,64 @@ export default function DesignLab() {
     setSelectedId((s) => (s === id ? null : s));
   };
 
-  const patternLabel = (PATTERNS.find((p) => p.id === pattern) || {}).label || pattern;
+  const builtInRegions = selectedPatterns.flatMap((p) => REGIONS_BY_PATTERN[p] || []);
+  const customIds = customShapes.map((c) => c.id);
+  const activeRegionIds = [...builtInRegions, ...customIds];
 
-  const editableRegions = REGIONS_BY_PATTERN[pattern] || [];
+  const fillFor = (id) => {
+    const custom = customShapes.find((c) => c.id === id);
+    if (custom) return custom.color === 'tertiary' ? tertiary : secondary;
+    return REGION_COLOR[id] === 'tertiary' ? tertiary : secondary;
+  };
+  const regions = activeRegionIds.map((id) => ({ id, fill: fillFor(id) }));
+
+  const togglePattern = (pId) =>
+    setSelectedPatterns((prev) =>
+      prev.includes(pId) ? prev.filter((p) => p !== pId) : [...prev, pId]
+    );
+
   const updateGeometry = (rid, region) => setGeometry((g) => ({ ...g, [rid]: region }));
+
+  const insertVertex = (rid, edgeIndex) =>
+    setGeometry((g) => {
+      const region = g[rid];
+      const { anchors, handles } = region;
+      const A = anchors[edgeIndex];
+      const B = anchors[(edgeIndex + 1) % anchors.length];
+      const C = handles[edgeIndex];
+      const C1 = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
+      const C2 = { x: (B.x + C.x) / 2, y: (B.y + C.y) / 2 };
+      const P = { x: (C1.x + C2.x) / 2, y: (C1.y + C2.y) / 2 };
+      const newAnchors = [...anchors.slice(0, edgeIndex + 1), P, ...anchors.slice(edgeIndex + 1)];
+      const newHandles = [...handles.slice(0, edgeIndex), C1, C2, ...handles.slice(edgeIndex + 1)];
+      return { ...g, [rid]: { anchors: newAnchors, handles: newHandles } };
+    });
+
+  const addCustomShape = () => {
+    const id = `custom-${Date.now()}`;
+    setGeometry((g) => ({ ...g, [id]: createCustomRegion() }));
+    setCustomShapes((cs) => [...cs, { id, color: 'secondary' }]);
+    setSelectedRegionId(id);
+    setEditMode(true);
+  };
+
+  const deleteRegion = (rid) => {
+    setGeometry((g) => {
+      const ng = { ...g };
+      delete ng[rid];
+      return ng;
+    });
+    setCustomShapes((cs) => cs.filter((c) => c.id !== rid));
+    setSelectedRegionId((s) => (s === rid ? null : s));
+  };
+
+  const setCustomColor = (rid, color) =>
+    setCustomShapes((cs) => cs.map((c) => (c.id === rid ? { ...c, color } : c)));
+
   const resetFit = () =>
     setGeometry((g) => ({
       ...g,
-      ...Object.fromEntries(editableRegions.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
+      ...Object.fromEntries(builtInRegions.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
     }));
 
   const buildBrief = () => {
@@ -104,7 +159,8 @@ export default function DesignLab() {
       `Base (Primary):      ${primary}`,
       `Accent (Secondary):  ${secondary}`,
       `Accent 2 (Tertiary): ${tertiary}`,
-      `Pattern: ${patternLabel}`,
+      `Patterns: ${selectedPatterns.map((p) => PATTERNS.find((x) => x.id === p)?.label || p).join(', ') || 'none'}`,
+      `Custom shapes: ${customShapes.length}`,
       `Material: ${material}`,
       `Shirt Size: ${shirtSize}`,
       '',
@@ -163,9 +219,7 @@ export default function DesignLab() {
           <div className="mt-8 relative w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
             <JerseyTemplate
               primary={primary}
-              secondary={secondary}
-              tertiary={tertiary}
-              pattern={pattern}
+              regions={regions}
               geometry={geometry}
             />
           </div>
@@ -228,23 +282,29 @@ export default function DesignLab() {
         <div className="lg:sticky lg:top-24 lg:self-start">
           <CanvasStage
             primary={primary}
-            secondary={secondary}
-            tertiary={tertiary}
-            pattern={pattern}
+            regions={regions}
+            geometry={geometry}
             placements={placements}
             selectedId={selectedId}
             onSelect={setSelectedId}
             onUpdate={updatePlacement}
             onDelete={deletePlacement}
-            onBackgroundClick={() => setSelectedId(null)}
-            geometry={geometry}
+            onBackgroundClick={() => {
+              setSelectedId(null);
+              setSelectedRegionId(null);
+            }}
             editMode={editMode}
-            editableRegions={editableRegions}
-            onGeometryChange={updateGeometry}
+            regionIds={activeRegionIds}
+            selectedRegionId={selectedRegionId}
+            onSelectRegion={setSelectedRegionId}
+            onChangeGeometry={updateGeometry}
+            onInsertVertex={insertVertex}
           />
           <div className="mt-4 text-center mono-label text-fog/40">
             {editMode
-              ? 'DRAG BLUE CORNERS TO MOVE · BLUE DOTS TO CURVE EDGES · RESET TO RESTORE'
+              ? selectedRegionId
+                ? 'DRAG CORNERS TO MOVE · DOTS TO CURVE · TAP + TO ADD A VERTEX · DRAG INSIDE TO MOVE SHAPE'
+                : 'TAP A SHAPE ON THE JERSEY TO ADJUST IT'
               : 'DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE · SCROLL OR BUTTONS TO ZOOM · DRAG CANVAS TO PAN'}
           </div>
         </div>
@@ -292,29 +352,43 @@ export default function DesignLab() {
             <ColorField label="TERTIARY (ACCENT 2)" value={tertiary} onChange={setTertiary} />
           </div>
 
-          {/* PATTERN */}
+          {/* PATTERNS */}
           <div>
-            <div className="mono-label text-fog/50 mb-2">PATTERN</div>
+            <div className="mono-label text-fog/50 mb-2">PATTERNS</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {PATTERNS.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setPattern(p.id)}
-                  className={`py-3 text-center mono-label border transition-colors ${
-                    pattern === p.id
-                      ? 'border-kinetic text-kinetic bg-kinetic/5'
-                      : 'border-steel text-fog/70 hover:border-fog/40'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              {PATTERNS.map((p) => {
+                const active = selectedPatterns.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => togglePattern(p.id)}
+                    className={`py-3 text-center mono-label border transition-colors ${
+                      active
+                        ? 'border-kinetic text-kinetic bg-kinetic/5'
+                        : 'border-steel text-fog/70 hover:border-fog/40'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
-            {editableRegions.length > 0 && (
-              <div className="flex items-center gap-3 mt-3">
+
+            <div className="flex items-center gap-3 mt-3 flex-wrap">
+              <button
+                type="button"
+                onClick={addCustomShape}
+                className="mono-label px-4 py-2 border border-steel text-fog/70 hover:border-kinetic hover:text-kinetic transition-colors"
+              >
+                + CUSTOM SHAPE
+              </button>
+              {activeRegionIds.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setEditMode((v) => !v)}
+                  onClick={() => {
+                    setEditMode((v) => !v);
+                    setSelectedRegionId(null);
+                  }}
                   className={`mono-label px-4 py-2 border transition-colors ${
                     editMode
                       ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -323,15 +397,50 @@ export default function DesignLab() {
                 >
                   {editMode ? 'DONE ADJUSTING' : 'ADJUST FIT'}
                 </button>
-                {editMode && (
-                  <button
-                    type="button"
-                    onClick={resetFit}
-                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                  >
-                    RESET
-                  </button>
-                )}
+              )}
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={resetFit}
+                  className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                >
+                  RESET
+                </button>
+              )}
+            </div>
+
+            {editMode && selectedRegionId && customIds.includes(selectedRegionId) && (
+              <div className="mt-3 border border-steel p-3 flex items-center gap-3 flex-wrap">
+                <span className="mono-label text-fog/50">SHAPE COLOR</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomColor(selectedRegionId, 'secondary')}
+                  className={`mono-label px-3 py-1.5 border transition-colors ${
+                    customShapes.find((c) => c.id === selectedRegionId)?.color === 'secondary'
+                      ? 'border-kinetic text-kinetic bg-kinetic/5'
+                      : 'border-steel text-fog/70 hover:border-fog/40'
+                  }`}
+                >
+                  ACCENT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomColor(selectedRegionId, 'tertiary')}
+                  className={`mono-label px-3 py-1.5 border transition-colors ${
+                    customShapes.find((c) => c.id === selectedRegionId)?.color === 'tertiary'
+                      ? 'border-kinetic text-kinetic bg-kinetic/5'
+                      : 'border-steel text-fog/70 hover:border-fog/40'
+                  }`}
+                >
+                  ACCENT 2
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteRegion(selectedRegionId)}
+                  className="mono-label px-3 py-1.5 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors ml-auto"
+                >
+                  DELETE SHAPE
+                </button>
               </div>
             )}
           </div>

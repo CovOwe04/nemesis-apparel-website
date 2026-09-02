@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, buildPath } from './geometry';
+import { buildPath } from './geometry';
 
 export const PATTERNS = [
   { id: 'solid', label: 'SOLID' },
@@ -7,7 +7,6 @@ export const PATTERNS = [
   { id: 'chest-band', label: 'CHEST BAND' },
   { id: 'shoulder-stripe', label: 'SHOULDER STRIPE' },
   { id: 'side-panels', label: 'SIDE PANELS' },
-  { id: 'tri-tone', label: 'TRI-TONE' },
 ];
 
 // Real white jersey photo (1024x1024, pure black background). The photo is used
@@ -18,18 +17,12 @@ export const PATTERNS = [
 const TEMPLATE_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
 
-export default function JerseyTemplate({
-  primary,
-  secondary,
-  tertiary,
-  pattern,
-  geometry = DEFAULT_GEOMETRY,
-}) {
+// `regions` is a list of { id, fill } — the caller resolves which regions are
+// active and what color each one gets (built-in patterns keep their assigned
+// slot; custom shapes carry their own). `geometry` holds the anchors/handles.
+export default function JerseyTemplate({ primary, regions, geometry = {} }) {
   const [size, setSize] = useState({ w: 1024, h: 1024 });
   const maskId = 'jersey-mask';
-
-  const colorFor = (slot) => (slot === 'secondary' ? secondary : tertiary);
-  const regions = REGIONS_BY_PATTERN[pattern] || [];
 
   return (
     <div className="absolute inset-0" style={{ isolation: 'isolate' }}>
@@ -39,8 +32,7 @@ export default function JerseyTemplate({
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Luminance mask: white jersey = opaque, black background = transparent.
-              CORS is open on the asset so the mask renders cleanly. */}
+          {/* Luminance mask: white jersey = opaque, black background = transparent. */}
           <mask
             id={maskId}
             maskContentUnits="userSpaceOnUse"
@@ -61,11 +53,9 @@ export default function JerseyTemplate({
           </mask>
         </defs>
 
-        {/* Everything in this group is clipped to the jersey silhouette, so the
-            canvas background (provided by the stage) shows through untouched and
-            is never tinted by the design colors. */}
+        {/* Everything here is clipped to the jersey silhouette, so the canvas
+            background shows through untouched and is never tinted. */}
         <g mask={`url(#${maskId})`}>
-          {/* Visible jersey photo — provides the real seams and fabric shading */}
           <image
             href={TEMPLATE_URL}
             x="0"
@@ -76,17 +66,12 @@ export default function JerseyTemplate({
             crossOrigin="anonymous"
           />
 
-          {/* Color overlay — multiply tints the jersey while preserving seams and
-              shading. Clipped to the jersey by the mask above. */}
+          {/* Color overlay — multiply tints the jersey while preserving seams. */}
           <g style={{ mixBlendMode: 'multiply' }}>
             <rect x="0" y="0" width={size.w} height={size.h} fill={primary} />
 
-            {regions.map((rid) => (
-              <path
-                key={rid}
-                d={buildPath(geometry[rid])}
-                fill={colorFor(REGION_COLOR[rid])}
-              />
+            {regions.map((r) => (
+              <path key={r.id} d={buildPath(geometry[r.id])} fill={r.fill} />
             ))}
           </g>
         </g>

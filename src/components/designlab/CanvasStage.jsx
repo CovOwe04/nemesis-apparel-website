@@ -11,19 +11,20 @@ import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 // as ratios of the (transformed) container rect.
 export default function CanvasStage({
   primary,
-  secondary,
-  tertiary,
-  pattern,
+  regions,
+  geometry,
   placements,
   selectedId,
   onSelect,
   onUpdate,
   onDelete,
   onBackgroundClick,
-  geometry,
   editMode,
-  editableRegions,
-  onGeometryChange,
+  regionIds,
+  selectedRegionId,
+  onSelectRegion,
+  onChangeGeometry,
+  onInsertVertex,
 }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -83,9 +84,7 @@ export default function CanvasStage({
       >
         <JerseyTemplate
           primary={primary}
-          secondary={secondary}
-          tertiary={tertiary}
-          pattern={pattern}
+          regions={regions}
           geometry={geometry}
         />
         <PlacementLayer
@@ -97,9 +96,12 @@ export default function CanvasStage({
         />
         {editMode && (
           <PatternEditor
-            regions={editableRegions}
+            regionIds={regionIds}
             geometry={geometry}
-            onChange={onGeometryChange}
+            selectedRegionId={selectedRegionId}
+            onSelectRegion={onSelectRegion}
+            onChange={onChangeGeometry}
+            onInsertVertex={onInsertVertex}
           />
         )}
       </div>
