@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { buildPath } from './geometry';
 
 export const PATTERNS = [
-  { id: 'solid', label: 'SOLID' },
   { id: 'accent-sleeves', label: 'ACCENT SLEEVES' },
   { id: 'chest-band', label: 'CHEST BAND' },
   { id: 'shoulder-stripe', label: 'SHOULDER STRIPE' },
