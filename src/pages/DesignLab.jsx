@@ -505,12 +505,10 @@ export default function DesignLab() {
               {editMode &&
                 (() => {
                   const pattern = selectedRegionId ? REGION_TO_PATTERN[selectedRegionId] : null;
-                  const label = pattern
-                    ? PATTERNS.find((x) => x.id === pattern)?.label || pattern
-                    : selectedRegionId
-                    ? 'SHAPE'
-                    : 'SELECT PATTERN';
                   const disabled = !selectedRegionId;
+                  const label = disabled
+                    ? 'SELECT PATTERN'
+                    : `RESET ${pattern ? PATTERNS.find((x) => x.id === pattern)?.label || pattern : 'SHAPE'}`;
                   return (
                     <button
                       type="button"
@@ -518,11 +516,11 @@ export default function DesignLab() {
                       disabled={disabled}
                       className={`mono-label px-4 py-2 border transition-colors ${
                         disabled
-                          ? 'border-steel text-fog/30 cursor-not-allowed'
+                          ? 'border-steel/50 text-fog/20 cursor-not-allowed opacity-50'
                           : 'border-steel text-fog/60 hover:border-kinetic hover:text-kinetic'
                       }`}
                     >
-                      RESET {label}
+                      {label}
                     </button>
                   );
                 })()}
