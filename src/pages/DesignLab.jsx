@@ -161,11 +161,19 @@ export default function DesignLab() {
   const setCustomColor = (rid, color) =>
     setCustomShapes((cs) => cs.map((c) => (c.id === rid ? { ...c, color } : c)));
 
-  const resetFit = () =>
-    setGeometry((g) => ({
-      ...g,
-      ...Object.fromEntries(builtInRegions.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
-    }));
+  const resetSelectedPattern = () => {
+    if (!selectedRegionId) return;
+    const pattern = REGION_TO_PATTERN[selectedRegionId];
+    if (pattern) {
+      const rids = REGIONS_BY_PATTERN[pattern] || [];
+      setGeometry((g) => ({
+        ...g,
+        ...Object.fromEntries(rids.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
+      }));
+    } else {
+      setGeometry((g) => ({ ...g, [selectedRegionId]: createCustomRegion() }));
+    }
+  };
 
   const buildBrief = () => {
     const lines = [
@@ -494,15 +502,23 @@ export default function DesignLab() {
                   {editMode ? 'DONE ADJUSTING' : 'ADJUST PATTERN'}
                 </button>
               )}
-              {editMode && (
-                <button
-                  type="button"
-                  onClick={resetFit}
-                  className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                >
-                  RESET
-                </button>
-              )}
+              {editMode &&
+                selectedRegionId &&
+                (() => {
+                  const pattern = REGION_TO_PATTERN[selectedRegionId];
+                  const label = pattern
+                    ? PATTERNS.find((x) => x.id === pattern)?.label || pattern
+                    : 'SHAPE';
+                  return (
+                    <button
+                      type="button"
+                      onClick={resetSelectedPattern}
+                      className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                    >
+                      RESET {label}
+                    </button>
+                  );
+                })()}
             </div>
 
             {customShapes.length > 0 && (
