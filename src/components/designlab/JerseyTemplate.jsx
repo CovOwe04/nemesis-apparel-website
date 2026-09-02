@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 export const PATTERNS = [
   { id: 'solid', label: 'SOLID' },
   { id: 'accent-sleeves', label: 'ACCENT SLEEVES' },
@@ -7,74 +9,91 @@ export const PATTERNS = [
   { id: 'tri-tone', label: 'TRI-TONE' },
 ];
 
-// Blank white jersey photo (front view, dark background) — the same kind of
-// jersey imagery used in the Arsenal. It acts as a single luminance mask over
-// the whole canvas, clipping every color layer to the jersey silhouette at
-// once (so the mask stays aligned regardless of each layer's size).
-const TEMPLATE_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
-
-const maskStyle = {
-  WebkitMaskImage: `url(${TEMPLATE_URL})`,
-  maskImage: `url(${TEMPLATE_URL})`,
-  WebkitMaskSize: 'contain',
-  maskSize: 'contain',
-  WebkitMaskRepeat: 'no-repeat',
-  maskRepeat: 'no-repeat',
-  WebkitMaskPosition: 'center',
-  maskPosition: 'center',
-  WebkitMaskMode: 'luminance',
-  maskMode: 'luminance',
-  isolation: 'isolate',
-};
+// Vector jersey silhouette — seams, sleeve cuffs, side seams and a curved hem
+// are built in so every pattern fill follows the jersey, not the canvas box.
+const SILHOUETTE =
+  'M 125 78 Q 150 100 175 78 L 200 90 L 236 101 L 241 152 L 214 147 L 211 296 Q 150 320 89 296 L 86 147 L 59 152 L 64 101 L 100 90 Z';
 
 export default function JerseyTemplate({ primary, secondary, tertiary, pattern }) {
+  const uid = useId();
+  const clipId = `jersey-${uid}`;
+  const shadeId = `shade-${uid}`;
+
   const accentSleeves = pattern === 'accent-sleeves' || pattern === 'tri-tone';
   const chestBand = pattern === 'chest-band' || pattern === 'tri-tone';
   const shoulderStripe = pattern === 'shoulder-stripe';
   const sidePanels = pattern === 'side-panels';
 
   return (
-    <div className="absolute inset-0" style={maskStyle}>
-      {/* Base fill */}
-      <div className="absolute inset-0" style={{ backgroundColor: primary }} />
+    <svg
+      className="absolute inset-0 w-full h-full"
+      viewBox="0 0 300 400"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <path d={SILHOUETTE} />
+        </clipPath>
+        <linearGradient id={shadeId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.28" />
+        </linearGradient>
+      </defs>
 
-      {/* Accent sleeves / shoulders */}
-      {accentSleeves && (
-        <div className="absolute inset-x-0 top-0 h-[26%]" style={{ backgroundColor: secondary }} />
-      )}
+      <g clipPath={`url(#${clipId})`}>
+        {/* Base fill */}
+        <rect x="0" y="0" width="300" height="400" fill={primary} />
 
-      {/* Chest band */}
-      {chestBand && (
-        <div className="absolute inset-x-0 top-[42%] h-[9%]" style={{ backgroundColor: tertiary }} />
-      )}
+        {/* Accent sleeves */}
+        {accentSleeves && (
+          <>
+            <path d="M 100 90 L 64 101 L 59 152 L 86 147 Z" fill={secondary} />
+            <path d="M 200 90 L 236 101 L 241 152 L 214 147 Z" fill={secondary} />
+          </>
+        )}
 
-      {/* Shoulder stripes */}
-      {shoulderStripe && (
-        <>
-          <div className="absolute left-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
-          <div className="absolute right-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
-        </>
-      )}
+        {/* Chest band */}
+        {chestBand && <rect x="0" y="150" width="300" height="30" fill={tertiary} />}
 
-      {/* Side panels */}
-      {sidePanels && (
-        <>
-          <div className="absolute left-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
-          <div className="absolute right-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
-        </>
-      )}
+        {/* Shoulder stripes */}
+        {shoulderStripe && (
+          <>
+            <rect x="0" y="0" width="120" height="42" fill={tertiary} />
+            <rect x="180" y="0" width="120" height="42" fill={tertiary} />
+          </>
+        )}
 
-      {/* Fabric shading — restores folds/highlights over the solid fill */}
-      <div
-        className="absolute inset-0 opacity-40 mix-blend-multiply"
-        style={{
-          backgroundImage: `url(${TEMPLATE_URL})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
-    </div>
+        {/* Side panels */}
+        {sidePanels && (
+          <>
+            <rect x="0" y="140" width="24" height="170" fill={tertiary} />
+            <rect x="276" y="140" width="24" height="170" fill={tertiary} />
+          </>
+        )}
+
+        {/* Seam lines */}
+        <g stroke="rgba(0,0,0,0.35)" strokeWidth="2" fill="none" strokeLinecap="round">
+          <path d="M 125 78 Q 150 100 175 78" />
+          <path d="M 125 78 L 100 90" />
+          <path d="M 175 78 L 200 90" />
+          <path d="M 100 90 L 86 147" />
+          <path d="M 200 90 L 214 147" />
+          <path d="M 86 147 L 89 296" />
+          <path d="M 214 147 L 211 296" />
+          <path d="M 59 152 Q 72 150 86 147" />
+          <path d="M 241 152 Q 228 150 214 147" />
+        </g>
+
+        {/* Curved hem */}
+        <path d="M 89 296 Q 150 320 211 296" stroke="rgba(0,0,0,0.5)" strokeWidth="3" fill="none" />
+
+        {/* Fabric shading for depth */}
+        <rect x="0" y="0" width="300" height="400" fill={`url(#${shadeId})`} />
+      </g>
+
+      {/* Silhouette outline */}
+      <path d={SILHOUETTE} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="2" />
+    </svg>
   );
 }

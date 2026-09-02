@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
-import PlacementLayer from '@/components/designlab/PlacementLayer';
+import CanvasStage from '@/components/designlab/CanvasStage';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -214,26 +214,20 @@ export default function DesignLab() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <div
-            className="relative mx-auto max-w-md aspect-[3/4] border border-steel bg-steel overflow-hidden"
-            onClick={() => setSelectedId(null)}
-          >
-            <JerseyTemplate
-              primary={primary}
-              secondary={secondary}
-              tertiary={tertiary}
-              pattern={pattern}
-            />
-            <PlacementLayer
-              placements={placements}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onUpdate={updatePlacement}
-              onDelete={deletePlacement}
-            />
-          </div>
+          <CanvasStage
+            primary={primary}
+            secondary={secondary}
+            tertiary={tertiary}
+            pattern={pattern}
+            placements={placements}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onUpdate={updatePlacement}
+            onDelete={deletePlacement}
+            onBackgroundClick={() => setSelectedId(null)}
+          />
           <div className="mt-4 text-center mono-label text-fog/40">
-            DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE
+            DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE · SCROLL OR BUTTONS TO ZOOM · DRAG CANVAS TO PAN
           </div>
         </div>
 
