@@ -61,8 +61,8 @@ export default function IdentityLab() {
   // Size slider 0..100 → maps to 4px..44px (100% = the size that fits within the seams by the armpits)
   const baseSize = 4 + (size / 100) * 40; // 0% → 4px, 100% → 44px
   const curveAmount = (curve / 100) * 45; // 0 → 45
-  const baselineY = 100 + (height / 100) * 120; // vertical position on the back
-  const ARC_WIDTH = 212; // path spans x=44..256 — keep text within the jersey seams
+  const baselineY = 100 + (height / 100) * 100; // vertical position on the back (100px span)
+  const ARC_WIDTH = 180; // 60% of canvas width — text stays within the seams
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
   // Word-wrap so the name stays inside the jersey seams at the chosen size.
   // Shrink only if a single word is too wide to fit; otherwise wrap onto more lines.
@@ -88,7 +88,7 @@ export default function IdentityLab() {
   const startBase = baselineY - ((numLines - 1) / 2) * lineHeight;
   const linePath = (i) => {
     const y = startBase + i * lineHeight;
-    return `M 44 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 256 ${y + curveAmount / 2}`;
+    return `M 60 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 240 ${y + curveAmount / 2}`;
   };
 
   const handleAdd = () => {
@@ -233,10 +233,7 @@ export default function IdentityLab() {
 
               {/* SIZE */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="mono-label text-fog/50">SIZE</span>
-                  <span className="mono-label text-kinetic">{size}%</span>
-                </div>
+                <div className="mono-label text-fog/50 mb-2">SIZE</div>
                 <input
                   type="range"
                   min="0"
@@ -250,10 +247,7 @@ export default function IdentityLab() {
 
               {/* CURVE */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="mono-label text-fog/50">ARCH CURVE</span>
-                  <span className="mono-label text-kinetic">{curve}%</span>
-                </div>
+                <div className="mono-label text-fog/50 mb-2">ARCH CURVE</div>
                 <input
                   type="range"
                   min="0"
@@ -267,10 +261,7 @@ export default function IdentityLab() {
 
               {/* VERTICAL POSITION */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="mono-label text-fog/50">VERTICAL POSITION</span>
-                  <span className="mono-label text-kinetic">{height}%</span>
-                </div>
+                <div className="mono-label text-fog/50 mb-2">VERTICAL POSITION</div>
                 <input
                   type="range"
                   min="0"
