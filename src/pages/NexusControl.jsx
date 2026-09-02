@@ -155,7 +155,7 @@ export default function NexusControl() {
         >
           <div className="flex items-center gap-2 mb-6">
             <Lock size={20} className="text-kinetic" />
-            <span className="mono-label text-kinetic">// NEXUS CONTROL</span>
+            <span className="mono-label text-kinetic">NEXUS CONTROL</span>
           </div>
           <h1 className="font-heading text-2xl uppercase text-fog mb-1">Admin access</h1>
           <p className="text-fog/50 text-sm mb-6">Restricted. Enter passcode to manage inventory.</p>
@@ -199,7 +199,7 @@ export default function NexusControl() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-12">
         {/* Create form */}
         <div className="lg:col-span-7">
-          <div className="mono-label text-kinetic mb-3">// ADD NEW KIT</div>
+          <div className="mono-label text-kinetic mb-3">ADD NEW KIT</div>
           <form onSubmit={createJersey} className="space-y-5">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -279,7 +279,7 @@ export default function NexusControl() {
 
         {/* Inventory list */}
         <div className="lg:col-span-5">
-          <div className="mono-label text-kinetic mb-3">// INVENTORY ({jerseys.length})</div>
+          <div className="mono-label text-kinetic mb-3">INVENTORY ({jerseys.length})</div>
           {loadingList ? (
             <div className="space-y-3">
               {[0, 1, 2].map((i) => (

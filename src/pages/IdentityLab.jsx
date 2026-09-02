@@ -124,7 +124,7 @@ export default function IdentityLab() {
           <Link to="/arsenal" className="mono-label text-fog/60 hover:text-kinetic inline-flex items-center gap-2 transition-colors">
             <ArrowLeft size={14} /> ARSENAL
           </Link>
-          <div className="mono-label text-kinetic">// IDENTITY LAB</div>
+          <div className="mono-label text-kinetic">IDENTITY LAB</div>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function IdentityLab() {
 
           {!canCustomize ? (
             <div className="border border-steel p-5">
-              <p className="mono-label text-kinetic mb-2">// LAB LOCKED</p>
+              <p className="mono-label text-kinetic mb-2">LAB LOCKED</p>
               <p className="text-fog/60 text-sm">
                 This kit ships as-is without name customization. Add it to your cart plain,
                 or pick a Lab-enabled kit from the arsenal.
@@ -333,7 +333,7 @@ export default function IdentityLab() {
           )}
 
           <div className="border border-steel p-4 bg-steel/20">
-            <p className="mono-label text-kinetic mb-2">// IDENTITY LAB ADVISORY</p>
+            <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
             <p className="text-fog/60 text-sm leading-relaxed">
               Use the lab to print your own name on the back of your jersey. Names are applied
               exactly as entered — however, our design team may professionally refine spacing,

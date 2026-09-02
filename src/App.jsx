@@ -12,6 +12,7 @@ import Arsenal from './pages/Arsenal';
 import IdentityLab from './pages/IdentityLab';
 import Cart from './pages/Cart';
 import NexusControl from './pages/NexusControl';
+import DesignLab from './pages/DesignLab';
 import Header from './components/Header';
 import { CartProvider } from '@/lib/CartContext';
 
@@ -48,6 +49,7 @@ const AuthenticatedApp = () => {
         <Route path="/lab/:jerseyId" element={<IdentityLab />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/nexus-control" element={<NexusControl />} />
+        <Route path="/design-lab" element={<DesignLab />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </div>

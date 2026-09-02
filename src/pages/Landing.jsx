@@ -91,7 +91,7 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <div className="mono-label text-kinetic mb-4">// 01 — MISSION</div>
+              <div className="mono-label text-kinetic mb-4">01 — MISSION</div>
               <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
                 We don't make shirts. We build armor.
               </h2>
@@ -119,7 +119,7 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
           <div className="flex items-end justify-between gap-6 mb-10">
             <div>
-              <div className="mono-label text-kinetic mb-3">// 02 — ARSENAL</div>
+              <div className="mono-label text-kinetic mb-3">02 — ARSENAL</div>
               <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
                 Featured kits
               </h2>
@@ -160,7 +160,7 @@ export default function Landing() {
       {/* PHILOSOPHY */}
       <section className="border-t border-steel">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
-          <div className="mono-label text-kinetic mb-4">// 03 — DESIGN LANGUAGE</div>
+          <div className="mono-label text-kinetic mb-4">03 — DESIGN LANGUAGE</div>
           <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog mb-12 max-w-2xl">
             Precision Velocity, in every stitch.
           </h2>

@@ -60,7 +60,7 @@ export default function Cart() {
     <div className="bg-void min-h-screen">
       <div className="border-b border-steel">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10">
-          <div className="mono-label text-kinetic mb-3">// THE CART</div>
+          <div className="mono-label text-kinetic mb-3">THE CART</div>
           <h1 className="font-heading text-4xl sm:text-5xl uppercase text-fog leading-[0.9]">
             Your kits
           </h1>
@@ -113,7 +113,16 @@ export default function Cart() {
                   </button>
                 </div>
 
-                {item.customName ? (
+                {item.isCustomDesign ? (
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 mono-label text-fog/50">
+                    <span>PATTERN: <span className="text-fog">{item.designSpec?.pattern}</span></span>
+                    <span>MATERIAL: <span className="text-fog">{item.designSpec?.material}</span></span>
+                    <span>BASE: <span className="text-fog">{item.designSpec?.primary}</span></span>
+                    <span>ACCENT: <span className="text-fog">{item.designSpec?.secondary}</span></span>
+                    <span>ACCENT 2: <span className="text-fog">{item.designSpec?.tertiary}</span></span>
+                    <span>GRAPHICS: <span className="text-fog">{item.designSpec?.placements}</span></span>
+                  </div>
+                ) : item.customName ? (
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 mono-label text-fog/50">
                     <span>NAME: <span className="text-fog">{item.customName}</span></span>
                     <span>FONT: <span className="text-fog">{FONT_LABELS[item.font] || item.font}</span></span>

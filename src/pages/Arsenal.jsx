@@ -51,7 +51,7 @@ export default function Arsenal() {
       {/* Header band */}
       <div className="border-b border-steel">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12 sm:py-16">
-          <div className="mono-label text-kinetic mb-3">// THE ARSENAL</div>
+          <div className="mono-label text-kinetic mb-3">THE ARSENAL</div>
           <h1 className="font-heading text-4xl sm:text-6xl uppercase leading-[0.9] text-fog">
             Browse every kit.
           </h1>

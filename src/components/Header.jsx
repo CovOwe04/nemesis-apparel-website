@@ -38,6 +38,7 @@ export default function Header() {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Arsenal', path: '/arsenal' },
+    { label: 'Design', path: '/design-lab' },
   ];
 
   const isActive = (path) =>
