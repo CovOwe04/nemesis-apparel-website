@@ -332,7 +332,14 @@ export default function IdentityLab() {
             </>
           )}
 
-          <div className="h-px velocity-line opacity-60" />
+          <div className="border border-steel p-4 bg-steel/20">
+            <p className="mono-label text-kinetic mb-2">// IDENTITY LAB ADVISORY</p>
+            <p className="text-fog/60 text-sm leading-relaxed">
+              Use the lab to print your own name on the back of your jersey. Names are applied
+              exactly as entered — however, our design team may professionally refine spacing,
+              curvature, or scale to ensure a clean, production-ready finish.
+            </p>
+          </div>
 
           {/* QTY + ADD */}
           <div className="flex items-center gap-4">
