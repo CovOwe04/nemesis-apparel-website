@@ -1,10 +1,53 @@
 import { useRef } from 'react';
 import { X, RotateCw } from 'lucide-react';
+import { TEMPLATE_URL } from './JerseyTemplate';
 
 // Absolutely-positioned drag-and-drop layer over the jersey canvas. Each
 // placement stores x/y as percentages (0–100) so it scales with the canvas,
 // and a scale multiplier for resizing. Drag the body to move; drag the
 // bottom-right handle to resize; click the × to delete.
+//
+// Graphics are rendered in three stacked layers so they clip to the jersey:
+//   1. a 20%-opacity base (unmasked) — the part of the graphic hanging off
+//      the jersey stays visible at low opacity.
+//   2. a 100%-opacity copy masked to the jersey silhouette — only the on-jersey
+//      portion shows at full strength.
+//   3. an invisible interaction layer on top with the drag/resize/rotate
+//      handles, kept unmasked so the handles always stay hittable.
+const JERSEY_MASK_STYLE = {
+  WebkitMaskImage: `url(${TEMPLATE_URL})`,
+  WebkitMaskSize: 'contain',
+  WebkitMaskPosition: 'center',
+  WebkitMaskRepeat: 'no-repeat',
+  maskImage: `url(${TEMPLATE_URL})`,
+  maskSize: 'contain',
+  maskPosition: 'center',
+  maskRepeat: 'no-repeat',
+  maskMode: 'luminance',
+};
+
+const placementStyle = (pl) => ({
+  left: `${pl.x}%`,
+  top: `${pl.y}%`,
+  transform: `translate(-50%, -50%) rotate(${pl.rotation || 0}deg)`,
+  touchAction: 'none',
+});
+
+function Graphic({ pl, opacity }) {
+  return (
+    <div className="absolute pointer-events-none" style={placementStyle(pl)}>
+      <div style={{ width: 88 * pl.scale, height: 88 * pl.scale, opacity }}>
+        <img
+          src={pl.url}
+          alt=""
+          className="w-full h-full object-contain select-none"
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function PlacementLayer({ placements, selectedId, onSelect, onUpdate, onDelete }) {
   const containerRef = useRef(null);
 
@@ -81,66 +124,72 @@ export default function PlacementLayer({ placements, selectedId, onSelect, onUpd
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
-      {placements.map((pl) => {
-        const selected = pl.id === selectedId;
-        return (
-          <div
-            key={pl.id}
-            onPointerDown={(e) => startMove(e, pl.id)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(pl.id);
-            }}
-            className="absolute pointer-events-auto cursor-move"
-            style={{
-              left: `${pl.x}%`,
-              top: `${pl.y}%`,
-              transform: `translate(-50%, -50%) rotate(${pl.rotation || 0}deg)`,
-              touchAction: 'none',
-            }}
-          >
+      {/* 20% base — visible everywhere, including the off-jersey bleed */}
+      <div className="absolute inset-0 pointer-events-none">
+        {placements.map((pl) => (
+          <Graphic key={`${pl.id}-base`} pl={pl} opacity={0.2} />
+        ))}
+      </div>
+
+      {/* 100% masked — only the on-jersey portion shows at full strength */}
+      <div className="absolute inset-0 pointer-events-none" style={JERSEY_MASK_STYLE}>
+        {placements.map((pl) => (
+          <Graphic key={`${pl.id}-mask`} pl={pl} opacity={1} />
+        ))}
+      </div>
+
+      {/* Interaction layer — drag, resize, rotate, delete (unmasked) */}
+      <div className="absolute inset-0">
+        {placements.map((pl) => {
+          const selected = pl.id === selectedId;
+          return (
             <div
-              className={`relative ${selected ? 'outline outline-2 outline-kinetic' : ''}`}
-              style={{ width: 88 * pl.scale, height: 88 * pl.scale }}
+              key={pl.id}
+              onPointerDown={(e) => startMove(e, pl.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(pl.id);
+              }}
+              className="absolute pointer-events-auto cursor-move"
+              style={placementStyle(pl)}
             >
-              <img
-                src={pl.url}
-                alt="placement"
-                className="w-full h-full object-contain pointer-events-none select-none"
-                draggable={false}
-              />
-              {selected && (
-                <>
-                  <button
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(pl.id);
-                    }}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-kinetic text-void flex items-center justify-center"
-                    aria-label="Remove graphic"
-                  >
-                    <X size={12} />
-                  </button>
-                  <div
-                    onPointerDown={(e) => startResize(e, pl.id)}
-                    className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-kinetic cursor-nwse-resize"
-                    aria-label="Resize"
-                  />
-                  <div className="absolute left-1/2 -top-6 h-6 w-px bg-kinetic -translate-x-1/2 pointer-events-none" />
-                  <div
-                    onPointerDown={(e) => startRotate(e, pl.id)}
-                    className="absolute left-1/2 -top-7 w-4 h-4 -translate-x-1/2 bg-kinetic rounded-full flex items-center justify-center cursor-grab"
-                    aria-label="Rotate"
-                  >
-                    <RotateCw size={9} className="text-void" />
-                  </div>
-                </>
-              )}
+              <div
+                className={`relative ${selected ? 'outline outline-2 outline-kinetic' : ''}`}
+                style={{ width: 88 * pl.scale, height: 88 * pl.scale }}
+              >
+                {selected && (
+                  <>
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(pl.id);
+                      }}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-kinetic text-void flex items-center justify-center"
+                      aria-label="Remove graphic"
+                    >
+                      <X size={12} />
+                    </button>
+                    <div
+                      onPointerDown={(e) => startResize(e, pl.id)}
+                      className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-kinetic cursor-nwse-resize"
+                      aria-label="Resize"
+                    />
+                    <div className="absolute left-1/2 -top-6 h-6 w-px bg-kinetic -translate-x-1/2 pointer-events-none" />
+                    <div
+                      onPointerDown={(e) => startRotate(e, pl.id)}
+                      className="absolute left-1/2 -top-7 w-4 h-4 -translate-x-1/2 bg-kinetic rounded-full flex items-center justify-center cursor-grab"
+                      aria-label="Rotate"
+                    >
+                      <RotateCw size={9} className="text-void" />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

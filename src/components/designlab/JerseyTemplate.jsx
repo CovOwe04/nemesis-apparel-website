@@ -13,7 +13,7 @@ export const PATTERNS = [
 // mask that clips everything to the jersey silhouette, and as the base for the
 // multiply tint. Pattern fills are drawn in the photo's native coordinate space
 // along the detected seam landmarks, so each region follows the real jersey.
-const TEMPLATE_URL =
+export const TEMPLATE_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
 
 // `regions` is a list of { id, fill } — the caller resolves which regions are
