@@ -66,17 +66,22 @@ export default function IdentityLab() {
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
   // Word-wrap so the name stays inside the jersey seams at the chosen size.
   // Shrink only if a single word is too wide to fit; otherwise wrap onto more lines.
+  // letterSpacing must match the SVG <text> letterSpacing below, or trailing
+  // characters fall off the end of the path and disappear.
   const charFactor = 0.7;
+  const letterSpacing = 1.5;
   const words = displayName.split(' ').filter(Boolean);
   const longestWord = Math.max(...words.map((w) => w.length), 1);
-  const fitForLongest = ARC_WIDTH / (longestWord * charFactor);
+  const fitForLongest =
+    (ARC_WIDTH - Math.max(0, longestWord - 1) * letterSpacing) / (longestWord * charFactor);
   const fontSize = Math.min(baseSize, fitForLongest);
   const lineHeight = fontSize * 1.15;
+  const textWidth = (t) => t.length * fontSize * charFactor + Math.max(0, t.length - 1) * letterSpacing;
   const lines = [];
   let cur = '';
   for (const w of words) {
     const trial = cur ? `${cur} ${w}` : w;
-    if (trial.length * fontSize * charFactor <= ARC_WIDTH) {
+    if (textWidth(trial) <= ARC_WIDTH) {
       cur = trial;
     } else {
       if (cur) lines.push(cur);
