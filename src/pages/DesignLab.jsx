@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
-import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion } from '@/components/designlab/geometry';
+import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion, REGION_TO_PATTERN, DEFAULT_PATTERN_COLOR } from '@/components/designlab/geometry';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -56,6 +56,7 @@ export default function DesignLab() {
   const [secondary, setSecondary] = useState('#FF1F3D');
   const [tertiary, setTertiary] = useState('#0A0A0A');
   const [selectedPatterns, setSelectedPatterns] = useState(['accent-sleeves']);
+  const [patternColors, setPatternColors] = useState(DEFAULT_PATTERN_COLOR);
   const [customShapes, setCustomShapes] = useState([]);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [material, setMaterial] = useState('Polyester');
@@ -78,6 +79,7 @@ export default function DesignLab() {
     setGeometry(DEFAULT_GEOMETRY);
     setSelectedRegionId(null);
     setMaterial(p.material);
+    setPatternColors(DEFAULT_PATTERN_COLOR);
   };
 
   const addPlacement = (url, type) => {
@@ -99,8 +101,13 @@ export default function DesignLab() {
   const fillFor = (id) => {
     const custom = customShapes.find((c) => c.id === id);
     if (custom) return custom.color === 'tertiary' ? tertiary : secondary;
-    return REGION_COLOR[id] === 'tertiary' ? tertiary : secondary;
+    const pattern = REGION_TO_PATTERN[id];
+    const accent = (pattern && patternColors[pattern]) || REGION_COLOR[id] || 'secondary';
+    return accent === 'tertiary' ? tertiary : secondary;
   };
+
+  const setPatternColor = (pId, color) =>
+    setPatternColors((pc) => ({ ...pc, [pId]: color }));
   const regions = activeRegionIds.map((id) => ({ id, fill: fillFor(id) }));
 
   const togglePattern = (pId) =>
@@ -373,6 +380,44 @@ export default function DesignLab() {
                 );
               })}
             </div>
+
+            {selectedPatterns.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2">
+                {selectedPatterns.map((pId) => {
+                  const p = PATTERNS.find((x) => x.id === pId);
+                  const accent = patternColors[pId] || 'secondary';
+                  return (
+                    <div key={pId} className="flex items-center gap-3 border border-steel p-2.5">
+                      <span className="mono-label text-fog/70 flex-1 min-w-0 truncate">
+                        {p?.label || pId}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPatternColor(pId, 'secondary')}
+                        className={`mono-label px-3 py-1.5 border transition-colors ${
+                          accent === 'secondary'
+                            ? 'border-kinetic text-kinetic bg-kinetic/5'
+                            : 'border-steel text-fog/70 hover:border-fog/40'
+                        }`}
+                      >
+                        ACCENT 1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPatternColor(pId, 'tertiary')}
+                        className={`mono-label px-3 py-1.5 border transition-colors ${
+                          accent === 'tertiary'
+                            ? 'border-kinetic text-kinetic bg-kinetic/5'
+                            : 'border-steel text-fog/70 hover:border-fog/40'
+                        }`}
+                      >
+                        ACCENT 2
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="flex items-center gap-3 mt-3 flex-wrap">
               <button

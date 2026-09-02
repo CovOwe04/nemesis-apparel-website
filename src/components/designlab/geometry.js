@@ -23,6 +23,20 @@ export const REGION_COLOR = {
   'side-right': 'tertiary',
 };
 
+// Reverse lookup: region id -> pattern id.
+export const REGION_TO_PATTERN = Object.fromEntries(
+  Object.entries(REGIONS_BY_PATTERN).flatMap(([p, regions]) =>
+    regions.map((r) => [r, p])
+  )
+);
+
+// Default accent assignment per pattern (derived from REGION_COLOR).
+export const DEFAULT_PATTERN_COLOR = Object.fromEntries(
+  Object.keys(REGIONS_BY_PATTERN)
+    .filter((p) => p !== 'solid')
+    .map((p) => [p, REGIONS_BY_PATTERN[p][0] ? REGION_COLOR[REGIONS_BY_PATTERN[p][0]] : 'secondary'])
+);
+
 export const DEFAULT_GEOMETRY = {
   'sleeve-left': {
     anchors: [
