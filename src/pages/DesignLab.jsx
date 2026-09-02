@@ -161,18 +161,12 @@ export default function DesignLab() {
   const setCustomColor = (rid, color) =>
     setCustomShapes((cs) => cs.map((c) => (c.id === rid ? { ...c, color } : c)));
 
-  const resetSelectedPattern = () => {
+  const resetSelectedShape = () => {
     if (!selectedRegionId) return;
-    const pattern = REGION_TO_PATTERN[selectedRegionId];
-    if (pattern) {
-      const rids = REGIONS_BY_PATTERN[pattern] || [];
-      setGeometry((g) => ({
-        ...g,
-        ...Object.fromEntries(rids.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
-      }));
-    } else {
-      setGeometry((g) => ({ ...g, [selectedRegionId]: createCustomRegion() }));
-    }
+    setGeometry((g) => ({
+      ...g,
+      [selectedRegionId]: DEFAULT_GEOMETRY[selectedRegionId] || createCustomRegion(),
+    }));
   };
 
   const buildBrief = () => {
@@ -506,13 +500,11 @@ export default function DesignLab() {
                 (() => {
                   const pattern = selectedRegionId ? REGION_TO_PATTERN[selectedRegionId] : null;
                   const disabled = !selectedRegionId;
-                  const label = disabled
-                    ? 'SELECT PATTERN'
-                    : `RESET ${pattern ? PATTERNS.find((x) => x.id === pattern)?.label || pattern : 'SHAPE'}`;
+                  const label = disabled ? 'SELECT SHAPE' : 'RESET SHAPE';
                   return (
                     <button
                       type="button"
-                      onClick={resetSelectedPattern}
+                      onClick={resetSelectedShape}
                       disabled={disabled}
                       className={`mono-label px-4 py-2 border transition-colors ${
                         disabled
