@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Image } from '@/components/ui/image';
+import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 
@@ -9,6 +9,8 @@ const FONT_LABELS = {
   condensed: 'CONDENSED',
   athletic: 'ATHLETIC',
 };
+
+const VERT_LABELS = { 10: 'HIGH', 25: 'NORMAL', 50: 'LOW' };
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, clearCart } = useCart();
@@ -75,28 +77,25 @@ export default function Cart() {
               key={item.id}
               className="flex gap-4 sm:gap-6 border border-steel p-4"
             >
-              <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
-                <div className="relative w-24 h-32 sm:w-28 sm:h-36 bg-steel overflow-hidden">
-                  <Image
-                    src={item.back_image}
-                    alt={item.name}
-                    fittingType="fill"
-                    className="w-full h-full"
-                  />
-                  {item.customName && (
-                    <div className="absolute inset-0 flex items-start justify-center pt-3 pointer-events-none">
-                      <span
-                        className="font-heading text-[0.6rem] text-fog uppercase text-center px-2 leading-tight"
-                        style={{
-                          transform: item.curve ? `rotate(${(item.curve - 50) / 50 * 3}deg)` : 'none',
-                        }}
-                      >
-                        {item.customName}
-                      </span>
-                    </div>
-                  )}
+              {item.isCustomDesign ? (
+                <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center">
+                  <span className="mono-label text-fog/40 text-center px-1 leading-tight">
+                    CUSTOM<br />DESIGN
+                  </span>
                 </div>
-              </Link>
+              ) : (
+                <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
+                  <IdentityNameOverlay
+                    back_image={item.back_image}
+                    customName={item.customName}
+                    fontId={item.font}
+                    size={item.size}
+                    curve={item.curve}
+                    height={item.height}
+                    className="w-24 h-32 sm:w-28 sm:h-36 bg-steel"
+                  />
+                </Link>
+              )}
 
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex items-start justify-between gap-3">
@@ -128,6 +127,7 @@ export default function Cart() {
                     <span>FONT: <span className="text-fog">{FONT_LABELS[item.font] || item.font}</span></span>
                     <span>SIZE: <span className="text-fog">{item.size}%</span></span>
                     <span>ARCH: <span className="text-fog">{item.curve}%</span></span>
+                    <span>VERT: <span className="text-fog">{VERT_LABELS[item.height] || 'NORMAL'}</span></span>
                   </div>
                 ) : (
                   <p className="mt-2 mono-label text-fog/40">PLAIN — NO CUSTOMIZATION</p>

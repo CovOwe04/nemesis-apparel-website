@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '@/lib/CartContext';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import PlacementLayer from '@/components/designlab/PlacementLayer';
@@ -8,8 +7,6 @@ import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
 const SWATCHES = ['#FFFFFF', '#0A0A0A', '#FF1F3D', '#1E3A8A', '#15803D', '#F59E0B', '#6D28D9', '#DC2626'];
-const CUSTOM_PRICE = 89;
-
 const PRESETS = [
   { name: 'BLACKOUT', primary: '#0A0A0A', secondary: '#FFFFFF', tertiary: '#FF1F3D', pattern: 'accent-sleeves', material: 'Polyester' },
   { name: 'BLOOD SPORT', primary: '#0A0A0A', secondary: '#FF1F3D', tertiary: '#FFFFFF', pattern: 'tri-tone', material: 'Performance Mesh' },
@@ -54,7 +51,6 @@ function ColorField({ label, value, onChange }) {
 }
 
 export default function DesignLab() {
-  const { addItem } = useCart();
   const [primary, setPrimary] = useState('#FFFFFF');
   const [secondary, setSecondary] = useState('#FF1F3D');
   const [tertiary, setTertiary] = useState('#0A0A0A');
@@ -66,7 +62,7 @@ export default function DesignLab() {
   const [selectedId, setSelectedId] = useState(null);
   const [shirtSize, setShirtSize] = useState('M');
   const [copied, setCopied] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const applyPreset = (p) => {
     setPrimary(p.primary);
@@ -125,40 +121,81 @@ export default function DesignLab() {
     }
   };
 
-  const handleAdd = () => {
-    const designKey = [
-      primary, secondary, tertiary, pattern, material, shirtSize,
-      ...placements.map((p) => `${p.type}:${p.url}:${p.x},${p.y},${p.scale}`),
-    ].join('|');
-    addItem({
-      jerseyId: 'custom-design',
-      name: 'Custom Design',
-      team: 'Custom Build',
-      price: CUSTOM_PRICE,
-      front_image: '',
-      back_image: '',
-      customName: 'CUSTOM DESIGN',
-      font: '',
-      size: 0,
-      curve: 0,
-      shirtSize,
-      isCustomDesign: true,
-      designKey,
-      designSpec: {
-        pattern: patternLabel,
-        material,
-        primary,
-        secondary,
-        tertiary,
-        placements: placements.length,
-      },
-      quantity: 1,
-    });
-    setAdded(true);
-    setTimeout(() => {
-      window.location.href = '/cart';
-    }, 700);
+  const handleSubmit = () => {
+    setSubmitted(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (submitted) {
+    return (
+      <div className="bg-void min-h-screen">
+        <div className="border-b border-steel">
+          <div className="mx-auto max-w-7xl px-5 sm:px-8 py-5 flex items-center justify-between">
+            <Link
+              to="/arsenal"
+              className="mono-label text-fog/60 hover:text-kinetic inline-flex items-center gap-2 transition-colors"
+            >
+              <ArrowLeft size={14} /> ARSENAL
+            </Link>
+            <div className="mono-label text-kinetic">DESIGN LAB</div>
+          </div>
+        </div>
+        <div className="mx-auto max-w-3xl px-5 sm:px-8 py-12 flex flex-col items-center text-center">
+          <div className="w-14 h-14 border-2 border-kinetic flex items-center justify-center mb-6">
+            <Check size={28} className="text-kinetic" />
+          </div>
+          <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Design submitted</h1>
+          <p className="mt-3 text-fog/60 max-w-md">
+            Your custom jersey design has been sent to the Nemesis design team. A rep will review
+            your brief and follow up to finalize production.
+          </p>
+          <div className="mt-8 relative w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+            <JerseyTemplate
+              primary={primary}
+              secondary={secondary}
+              tertiary={tertiary}
+              pattern={pattern}
+            />
+          </div>
+          <div className="mt-8 border border-steel p-4 bg-steel/20 max-w-md text-left w-full">
+            <p className="mono-label text-kinetic mb-2">KEEP YOUR BRIEF</p>
+            <p className="text-fog/60 text-sm leading-relaxed">
+              Copy your design brief and save the details for your own records — our team may
+              reference it during production.
+            </p>
+            <button
+              onClick={copyBrief}
+              className="mt-4 inline-flex items-center gap-2 bg-kinetic px-5 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check size={16} /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy size={16} /> Copy brief
+                </>
+              )}
+            </button>
+          </div>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setSubmitted(false)}
+              className="mono-label border border-steel px-6 py-3 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
+            >
+              EDIT DESIGN
+            </button>
+            <Link
+              to="/arsenal"
+              className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
+            >
+              Back to arsenal
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-void min-h-screen">
@@ -367,6 +404,14 @@ export default function DesignLab() {
             </p>
           </div>
 
+          <div className="border border-steel p-4 bg-steel/20">
+            <p className="mono-label text-kinetic mb-2">SAVE YOUR DETAILS</p>
+            <p className="text-fog/60 text-sm leading-relaxed">
+              Copy your design brief and keep it for your records before submitting — our team may
+              reference it during production.
+            </p>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-stretch gap-3">
             <button
               onClick={copyBrief}
@@ -383,17 +428,10 @@ export default function DesignLab() {
               )}
             </button>
             <button
-              onClick={handleAdd}
-              disabled={added}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors disabled:opacity-70"
+              onClick={handleSubmit}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
             >
-              {added ? (
-                <>
-                  <Check size={18} /> Added — heading to cart
-                </>
-              ) : (
-                <>Add to cart — ${CUSTOM_PRICE}</>
-              )}
+              Submit design
             </button>
           </div>
         </div>

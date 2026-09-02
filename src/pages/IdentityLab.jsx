@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Image } from '@/components/ui/image';
+import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check } from 'lucide-react';
-
-const FONTS = [
-  { id: 'block', label: 'BLOCK', family: "'Archivo Black', sans-serif" },
-  { id: 'condensed', label: 'CONDENSED', family: "'Anton', sans-serif" },
-  { id: 'athletic', label: 'ATHLETIC', family: "'Oswald', sans-serif" },
-  { id: 'tech', label: 'TECH', family: "'Space Grotesk', sans-serif" },
-  { id: 'clean', label: 'CLEAN', family: "'Inter', sans-serif" },
-];
 
 export default function IdentityLab() {
   const { jerseyId } = useParams();
@@ -57,45 +49,7 @@ export default function IdentityLab() {
     );
   }
 
-  const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const canCustomize = !!jersey.enable_customization;
-  // Size slider 0..100 → maps to 4px..44px (100% = the size that fits within the seams by the armpits)
-  const baseSize = 4 + (size / 100) * 40; // 0% → 4px, 100% → 44px
-  const curveAmount = (curve / 100) * 45; // 0 → 45
-  const baselineY = 100 + (height / 100) * 50; // vertical position on the back (50px span)
-  const ARC_WIDTH = 150; // 50% of canvas width — text stays within the seams
-  const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
-  // Word-wrap so the name stays inside the jersey seams at the chosen size.
-  // Shrink only if a single word is too wide to fit; otherwise wrap onto more lines.
-  // letterSpacing must match the SVG <text> letterSpacing below, or trailing
-  // characters fall off the end of the path and disappear.
-  const charFactor = 0.7;
-  const letterSpacing = 1.5;
-  const words = displayName.split(' ').filter(Boolean);
-  const longestWord = Math.max(...words.map((w) => w.length), 1);
-  const fitForLongest =
-    (ARC_WIDTH - Math.max(0, longestWord - 1) * letterSpacing) / (longestWord * charFactor);
-  const fontSize = Math.min(baseSize, fitForLongest);
-  const lineHeight = fontSize * 1.15;
-  const textWidth = (t) => t.length * fontSize * charFactor + Math.max(0, t.length - 1) * letterSpacing;
-  const lines = [];
-  let cur = '';
-  for (const w of words) {
-    const trial = cur ? `${cur} ${w}` : w;
-    if (textWidth(trial) <= ARC_WIDTH) {
-      cur = trial;
-    } else {
-      if (cur) lines.push(cur);
-      cur = w;
-    }
-  }
-  if (cur) lines.push(cur);
-  const numLines = Math.max(lines.length, 1);
-  const startBase = baselineY - ((numLines - 1) / 2) * lineHeight;
-  const linePath = (i) => {
-    const y = startBase + i * lineHeight;
-    return `M 75 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 225 ${y + curveAmount / 2}`;
-  };
 
   const handleAdd = () => {
     addItem({
@@ -109,6 +63,7 @@ export default function IdentityLab() {
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
+      height: canCustomize ? height : 0,
       shirtSize,
       quantity: qty,
     });
@@ -133,41 +88,16 @@ export default function IdentityLab() {
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
             <div className="relative aspect-[3/4] overflow-hidden bg-steel">
-              <Image
-                src={jersey.back_image}
-                alt={`${jersey.name} back — customizer canvas`}
-                fittingType="fill"
+              <IdentityNameOverlay
+                back_image={jersey.back_image}
+                customName={canCustomize ? name.toUpperCase() : ''}
+                fontId={fontId}
+                size={size}
+                curve={curve}
+                height={height}
+                showPlaceholder={canCustomize}
                 className="w-full h-full"
               />
-              {canCustomize && (
-                <svg
-                  className="absolute inset-0 w-full h-full pointer-events-none"
-                  viewBox="0 0 300 400"
-                  preserveAspectRatio="xMidYMid meet"
-                >
-                  <defs>
-                    {lines.map((line, i) => (
-                      <path key={i} id={`name-arc-${i}`} d={linePath(i)} fill="none" />
-                    ))}
-                  </defs>
-                  <text
-                    fontFamily={font.family}
-                    fontSize={fontSize}
-                    fill="#F5F5F7"
-                    stroke="#0A0A0A"
-                    strokeWidth="1.4"
-                    paintOrder="stroke fill"
-                    letterSpacing="1.5"
-                    style={{ textTransform: 'uppercase' }}
-                  >
-                    {lines.map((line, i) => (
-                      <textPath key={i} href={`#name-arc-${i}`} startOffset="50%" textAnchor="middle">
-                        {line}
-                      </textPath>
-                    ))}
-                  </text>
-                </svg>
-              )}
             </div>
           </div>
           <div className="mt-4 text-center mono-label text-fog/40">
