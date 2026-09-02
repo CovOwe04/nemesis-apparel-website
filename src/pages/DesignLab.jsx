@@ -636,9 +636,6 @@ export default function DesignLab() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="mono-label text-fog/70">{pl.type.toUpperCase()} #{i + 1}</div>
-                      <div className="mono-label text-fog/40">
-                        {pl.x.toFixed(0)}%, {pl.y.toFixed(0)}% · {pl.scale.toFixed(2)}x
-                      </div>
                     </div>
                     <button
                       onClick={() => setSelectedId(pl.id)}
