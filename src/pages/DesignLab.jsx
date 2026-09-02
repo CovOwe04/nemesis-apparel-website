@@ -503,17 +503,24 @@ export default function DesignLab() {
                 </button>
               )}
               {editMode &&
-                selectedRegionId &&
                 (() => {
-                  const pattern = REGION_TO_PATTERN[selectedRegionId];
+                  const pattern = selectedRegionId ? REGION_TO_PATTERN[selectedRegionId] : null;
                   const label = pattern
                     ? PATTERNS.find((x) => x.id === pattern)?.label || pattern
-                    : 'SHAPE';
+                    : selectedRegionId
+                    ? 'SHAPE'
+                    : 'SELECT PATTERN';
+                  const disabled = !selectedRegionId;
                   return (
                     <button
                       type="button"
                       onClick={resetSelectedPattern}
-                      className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                      disabled={disabled}
+                      className={`mono-label px-4 py-2 border transition-colors ${
+                        disabled
+                          ? 'border-steel text-fog/30 cursor-not-allowed'
+                          : 'border-steel text-fog/60 hover:border-kinetic hover:text-kinetic'
+                      }`}
                     >
                       RESET {label}
                     </button>
