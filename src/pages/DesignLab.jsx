@@ -155,26 +155,6 @@ export default function DesignLab() {
     }));
   };
 
-  const [geomCopied, setGeomCopied] = useState(false);
-  const copyGeom = async () => {
-    try {
-      const compact = Object.fromEntries(
-        Object.entries(geometry).map(([k, v]) => [
-          k,
-          {
-            anchors: v.anchors.map((a) => ({ x: +a.x.toFixed(2), y: +a.y.toFixed(2) })),
-            handles: v.handles.map((h) => ({ x: +h.x.toFixed(2), y: +h.y.toFixed(2) })),
-          },
-        ])
-      );
-      await navigator.clipboard.writeText(JSON.stringify(compact, null, 2));
-      setGeomCopied(true);
-      setTimeout(() => setGeomCopied(false), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
   const buildBrief = () => {
     const lines = [
       'NEMESIS APPAREL — CUSTOM JERSEY DESIGN BRIEF',
@@ -523,15 +503,7 @@ export default function DesignLab() {
                     </button>
                   );
                 })()}
-              {editMode && (
-                <button
-                  type="button"
-                  onClick={copyGeom}
-                  className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                >
-                  {geomCopied ? 'COPIED' : 'COPY GEOM'}
-                </button>
-              )}
+
             </div>
 
             {customShapes.length > 0 && (
