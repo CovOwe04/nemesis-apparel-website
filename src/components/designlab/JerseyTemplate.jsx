@@ -12,13 +12,13 @@ export const PATTERNS = [
 // the whole canvas, clipping every color layer to the jersey silhouette at
 // once (so the mask stays aligned regardless of each layer's size).
 const TEMPLATE_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/0afbde217_generated_image.png';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
 
 const maskStyle = {
   WebkitMaskImage: `url(${TEMPLATE_URL})`,
   maskImage: `url(${TEMPLATE_URL})`,
-  WebkitMaskSize: 'cover',
-  maskSize: 'cover',
+  WebkitMaskSize: 'contain',
+  maskSize: 'contain',
   WebkitMaskRepeat: 'no-repeat',
   maskRepeat: 'no-repeat',
   WebkitMaskPosition: 'center',
@@ -70,8 +70,9 @@ export default function JerseyTemplate({ primary, secondary, tertiary, pattern }
         className="absolute inset-0 opacity-40 mix-blend-multiply"
         style={{
           backgroundImage: `url(${TEMPLATE_URL})`,
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       />
     </div>
