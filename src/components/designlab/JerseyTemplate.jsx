@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { buildPath } from './geometry';
 
 export const PATTERNS = [
@@ -24,7 +23,9 @@ export const BACK_TEMPLATE_URL =
 // slot; custom shapes carry their own). `geometry` holds the anchors/handles.
 // `templateUrl` selects which jersey photo to use (front vs back).
 export default function JerseyTemplate({ primary, regions, geometry = {}, templateUrl = TEMPLATE_URL }) {
-  const [size, setSize] = useState({ w: 1024, h: 1024 });
+  // Fixed 1024x1024 coordinate space — keeps geometry anchors compatible across
+  // front and back templates regardless of each photo's natural dimensions.
+  const size = { w: 1024, h: 1024 };
   const maskId = 'jersey-mask';
 
   return (
@@ -79,18 +80,6 @@ export default function JerseyTemplate({ primary, regions, geometry = {}, templa
           </g>
         </g>
       </svg>
-
-      {/* Hidden preload to read natural dimensions (keeps viewBox exact) */}
-      <img
-        src={templateUrl}
-        alt=""
-        className="hidden"
-        onLoad={(e) => {
-          const nw = e.currentTarget.naturalWidth;
-          const nh = e.currentTarget.naturalHeight;
-          if (nw && nh) setSize({ w: nw, h: nh });
-        }}
-      />
     </div>
   );
 }
