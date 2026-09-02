@@ -284,8 +284,8 @@ export default function IdentityLab() {
                 <div className="mono-label text-fog/50 mb-2">VERTICAL POSITION</div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'HIGH', value: 50 },
-                    { label: 'NORMAL', value: 0 },
+                    { label: 'NORMAL', value: 50 },
+                    { label: 'HIGH', value: 0 },
                     { label: 'LOW', value: 100 },
                   ].map((opt) => (
                     <button
