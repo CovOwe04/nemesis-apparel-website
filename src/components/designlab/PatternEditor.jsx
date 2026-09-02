@@ -123,7 +123,18 @@ export default function PatternEditor({
                 const next = region.anchors[(i + 1) % region.anchors.length];
                 const c = region.handles[i];
                 const mid = { x: (a.x + next.x) / 2, y: (a.y + next.y) / 2 };
-                const cm = edgeMidpoint(a, c, next);
+                // Place the + button beside the edge, perpendicular to the handle
+                // stem, so it never overlaps the curve-handle dot — even when the
+                // edge is straight and the handle sits on the midpoint.
+                let sdx = c.x - mid.x;
+                let sdy = c.y - mid.y;
+                let slen = Math.hypot(sdx, sdy);
+                if (slen < 1) {
+                  sdx = next.x - a.x;
+                  sdy = next.y - a.y;
+                  slen = Math.hypot(sdx, sdy) || 1;
+                }
+                const cm = { x: mid.x + (-sdy / slen) * 48, y: mid.y + (sdx / slen) * 48 };
                 return (
                   <g key={i}>
                     <line
@@ -140,7 +151,7 @@ export default function PatternEditor({
                     <circle
                       cx={c.x}
                       cy={c.y}
-                      r="26"
+                      r="18"
                       fill="transparent"
                       pointerEvents="all"
                       cursor="pointer"
@@ -171,7 +182,7 @@ export default function PatternEditor({
                       <circle
                         cx={cm.x}
                         cy={cm.y}
-                        r="26"
+                        r="20"
                         fill="transparent"
                         pointerEvents="all"
                         cursor="pointer"
