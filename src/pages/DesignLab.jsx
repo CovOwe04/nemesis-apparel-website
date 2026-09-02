@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
+import JerseyTemplate, { PATTERNS, TEMPLATE_URL, BACK_TEMPLATE_URL } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
 import { useDesignState } from '@/components/designlab/useDesignState';
@@ -167,13 +167,13 @@ export default function DesignLab() {
             <div>
               <div className="mono-label text-fog/40 mb-1">FRONT</div>
               <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
-                <JerseyTemplate primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
+                <JerseyTemplate templateUrl={TEMPLATE_URL} primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
               </div>
             </div>
             <div>
               <div className="mono-label text-fog/40 mb-1">BACK</div>
               <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
-                <JerseyTemplate primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
+                <JerseyTemplate templateUrl={BACK_TEMPLATE_URL} primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
               </div>
             </div>
           </div>
@@ -252,6 +252,7 @@ export default function DesignLab() {
           </div>
 
           <CanvasStage
+            templateUrl={activeSide === 'front' ? TEMPLATE_URL : BACK_TEMPLATE_URL}
             primary={design.primary}
             regions={design.regions}
             geometry={design.geometry}

@@ -16,10 +16,14 @@ export const PATTERNS = [
 export const TEMPLATE_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
 
+export const BACK_TEMPLATE_URL =
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/62eb8c0d5_generated_image.png';
+
 // `regions` is a list of { id, fill } — the caller resolves which regions are
 // active and what color each one gets (built-in patterns keep their assigned
 // slot; custom shapes carry their own). `geometry` holds the anchors/handles.
-export default function JerseyTemplate({ primary, regions, geometry = {} }) {
+// `templateUrl` selects which jersey photo to use (front vs back).
+export default function JerseyTemplate({ primary, regions, geometry = {}, templateUrl = TEMPLATE_URL }) {
   const [size, setSize] = useState({ w: 1024, h: 1024 });
   const maskId = 'jersey-mask';
 
@@ -41,7 +45,7 @@ export default function JerseyTemplate({ primary, regions, geometry = {} }) {
             height={size.h}
           >
             <image
-              href={TEMPLATE_URL}
+              href={templateUrl}
               x="0"
               y="0"
               width={size.w}
@@ -56,7 +60,7 @@ export default function JerseyTemplate({ primary, regions, geometry = {} }) {
             background shows through untouched and is never tinted. */}
         <g mask={`url(#${maskId})`}>
           <image
-            href={TEMPLATE_URL}
+            href={templateUrl}
             x="0"
             y="0"
             width={size.w}
@@ -78,7 +82,7 @@ export default function JerseyTemplate({ primary, regions, geometry = {} }) {
 
       {/* Hidden preload to read natural dimensions (keeps viewBox exact) */}
       <img
-        src={TEMPLATE_URL}
+        src={templateUrl}
         alt=""
         className="hidden"
         onLoad={(e) => {

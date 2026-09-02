@@ -10,6 +10,7 @@ import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 // a graphic still works under zoom because PlacementLayer computes positions
 // as ratios of the (transformed) container rect.
 export default function CanvasStage({
+  templateUrl,
   primary,
   regions,
   geometry,
@@ -83,6 +84,7 @@ export default function CanvasStage({
         }}
       >
         <JerseyTemplate
+          templateUrl={templateUrl}
           primary={primary}
           regions={regions}
           geometry={geometry}
