@@ -591,40 +591,6 @@ export default function DesignLab() {
             </div>
           </div>
 
-          {/* QUANTITY */}
-          <div>
-            <div className="mono-label text-fog/50 mb-2">QUANTITY</div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
-                aria-label="Decrease quantity"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setQuantity(Number.isFinite(v) && v > 0 ? v : 1);
-                }}
-                className="w-16 h-11 text-center font-heading text-lg bg-void border border-steel text-fog focus:border-kinetic outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
-              <span className="mono-label text-fog/40 ml-1">JERSEYS OF THIS DESIGN</span>
-            </div>
-          </div>
-
           <div className="h-px velocity-line opacity-60" />
 
           {/* ASSETS */}
@@ -692,6 +658,38 @@ export default function DesignLab() {
               Copy your design brief and keep it for your records before submitting — our team may
               reference it during production.
             </p>
+          </div>
+
+          {/* QUANTITY */}
+          <div className="flex items-center gap-3">
+            <span className="mono-label text-fog/50 mr-1">QUANTITY</span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
+              aria-label="Decrease quantity"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                setQuantity(Number.isFinite(v) && v > 0 ? v : 1);
+              }}
+              className="no-spinner w-16 h-11 text-center font-heading text-lg bg-void border border-steel text-fog focus:border-kinetic outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+            <span className="mono-label text-fog/40 ml-1">JERSEYS OF THIS DESIGN</span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch gap-3">
