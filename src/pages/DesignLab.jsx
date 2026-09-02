@@ -70,7 +70,6 @@ export default function DesignLab() {
   const [geometry, setGeometry] = useState(DEFAULT_GEOMETRY);
   const [editMode, setEditMode] = useState(false);
   const [ctxMenu, setCtxMenu] = useState(null);
-  const [geomCopied, setGeomCopied] = useState(false);
 
   const applyPreset = (p) => {
     setPrimary(p.primary);
@@ -140,16 +139,6 @@ export default function DesignLab() {
       if (!region) return g;
       return { ...g, [rid]: deleteVertexFromRegion(region, vertexIndex) };
     });
-
-  const copyGeometry = async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(geometry, null, 2));
-      setGeomCopied(true);
-      setTimeout(() => setGeomCopied(false), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
 
   const addCustomShape = () => {
     const id = `custom-${Date.now()}`;
@@ -506,22 +495,13 @@ export default function DesignLab() {
                 </button>
               )}
               {editMode && (
-                <>
-                  <button
-                    type="button"
-                    onClick={resetFit}
-                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                  >
-                    RESET
-                  </button>
-                  <button
-                    type="button"
-                    onClick={copyGeometry}
-                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                  >
-                    {geomCopied ? 'COPIED' : 'COPY GEOM'}
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={resetFit}
+                  className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                >
+                  RESET
+                </button>
               )}
             </div>
 
