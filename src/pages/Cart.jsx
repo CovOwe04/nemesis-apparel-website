@@ -102,7 +102,7 @@ export default function Cart() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="font-heading text-lg uppercase text-fog truncate">{item.name}</h2>
-                    <p className="mono-label text-fog/40 mt-1">{item.team}</p>
+                    <p className="mono-label text-fog/40 mt-1">{item.team} · SIZE {item.shirtSize || 'M'}</p>
                   </div>
                   <button
                     onClick={() => removeItem(item.id)}

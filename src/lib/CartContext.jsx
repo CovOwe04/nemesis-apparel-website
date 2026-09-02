@@ -33,7 +33,8 @@ export function CartProvider({ children }) {
         (i.customName || '') === (item.customName || '') &&
         (i.font || '') === (item.font || '') &&
         Number(i.size || 0) === Number(item.size || 0) &&
-        Number(i.curve || 0) === Number(item.curve || 0);
+        Number(i.curve || 0) === Number(item.curve || 0) &&
+        (i.shirtSize || '') === (item.shirtSize || '');
       const existing = prev.find(matchKey);
       if (existing) {
         return prev.map((i) =>

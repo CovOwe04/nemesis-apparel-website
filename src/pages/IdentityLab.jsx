@@ -26,6 +26,7 @@ export default function IdentityLab() {
   const [curve, setCurve] = useState(0);
   const [height, setHeight] = useState(25);
   const [qty, setQty] = useState(1);
+  const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function IdentityLab() {
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
+      shirtSize,
       quantity: qty,
     });
     setAdded(true);
@@ -186,6 +188,26 @@ export default function IdentityLab() {
           </div>
 
           <div className="h-px velocity-line opacity-60" />
+
+          {/* SHIRT SIZE */}
+          <div>
+            <div className="mono-label text-fog/50 mb-2">SHIRT SIZE</div>
+            <div className="grid grid-cols-5 gap-2">
+              {['XS', 'S', 'M', 'L', 'XL'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setShirtSize(s)}
+                  className={`py-3 text-center font-heading text-sm border transition-colors ${
+                    shirtSize === s
+                      ? 'border-kinetic text-kinetic bg-kinetic/5'
+                      : 'border-steel text-fog/70 hover:border-fog/40'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {!canCustomize ? (
             <div className="border border-steel p-5">
