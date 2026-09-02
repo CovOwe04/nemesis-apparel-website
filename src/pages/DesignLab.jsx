@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
+import { REGIONS_BY_PATTERN, DEFAULT_GEOMETRY } from '@/components/designlab/geometry';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -63,6 +64,8 @@ export default function DesignLab() {
   const [shirtSize, setShirtSize] = useState('M');
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [geometry, setGeometry] = useState(DEFAULT_GEOMETRY);
+  const [editMode, setEditMode] = useState(false);
 
   const applyPreset = (p) => {
     setPrimary(p.primary);
@@ -85,6 +88,14 @@ export default function DesignLab() {
   };
 
   const patternLabel = (PATTERNS.find((p) => p.id === pattern) || {}).label || pattern;
+
+  const editableRegions = REGIONS_BY_PATTERN[pattern] || [];
+  const updateGeometry = (rid, region) => setGeometry((g) => ({ ...g, [rid]: region }));
+  const resetFit = () =>
+    setGeometry((g) => ({
+      ...g,
+      ...Object.fromEntries(editableRegions.map((rid) => [rid, DEFAULT_GEOMETRY[rid]])),
+    }));
 
   const buildBrief = () => {
     const lines = [
@@ -155,6 +166,7 @@ export default function DesignLab() {
               secondary={secondary}
               tertiary={tertiary}
               pattern={pattern}
+              geometry={geometry}
             />
           </div>
           <div className="mt-8 border border-steel p-4 bg-steel/20 max-w-md text-left w-full">
@@ -225,9 +237,15 @@ export default function DesignLab() {
             onUpdate={updatePlacement}
             onDelete={deletePlacement}
             onBackgroundClick={() => setSelectedId(null)}
+            geometry={geometry}
+            editMode={editMode}
+            editableRegions={editableRegions}
+            onGeometryChange={updateGeometry}
           />
           <div className="mt-4 text-center mono-label text-fog/40">
-            DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE · SCROLL OR BUTTONS TO ZOOM · DRAG CANVAS TO PAN
+            {editMode
+              ? 'DRAG BLUE CORNERS TO MOVE · BLUE DOTS TO CURVE EDGES · RESET TO RESTORE'
+              : 'DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE · SCROLL OR BUTTONS TO ZOOM · DRAG CANVAS TO PAN'}
           </div>
         </div>
 
@@ -292,6 +310,30 @@ export default function DesignLab() {
                 </button>
               ))}
             </div>
+            {editableRegions.length > 0 && (
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditMode((v) => !v)}
+                  className={`mono-label px-4 py-2 border transition-colors ${
+                    editMode
+                      ? 'border-kinetic text-kinetic bg-kinetic/5'
+                      : 'border-steel text-fog/70 hover:border-fog/40'
+                  }`}
+                >
+                  {editMode ? 'DONE ADJUSTING' : 'ADJUST FIT'}
+                </button>
+                {editMode && (
+                  <button
+                    type="button"
+                    onClick={resetFit}
+                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                  >
+                    RESET
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* MATERIAL */}

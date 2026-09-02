@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import JerseyTemplate from './JerseyTemplate';
 import PlacementLayer from './PlacementLayer';
+import PatternEditor from './PatternEditor';
 import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 
 // Canvas stage with zoom + pan over the jersey and its placements. The view
@@ -19,6 +20,10 @@ export default function CanvasStage({
   onUpdate,
   onDelete,
   onBackgroundClick,
+  geometry,
+  editMode,
+  editableRegions,
+  onGeometryChange,
 }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -81,6 +86,7 @@ export default function CanvasStage({
           secondary={secondary}
           tertiary={tertiary}
           pattern={pattern}
+          geometry={geometry}
         />
         <PlacementLayer
           placements={placements}
@@ -89,6 +95,13 @@ export default function CanvasStage({
           onUpdate={onUpdate}
           onDelete={onDelete}
         />
+        {editMode && (
+          <PatternEditor
+            regions={editableRegions}
+            geometry={geometry}
+            onChange={onGeometryChange}
+          />
+        )}
       </div>
 
       {/* Zoom readout */}
