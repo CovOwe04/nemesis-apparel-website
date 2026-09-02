@@ -49,6 +49,7 @@ export default function DesignLab() {
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   // UI state (shared, reset on side switch)
   const [editMode, setEditMode] = useState(false);
@@ -136,9 +137,70 @@ export default function DesignLab() {
   };
 
   const handleSubmit = () => {
+    setConfirming(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const confirmSubmit = () => {
+    setConfirming(false);
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (confirming) {
+    return (
+      <div className="bg-void min-h-screen">
+        <div className="border-b border-steel">
+          <div className="mx-auto max-w-7xl px-5 sm:px-8 py-5 flex items-center justify-between">
+            <button
+              onClick={() => setConfirming(false)}
+              className="mono-label text-fog/60 hover:text-kinetic inline-flex items-center gap-2 transition-colors"
+            >
+              <ArrowLeft size={14} /> BACK TO EDITOR
+            </button>
+            <div className="mono-label text-kinetic">REVIEW BOTH SIDES</div>
+          </div>
+        </div>
+        <div className="mx-auto max-w-3xl px-5 sm:px-8 py-12 flex flex-col items-center text-center">
+          <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Review your design</h1>
+          <p className="mt-3 text-fog/60 max-w-md">
+            Check both the front and back of your jersey before submitting. Make sure everything
+            looks right — you can go back to adjust if needed.
+          </p>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-6">
+            <div>
+              <div className="mono-label text-fog/40 mb-1">FRONT</div>
+              <div className="w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+                <JerseyTemplate templateUrl={TEMPLATE_URL} primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
+              </div>
+            </div>
+            <div>
+              <div className="mono-label text-fog/40 mb-1">BACK</div>
+              <div className="w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+                <JerseyTemplate templateUrl={BACK_TEMPLATE_URL} primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-stretch gap-3 w-full max-w-md">
+            <button
+              onClick={() => setConfirming(false)}
+              className="mono-label border border-steel px-6 py-4 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
+            >
+              KEEP EDITING
+            </button>
+            <button
+              onClick={confirmSubmit}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
+            >
+              <Check size={18} /> Confirm & submit
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
