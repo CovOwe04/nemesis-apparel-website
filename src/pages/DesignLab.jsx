@@ -171,13 +171,13 @@ export default function DesignLab() {
           <div className="mt-8 flex flex-wrap justify-center gap-6">
             <div>
               <div className="mono-label text-fog/40 mb-1">FRONT</div>
-              <div className="w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+              <div className="relative w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
                 <JerseyTemplate templateUrl={TEMPLATE_URL} primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
               </div>
             </div>
             <div>
               <div className="mono-label text-fog/40 mb-1">BACK</div>
-              <div className="w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+              <div className="relative w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
                 <JerseyTemplate templateUrl={BACK_TEMPLATE_URL} primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
               </div>
             </div>
@@ -228,13 +228,13 @@ export default function DesignLab() {
           <div className="mt-8 flex gap-4">
             <div>
               <div className="mono-label text-fog/40 mb-1">FRONT</div>
-              <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+              <div className="relative w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
                 <JerseyTemplate templateUrl={TEMPLATE_URL} primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
               </div>
             </div>
             <div>
               <div className="mono-label text-fog/40 mb-1">BACK</div>
-              <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+              <div className="relative w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
                 <JerseyTemplate templateUrl={BACK_TEMPLATE_URL} primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
               </div>
             </div>

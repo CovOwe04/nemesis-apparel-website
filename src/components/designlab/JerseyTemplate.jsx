@@ -16,7 +16,7 @@ export const TEMPLATE_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
 
 export const BACK_TEMPLATE_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/62eb8c0d5_generated_image.png';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/ff3ea2e87_generated_image.png';
 
 // `regions` is a list of { id, fill } — the caller resolves which regions are
 // active and what color each one gets (built-in patterns keep their assigned
