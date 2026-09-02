@@ -7,46 +7,77 @@ export const PATTERNS = [
   { id: 'tri-tone', label: 'TRI-TONE' },
 ];
 
-// Front-view jersey SVG. Regions (body / sleeves / collar) are recolored per
-// pattern, with overlay accents (chest band, shoulder stripes, side panels)
-// drawn on top for the tertiary color.
+// Blank white jersey photo (front view, dark background) — the same kind of
+// jersey imagery used in the Arsenal. Used both as the visible fabric shading
+// and as a luminance mask that clips every color layer to the jersey
+// silhouette, so fills work for any color (including black).
+const TEMPLATE_URL =
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/0afbde217_generated_image.png';
+
+const maskStyle = {
+  WebkitMaskImage: `url(${TEMPLATE_URL})`,
+  maskImage: `url(${TEMPLATE_URL})`,
+  WebkitMaskSize: 'cover',
+  maskSize: 'cover',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskPosition: 'center',
+  maskPosition: 'center',
+  WebkitMaskMode: 'luminance',
+  maskMode: 'luminance',
+};
+
+function Layer({ className, style }) {
+  return <div className={`absolute ${className}`} style={{ ...maskStyle, ...style }} />;
+}
+
 export default function JerseyTemplate({ primary, secondary, tertiary, pattern }) {
-  const accentSleeves = ['accent-sleeves', 'shoulder-stripe', 'tri-tone'].includes(pattern);
-  const sleeves = accentSleeves ? secondary : primary;
-  const collar = pattern === 'tri-tone' ? tertiary : primary;
-  const showChestBand = pattern === 'chest-band' || pattern === 'tri-tone';
-  const showShoulderStripe = pattern === 'shoulder-stripe';
-  const showSidePanels = pattern === 'side-panels';
+  const accentSleeves = pattern === 'accent-sleeves' || pattern === 'tri-tone';
+  const chestBand = pattern === 'chest-band' || pattern === 'tri-tone';
+  const shoulderStripe = pattern === 'shoulder-stripe';
+  const sidePanels = pattern === 'side-panels';
 
   return (
-    <svg viewBox="0 0 300 360" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      {/* Sleeves */}
-      <path d="M 88 96 L 38 142 L 54 172 L 104 118 Z" fill={sleeves} stroke="#0A0A0A" strokeWidth="2" />
-      <path d="M 212 96 L 262 142 L 246 172 L 196 118 Z" fill={sleeves} stroke="#0A0A0A" strokeWidth="2" />
-      {/* Body */}
-      <path
-        d="M 100 78 L 125 78 Q 150 99 175 78 L 200 78 L 212 96 L 212 342 L 88 342 L 88 96 Z"
-        fill={primary}
-        stroke="#0A0A0A"
-        strokeWidth="2"
-      />
-      {/* Collar band */}
-      <path d="M 125 78 Q 150 99 175 78 L 173 85 Q 150 104 127 85 Z" fill={collar} stroke="#0A0A0A" strokeWidth="1.5" />
+    <div className="absolute inset-0">
+      {/* Base fill */}
+      <Layer className="inset-0" style={{ backgroundColor: primary }} />
 
-      {/* Overlays */}
-      {showChestBand && <rect x="88" y="150" width="124" height="30" fill={tertiary} opacity="0.92" />}
-      {showShoulderStripe && (
+      {/* Accent sleeves / shoulders */}
+      {accentSleeves && (
+        <Layer className="inset-x-0 top-0 h-[26%]" style={{ backgroundColor: secondary }} />
+      )}
+
+      {/* Chest band */}
+      {chestBand && (
+        <Layer className="inset-x-0 top-[42%] h-[9%]" style={{ backgroundColor: tertiary }} />
+      )}
+
+      {/* Shoulder stripes */}
+      {shoulderStripe && (
         <>
-          <path d="M 100 80 L 124 80 L 118 112 L 96 112 Z" fill={tertiary} />
-          <path d="M 200 80 L 176 80 L 182 112 L 204 112 Z" fill={tertiary} />
+          <Layer className="left-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
+          <Layer className="right-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
         </>
       )}
-      {showSidePanels && (
+
+      {/* Side panels */}
+      {sidePanels && (
         <>
-          <rect x="94" y="112" width="14" height="226" fill={tertiary} opacity="0.85" />
-          <rect x="192" y="112" width="14" height="226" fill={tertiary} opacity="0.85" />
+          <Layer className="left-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
+          <Layer className="right-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
         </>
       )}
-    </svg>
+
+      {/* Fabric shading — restores folds/highlights over the solid fill */}
+      <div
+        className="absolute inset-0 opacity-40 mix-blend-multiply"
+        style={{
+          backgroundImage: `url(${TEMPLATE_URL})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          ...maskStyle,
+        }}
+      />
+    </div>
   );
 }

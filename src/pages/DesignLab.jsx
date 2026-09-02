@@ -10,6 +10,15 @@ const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend
 const SWATCHES = ['#FFFFFF', '#0A0A0A', '#FF1F3D', '#1E3A8A', '#15803D', '#F59E0B', '#6D28D9', '#DC2626'];
 const CUSTOM_PRICE = 89;
 
+const PRESETS = [
+  { name: 'BLACKOUT', primary: '#0A0A0A', secondary: '#FFFFFF', tertiary: '#FF1F3D', pattern: 'accent-sleeves', material: 'Polyester' },
+  { name: 'BLOOD SPORT', primary: '#0A0A0A', secondary: '#FF1F3D', tertiary: '#FFFFFF', pattern: 'tri-tone', material: 'Performance Mesh' },
+  { name: 'ICE', primary: '#FFFFFF', secondary: '#1E3A8A', tertiary: '#94A3B8', pattern: 'shoulder-stripe', material: 'Polyester' },
+  { name: 'VOLTAGE', primary: '#FFFFFF', secondary: '#F59E0B', tertiary: '#0A0A0A', pattern: 'chest-band', material: 'Tri-Blend' },
+  { name: 'STEALTH', primary: '#3F3F46', secondary: '#0A0A0A', tertiary: '#FF1F3D', pattern: 'side-panels', material: 'Cotton' },
+  { name: 'COURT KING', primary: '#1E3A8A', secondary: '#FFFFFF', tertiary: '#F59E0B', pattern: 'tri-tone', material: 'Silk' },
+];
+
 let pid = 0;
 const makeId = () => `pl-${Date.now()}-${pid++}`;
 
@@ -58,6 +67,14 @@ export default function DesignLab() {
   const [shirtSize, setShirtSize] = useState('M');
   const [copied, setCopied] = useState(false);
   const [added, setAdded] = useState(false);
+
+  const applyPreset = (p) => {
+    setPrimary(p.primary);
+    setSecondary(p.secondary);
+    setTertiary(p.tertiary);
+    setPattern(p.pattern);
+    setMaterial(p.material);
+  };
 
   const addPlacement = (url, type) => {
     const id = makeId();
@@ -194,6 +211,27 @@ export default function DesignLab() {
               Start from a white template, dial your colors and pattern, drop in logos and icons,
               then hand the brief to our design team for a production-ready finish.
             </p>
+          </div>
+
+          <div>
+            <div className="mono-label text-fog/50 mb-2">PRESETS</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  className="flex items-center gap-2.5 py-3 px-3 border border-steel hover:border-kinetic transition-colors text-left"
+                >
+                  <span className="flex gap-px">
+                    <span className="w-2.5 h-5" style={{ backgroundColor: p.primary }} />
+                    <span className="w-2.5 h-5" style={{ backgroundColor: p.secondary }} />
+                    <span className="w-2.5 h-5" style={{ backgroundColor: p.tertiary }} />
+                  </span>
+                  <span className="mono-label text-fog/70">{p.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="h-px velocity-line opacity-60" />
