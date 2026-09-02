@@ -22,9 +22,9 @@ export default function IdentityLab() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [fontId, setFontId] = useState('block');
-  const [size, setSize] = useState(100);
+  const [size, setSize] = useState(40);
   const [curve, setCurve] = useState(0);
-  const [height, setHeight] = useState(42);
+  const [height, setHeight] = useState(25);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -236,9 +236,9 @@ export default function IdentityLab() {
                 <div className="mono-label text-fog/50 mb-2">SIZE</div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'SMALL', value: 30 },
-                    { label: 'MEDIUM', value: 65 },
-                    { label: 'LARGE', value: 100 },
+                    { label: 'SMALL', value: 25 },
+                    { label: 'MEDIUM', value: 40 },
+                    { label: 'LARGE', value: 55 },
                   ].map((opt) => (
                     <button
                       key={opt.label}
@@ -284,9 +284,9 @@ export default function IdentityLab() {
                 <div className="mono-label text-fog/50 mb-2">VERTICAL POSITION</div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'NORMAL', value: 50 },
-                    { label: 'HIGH', value: 0 },
-                    { label: 'LOW', value: 100 },
+                    { label: 'NORMAL', value: 25 },
+                    { label: 'HIGH', value: 10 },
+                    { label: 'LOW', value: 40 },
                   ].map((opt) => (
                     <button
                       key={opt.label}
