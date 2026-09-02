@@ -23,9 +23,10 @@ const makeId = () => `pl-${Date.now()}-${pid++}`;
 function ColorField({ label, value, onChange }) {
   return (
     <div>
-      <div className="mono-label text-fog/50 mb-2">{label}</div>
-      <div className="flex items-center gap-3 flex-wrap">
-        <label className="relative w-10 h-10 border border-steel cursor-pointer overflow-hidden">
+    <div className="mono-label text-fog/50 mb-2">{label}</div>
+    <div className="flex flex-col gap-2.5">
+      <label className="flex items-center gap-3 cursor-pointer group">
+        <span className="relative w-10 h-10 border-2 border-kinetic overflow-hidden shrink-0">
           <span className="absolute inset-0" style={{ backgroundColor: value }} />
           <input
             type="color"
@@ -33,20 +34,28 @@ function ColorField({ label, value, onChange }) {
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
-        </label>
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="mono-label text-kinetic">CUSTOM COLOR</span>
+          <span className="mono-label text-fog/40">CLICK TO PICK ANY SHADE</span>
+        </span>
+      </label>
+      <div className="flex flex-col gap-1.5">
+        <div className="mono-label text-fog/30">BASIC OPTIONS — SUGGESTIONS ONLY</div>
         <div className="flex flex-wrap gap-1.5">
           {SWATCHES.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => onChange(c)}
-              className={`w-6 h-6 border ${value.toUpperCase() === c.toUpperCase() ? 'border-kinetic' : 'border-steel'}`}
+              className={`w-7 h-7 border ${value.toUpperCase() === c.toUpperCase() ? 'border-kinetic' : 'border-steel hover:border-fog/40'} transition-colors`}
               style={{ backgroundColor: c }}
               aria-label={c}
             />
           ))}
         </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -65,6 +74,7 @@ export default function DesignLab() {
   const [placements, setPlacements] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [shirtSize, setShirtSize] = useState('M');
+  const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [geometry, setGeometry] = useState(DEFAULT_GEOMETRY);
@@ -180,6 +190,7 @@ export default function DesignLab() {
       `Custom shapes: ${customShapes.length}`,
       `Material: ${material}`,
       `Shirt Size: ${shirtSize}`,
+      `Quantity: ${quantity}`,
       '',
       `Graphics on jersey (${placements.length}):`,
       ...placements.map(
@@ -601,6 +612,40 @@ export default function DesignLab() {
                   {s}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* QUANTITY */}
+          <div>
+            <div className="mono-label text-fog/50 mb-2">QUANTITY</div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setQuantity(Number.isFinite(v) && v > 0 ? v : 1);
+                }}
+                className="w-16 h-11 text-center font-heading text-lg bg-void border border-steel text-fog focus:border-kinetic outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="w-11 h-11 border border-steel text-fog hover:border-kinetic hover:text-kinetic font-heading text-xl flex items-center justify-center transition-colors"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+              <span className="mono-label text-fog/40 ml-1">JERSEYS OF THIS DESIGN</span>
             </div>
           </div>
 
