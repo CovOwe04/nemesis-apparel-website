@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
-import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion, REGION_TO_PATTERN, DEFAULT_PATTERN_COLOR, deleteVertexFromRegion } from '@/components/designlab/geometry';
+import { useDesignState } from '@/components/designlab/useDesignState';
+import { REGION_TO_PATTERN } from '@/components/designlab/geometry';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -15,9 +16,6 @@ const PRESETS = [
   { name: 'STEALTH', primary: '#3F3F46', secondary: '#0A0A0A', tertiary: '#FF1F3D', patterns: ['side-panels'], material: 'Cotton' },
   { name: 'COURT KING', primary: '#1E3A8A', secondary: '#FFFFFF', tertiary: '#F59E0B', patterns: ['accent-sleeves', 'chest-band'], material: 'Silk' },
 ];
-
-let pid = 0;
-const makeId = () => `pl-${Date.now()}-${pid++}`;
 
 function ColorField({ label, value, onChange }) {
   return (
@@ -37,142 +35,87 @@ function ColorField({ label, value, onChange }) {
 }
 
 export default function DesignLab() {
-  const [primary, setPrimary] = useState('#FFFFFF');
-  const [secondary, setSecondary] = useState('#FF1F3D');
-  const [tertiary, setTertiary] = useState('#0A0A0A');
-  const [selectedPatterns, setSelectedPatterns] = useState(['accent-sleeves']);
-  const [patternColors, setPatternColors] = useState(DEFAULT_PATTERN_COLOR);
-  const [customShapes, setCustomShapes] = useState([]);
-  const [selectedRegionId, setSelectedRegionId] = useState(null);
+  // Two independent design states — front and back are fully separate.
+  const frontDesign = useDesignState();
+  const backDesign = useDesignState();
+  const [activeSide, setActiveSide] = useState('front');
+  const design = activeSide === 'front' ? frontDesign : backDesign;
+
+  // Shared state (not side-specific)
   const [material, setMaterial] = useState('Polyester');
   const [logos, setLogos] = useState([]);
   const [icons, setIcons] = useState([]);
-  const [placements, setPlacements] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
   const [shirtSize, setShirtSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [geometry, setGeometry] = useState(DEFAULT_GEOMETRY);
+
+  // UI state (shared, reset on side switch)
   const [editMode, setEditMode] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [ctxMenu, setCtxMenu] = useState(null);
 
-  const applyPreset = (p) => {
-    setPrimary(p.primary);
-    setSecondary(p.secondary);
-    setTertiary(p.tertiary);
-    setSelectedPatterns(p.patterns);
-    setCustomShapes([]);
-    setGeometry(DEFAULT_GEOMETRY);
+  const switchSide = (side) => {
+    if (side === activeSide) return;
+    setSelectedId(null);
     setSelectedRegionId(null);
-    setMaterial(p.material);
-    setPatternColors(DEFAULT_PATTERN_COLOR);
+    setCtxMenu(null);
+    setActiveSide(side);
   };
 
-  const addPlacement = (url, type) => {
-    const id = makeId();
-    setPlacements((p) => [...p, { id, url, type, x: 50, y: 45, scale: 1, rotation: 0 }]);
+  const handleApplyPreset = (p) => {
+    design.applyPreset(p);
+    setMaterial(p.material);
+    setSelectedRegionId(null);
+  };
+
+  const handleAddPlacement = (url, type) => {
+    const id = design.addPlacement(url, type);
     setSelectedId(id);
   };
-  const updatePlacement = (id, patch) =>
-    setPlacements((p) => p.map((pl) => (pl.id === id ? { ...pl, ...patch } : pl)));
-  const deletePlacement = (id) => {
-    setPlacements((p) => p.filter((pl) => pl.id !== id));
+
+  const handleDeletePlacement = (id) => {
+    design.deletePlacement(id);
     setSelectedId((s) => (s === id ? null : s));
   };
 
-  const builtInRegions = selectedPatterns.flatMap((p) => REGIONS_BY_PATTERN[p] || []);
-  const customIds = customShapes.map((c) => c.id);
-  const activeRegionIds = [...builtInRegions, ...customIds];
-
-  const fillFor = (id) => {
-    const custom = customShapes.find((c) => c.id === id);
-    if (custom) return custom.color === 'tertiary' ? tertiary : secondary;
-    const pattern = REGION_TO_PATTERN[id];
-    const accent = (pattern && patternColors[pattern]) || REGION_COLOR[id] || 'secondary';
-    return accent === 'tertiary' ? tertiary : secondary;
-  };
-
-  const setPatternColor = (pId, color) =>
-    setPatternColors((pc) => ({ ...pc, [pId]: color }));
-  const regions = activeRegionIds.map((id) => ({ id, fill: fillFor(id) }));
-
-  const togglePattern = (pId) =>
-    setSelectedPatterns((prev) =>
-      prev.includes(pId) ? prev.filter((p) => p !== pId) : [...prev, pId]
-    );
-
-  const updateGeometry = (rid, region) => setGeometry((g) => ({ ...g, [rid]: region }));
-
-  const insertVertex = (rid, edgeIndex) =>
-    setGeometry((g) => {
-      const region = g[rid];
-      const { anchors, handles } = region;
-      const A = anchors[edgeIndex];
-      const B = anchors[(edgeIndex + 1) % anchors.length];
-      const C = handles[edgeIndex];
-      const C1 = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
-      const C2 = { x: (B.x + C.x) / 2, y: (B.y + C.y) / 2 };
-      const P = { x: (C1.x + C2.x) / 2, y: (C1.y + C2.y) / 2 };
-      const newAnchors = [...anchors.slice(0, edgeIndex + 1), P, ...anchors.slice(edgeIndex + 1)];
-      const newHandles = [...handles.slice(0, edgeIndex), C1, C2, ...handles.slice(edgeIndex + 1)];
-      return { ...g, [rid]: { anchors: newAnchors, handles: newHandles } };
-    });
-
-  const deleteVertex = (rid, vertexIndex) =>
-    setGeometry((g) => {
-      const region = g[rid];
-      if (!region) return g;
-      return { ...g, [rid]: deleteVertexFromRegion(region, vertexIndex) };
-    });
-
-  const addCustomShape = () => {
-    const id = `custom-${Date.now()}`;
-    setGeometry((g) => ({ ...g, [id]: createCustomRegion() }));
-    setCustomShapes((cs) => [...cs, { id, color: 'secondary' }]);
+  const handleAddCustomShape = () => {
+    const id = design.addCustomShape();
     setSelectedRegionId(id);
     setEditMode(true);
   };
 
-  const deleteRegion = (rid) => {
-    setGeometry((g) => {
-      const ng = { ...g };
-      delete ng[rid];
-      return ng;
-    });
-    setCustomShapes((cs) => cs.filter((c) => c.id !== rid));
+  const handleDeleteRegion = (rid) => {
+    design.deleteRegion(rid);
     setSelectedRegionId((s) => (s === rid ? null : s));
   };
 
-  const setCustomColor = (rid, color) =>
-    setCustomShapes((cs) => cs.map((c) => (c.id === rid ? { ...c, color } : c)));
-
-  const resetSelectedShape = () => {
-    if (!selectedRegionId) return;
-    setGeometry((g) => ({
-      ...g,
-      [selectedRegionId]: DEFAULT_GEOMETRY[selectedRegionId] || createCustomRegion(),
-    }));
-  };
+  const buildSideBrief = (label, d) => [
+    `--- ${label} ---`,
+    `Base (Primary):      ${d.primary}`,
+    `Accent (Secondary):  ${d.secondary}`,
+    `Accent 2 (Tertiary): ${d.tertiary}`,
+    `Patterns: ${d.selectedPatterns.map((p) => PATTERNS.find((x) => x.id === p)?.label || p).join(', ') || 'none'}`,
+    `Custom shapes: ${d.customShapes.length}`,
+    `Graphics on jersey (${d.placements.length}):`,
+    ...d.placements.map(
+      (pl, i) =>
+        `  ${i + 1}. [${pl.type.toUpperCase()}] @ ${pl.x.toFixed(0)}%, ${pl.y.toFixed(0)}% (scale ${pl.scale.toFixed(2)}, rot ${Math.round(pl.rotation || 0)}°) — ${pl.url}`
+    ),
+  ];
 
   const buildBrief = () => {
     const lines = [
       'NEMESIS APPAREL — CUSTOM JERSEY DESIGN BRIEF',
       '-------------------------------------------',
-      `Base (Primary):      ${primary}`,
-      `Accent (Secondary):  ${secondary}`,
-      `Accent 2 (Tertiary): ${tertiary}`,
-      `Patterns: ${selectedPatterns.map((p) => PATTERNS.find((x) => x.id === p)?.label || p).join(', ') || 'none'}`,
-      `Custom shapes: ${customShapes.length}`,
       `Material: ${material}`,
       `Shirt Size: ${shirtSize}`,
       `Quantity: ${quantity}`,
       '',
-      `Graphics on jersey (${placements.length}):`,
-      ...placements.map(
-        (pl, i) =>
-          `  ${i + 1}. [${pl.type.toUpperCase()}] @ ${pl.x.toFixed(0)}%, ${pl.y.toFixed(0)}% (scale ${pl.scale.toFixed(2)}, rot ${Math.round(pl.rotation || 0)}°) — ${pl.url}`
-      ),
+      ...buildSideBrief('FRONT', frontDesign),
+      '',
+      ...buildSideBrief('BACK', backDesign),
       '',
       'Logos uploaded:',
       ...(logos.length ? logos.map((u) => `  - ${u}`) : ['  (none)']),
@@ -220,12 +163,19 @@ export default function DesignLab() {
             Your custom jersey design has been sent to the Nemesis design team. A rep will review
             your brief and follow up to finalize production.
           </p>
-          <div className="mt-8 relative w-56 aspect-[3/4] border border-steel bg-steel overflow-hidden">
-            <JerseyTemplate
-              primary={primary}
-              regions={regions}
-              geometry={geometry}
-            />
+          <div className="mt-8 flex gap-4">
+            <div>
+              <div className="mono-label text-fog/40 mb-1">FRONT</div>
+              <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+                <JerseyTemplate primary={frontDesign.primary} regions={frontDesign.regions} geometry={frontDesign.geometry} />
+              </div>
+            </div>
+            <div>
+              <div className="mono-label text-fog/40 mb-1">BACK</div>
+              <div className="w-48 aspect-[3/4] border border-steel bg-steel overflow-hidden">
+                <JerseyTemplate primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
+              </div>
+            </div>
           </div>
           <div className="mt-8 border border-steel p-4 bg-steel/20 max-w-md text-left w-full">
             <p className="mono-label text-kinetic mb-2">KEEP YOUR BRIEF</p>
@@ -284,24 +234,41 @@ export default function DesignLab() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
+          {/* SIDE TABS */}
+          <div className="flex mb-4">
+            {['front', 'back'].map((side) => (
+              <button
+                key={side}
+                onClick={() => switchSide(side)}
+                className={`flex-1 py-3 mono-label border transition-colors ${
+                  activeSide === side
+                    ? 'border-kinetic text-kinetic bg-kinetic/5'
+                    : 'border-steel text-fog/60 hover:border-fog/40 hover:text-fog'
+                } ${side === 'front' ? 'border-r-0' : ''}`}
+              >
+                {side === 'front' ? 'FRONT' : 'BACK'}
+              </button>
+            ))}
+          </div>
+
           <CanvasStage
-            primary={primary}
-            regions={regions}
-            geometry={geometry}
-            placements={placements}
+            primary={design.primary}
+            regions={design.regions}
+            geometry={design.geometry}
+            placements={design.placements}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            onUpdate={updatePlacement}
-            onDelete={deletePlacement}
+            onUpdate={design.updatePlacement}
+            onDelete={handleDeletePlacement}
             onBackgroundClick={() => {
               setSelectedId(null);
               setSelectedRegionId(null);
             }}
             editMode={editMode}
-            regionIds={activeRegionIds}
+            regionIds={design.activeRegionIds}
             selectedRegionId={selectedRegionId}
             onSelectRegion={setSelectedRegionId}
-            onChangeGeometry={updateGeometry}
+            onChangeGeometry={design.updateGeometry}
             onContextMenuRegion={setCtxMenu}
           />
           <div className="mt-4 text-center mono-label text-fog/40">
@@ -330,7 +297,7 @@ export default function DesignLab() {
             >
               <button
                 onClick={() => {
-                  insertVertex(ctxMenu.rid, ctxMenu.edgeIndex);
+                  design.insertVertex(ctxMenu.rid, ctxMenu.edgeIndex);
                   setCtxMenu(null);
                 }}
                 className="w-full text-left px-3 py-2 mono-label text-fog/80 hover:bg-kinetic/10 hover:text-kinetic transition-colors"
@@ -340,7 +307,7 @@ export default function DesignLab() {
               {ctxMenu.canDelete ? (
                 <button
                   onClick={() => {
-                    deleteVertex(ctxMenu.rid, ctxMenu.vertexIndex);
+                    design.deleteVertex(ctxMenu.rid, ctxMenu.vertexIndex);
                     setCtxMenu(null);
                   }}
                   className="w-full text-left px-3 py-2 mono-label text-fog/80 hover:bg-kinetic/10 hover:text-kinetic transition-colors"
@@ -376,7 +343,7 @@ export default function DesignLab() {
                 <button
                   key={p.name}
                   type="button"
-                  onClick={() => applyPreset(p)}
+                  onClick={() => handleApplyPreset(p)}
                   className="flex items-center gap-2.5 py-3 px-3 border border-steel hover:border-kinetic transition-colors text-left"
                 >
                   <span className="flex gap-px">
@@ -394,9 +361,9 @@ export default function DesignLab() {
 
           {/* COLORS */}
           <div className="grid grid-cols-3 gap-3">
-            <ColorField label="PRIMARY" value={primary} onChange={setPrimary} />
-            <ColorField label="SECONDARY" value={secondary} onChange={setSecondary} />
-            <ColorField label="TERTIARY" value={tertiary} onChange={setTertiary} />
+            <ColorField label="PRIMARY" value={design.primary} onChange={design.setPrimary} />
+            <ColorField label="SECONDARY" value={design.secondary} onChange={design.setSecondary} />
+            <ColorField label="TERTIARY" value={design.tertiary} onChange={design.setTertiary} />
           </div>
 
           {/* PATTERNS */}
@@ -404,11 +371,11 @@ export default function DesignLab() {
             <div className="mono-label text-fog/50 mb-2">PATTERNS</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {PATTERNS.map((p) => {
-                const active = selectedPatterns.includes(p.id);
+                const active = design.selectedPatterns.includes(p.id);
                 return (
                   <button
                     key={p.id}
-                    onClick={() => togglePattern(p.id)}
+                    onClick={() => design.togglePattern(p.id)}
                     className={`py-3 text-center mono-label border transition-colors ${
                       active
                         ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -421,11 +388,11 @@ export default function DesignLab() {
               })}
             </div>
 
-            {selectedPatterns.length > 0 && (
+            {design.selectedPatterns.length > 0 && (
               <div className="mt-3 flex flex-col gap-2">
-                {selectedPatterns.map((pId) => {
+                {design.selectedPatterns.map((pId) => {
                   const p = PATTERNS.find((x) => x.id === pId);
-                  const accent = patternColors[pId] || 'secondary';
+                  const accent = design.patternColors[pId] || 'secondary';
                   return (
                     <div key={pId} className="flex items-center gap-3 border border-steel p-2.5">
                       <span className="mono-label text-fog/70 flex-1 min-w-0 truncate">
@@ -433,7 +400,7 @@ export default function DesignLab() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => setPatternColor(pId, 'secondary')}
+                        onClick={() => design.setPatternColor(pId, 'secondary')}
                         className={`mono-label px-3 py-1.5 border transition-colors ${
                           accent === 'secondary'
                             ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -444,7 +411,7 @@ export default function DesignLab() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPatternColor(pId, 'tertiary')}
+                        onClick={() => design.setPatternColor(pId, 'tertiary')}
                         className={`mono-label px-3 py-1.5 border transition-colors ${
                           accent === 'tertiary'
                             ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -462,12 +429,12 @@ export default function DesignLab() {
             <div className="flex items-center gap-3 mt-3 flex-wrap">
               <button
                 type="button"
-                onClick={addCustomShape}
+                onClick={handleAddCustomShape}
                 className="mono-label px-4 py-2 border border-steel text-fog/70 hover:border-kinetic hover:text-kinetic transition-colors"
               >
                 + CUSTOM SHAPE
               </button>
-              {activeRegionIds.length > 0 && (
+              {design.activeRegionIds.length > 0 && (
                 <button
                   type="button"
                   onClick={() => {
@@ -485,13 +452,12 @@ export default function DesignLab() {
               )}
               {editMode &&
                 (() => {
-                  const pattern = selectedRegionId ? REGION_TO_PATTERN[selectedRegionId] : null;
                   const disabled = !selectedRegionId;
                   const label = disabled ? 'SELECT SHAPE' : 'RESET SHAPE';
                   return (
                     <button
                       type="button"
-                      onClick={resetSelectedShape}
+                      onClick={() => design.resetSelectedShape(selectedRegionId)}
                       disabled={disabled}
                       className={`mono-label px-4 py-2 border transition-colors ${
                         disabled
@@ -503,22 +469,21 @@ export default function DesignLab() {
                     </button>
                   );
                 })()}
-
             </div>
 
-            {customShapes.length > 0 && (
+            {design.customShapes.length > 0 && (
               <div className="mt-3 flex flex-col gap-2">
                 <div className="mono-label text-fog/50">
-                  CUSTOM SHAPES ({customShapes.length})
+                  CUSTOM SHAPES ({design.customShapes.length})
                 </div>
-                {customShapes.map((c, idx) => (
+                {design.customShapes.map((c, idx) => (
                   <div key={c.id} className="flex items-center gap-2 border border-steel p-2.5">
                     <span className="mono-label text-fog/70 flex-1 min-w-0 truncate">
                       SHAPE {idx + 1}
                     </span>
                     <button
                       type="button"
-                      onClick={() => setCustomColor(c.id, 'secondary')}
+                      onClick={() => design.setCustomColor(c.id, 'secondary')}
                       className={`mono-label px-3 py-1.5 border transition-colors ${
                         c.color === 'secondary'
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -529,7 +494,7 @@ export default function DesignLab() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCustomColor(c.id, 'tertiary')}
+                      onClick={() => design.setCustomColor(c.id, 'tertiary')}
                       className={`mono-label px-3 py-1.5 border transition-colors ${
                         c.color === 'tertiary'
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
@@ -540,7 +505,7 @@ export default function DesignLab() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteRegion(c.id)}
+                      onClick={() => handleDeleteRegion(c.id)}
                       className="text-fog/50 hover:text-kinetic p-1.5 border border-steel hover:border-kinetic transition-colors"
                       aria-label="Delete shape"
                     >
@@ -600,24 +565,24 @@ export default function DesignLab() {
             hint="CLICK TO PLACE"
             assets={logos}
             onUpload={(u) => setLogos((a) => [...a, u])}
-            onSelect={(u) => addPlacement(u, 'logo')}
+            onSelect={(u) => handleAddPlacement(u, 'logo')}
           />
           <AssetUploader
             label="ICONS"
             hint="CLICK TO PLACE"
             assets={icons}
             onUpload={(u) => setIcons((a) => [...a, u])}
-            onSelect={(u) => addPlacement(u, 'icon')}
+            onSelect={(u) => handleAddPlacement(u, 'icon')}
           />
 
           {/* PLACEMENTS LIST */}
-          {placements.length > 0 && (
+          {design.placements.length > 0 && (
             <div>
               <div className="mono-label text-fog/50 mb-2">
-                GRAPHICS ON JERSEY ({placements.length})
+                GRAPHICS ON {activeSide.toUpperCase()} ({design.placements.length})
               </div>
               <div className="flex flex-col gap-2">
-                {placements.map((pl, i) => (
+                {design.placements.map((pl, i) => (
                   <div key={pl.id} className="flex items-center gap-3 border border-steel p-2">
                     <div className="w-10 h-10 bg-steel overflow-hidden shrink-0">
                       <img src={pl.url} alt="" className="w-full h-full object-contain" />
@@ -632,7 +597,7 @@ export default function DesignLab() {
                       EDIT
                     </button>
                     <button
-                      onClick={() => deletePlacement(pl.id)}
+                      onClick={() => handleDeletePlacement(pl.id)}
                       className="text-fog/40 hover:text-kinetic p-1"
                       aria-label="Remove graphic"
                     >
