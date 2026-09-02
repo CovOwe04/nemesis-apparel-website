@@ -286,7 +286,7 @@ export default function IdentityLab() {
                   {[
                     { label: 'NORMAL', value: 25 },
                     { label: 'HIGH', value: 10 },
-                    { label: 'LOW', value: 40 },
+                    { label: 'LOW', value: 50 },
                   ].map((opt) => (
                     <button
                       key={opt.label}
