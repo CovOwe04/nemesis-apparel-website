@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import JerseyTemplate, { PATTERNS } from '@/components/designlab/JerseyTemplate';
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
-import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion, REGION_TO_PATTERN, DEFAULT_PATTERN_COLOR } from '@/components/designlab/geometry';
+import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion, REGION_TO_PATTERN, DEFAULT_PATTERN_COLOR, deleteVertexFromRegion } from '@/components/designlab/geometry';
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -69,6 +69,8 @@ export default function DesignLab() {
   const [submitted, setSubmitted] = useState(false);
   const [geometry, setGeometry] = useState(DEFAULT_GEOMETRY);
   const [editMode, setEditMode] = useState(false);
+  const [ctxMenu, setCtxMenu] = useState(null);
+  const [geomCopied, setGeomCopied] = useState(false);
 
   const applyPreset = (p) => {
     setPrimary(p.primary);
@@ -131,6 +133,23 @@ export default function DesignLab() {
       const newHandles = [...handles.slice(0, edgeIndex), C1, C2, ...handles.slice(edgeIndex + 1)];
       return { ...g, [rid]: { anchors: newAnchors, handles: newHandles } };
     });
+
+  const deleteVertex = (rid, vertexIndex) =>
+    setGeometry((g) => {
+      const region = g[rid];
+      if (!region) return g;
+      return { ...g, [rid]: deleteVertexFromRegion(region, vertexIndex) };
+    });
+
+  const copyGeometry = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(geometry, null, 2));
+      setGeomCopied(true);
+      setTimeout(() => setGeomCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const addCustomShape = () => {
     const id = `custom-${Date.now()}`;
@@ -305,16 +324,59 @@ export default function DesignLab() {
             selectedRegionId={selectedRegionId}
             onSelectRegion={setSelectedRegionId}
             onChangeGeometry={updateGeometry}
-            onInsertVertex={insertVertex}
+            onContextMenuRegion={setCtxMenu}
           />
           <div className="mt-4 text-center mono-label text-fog/40">
             {editMode
               ? selectedRegionId
-                ? 'DRAG CORNERS TO MOVE · DOTS TO CURVE · TAP + TO ADD A VERTEX · DRAG INSIDE TO MOVE SHAPE'
+                ? 'DRAG CORNERS TO MOVE · DOTS TO CURVE · RIGHT-CLICK TO ADD/DELETE VERTEX · DRAG INSIDE TO MOVE SHAPE'
                 : 'TAP A SHAPE ON THE JERSEY TO ADJUST IT'
               : 'DRAG GRAPHICS TO POSITION · CORNER HANDLE TO RESIZE · SCROLL OR BUTTONS TO ZOOM · DRAG CANVAS TO PAN'}
           </div>
         </div>
+
+        {/* RIGHT-CLICK VERTEX MENU */}
+        {ctxMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setCtxMenu(null)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setCtxMenu(null);
+              }}
+            />
+            <div
+              className="fixed z-50 bg-void border border-steel py-1 min-w-[160px]"
+              style={{ left: Math.min(ctxMenu.clientX, window.innerWidth - 170), top: Math.min(ctxMenu.clientY, window.innerHeight - 90) }}
+            >
+              <button
+                onClick={() => {
+                  insertVertex(ctxMenu.rid, ctxMenu.edgeIndex);
+                  setCtxMenu(null);
+                }}
+                className="w-full text-left px-3 py-2 mono-label text-fog/80 hover:bg-kinetic/10 hover:text-kinetic transition-colors"
+              >
+                + ADD VERTEX
+              </button>
+              {ctxMenu.canDelete ? (
+                <button
+                  onClick={() => {
+                    deleteVertex(ctxMenu.rid, ctxMenu.vertexIndex);
+                    setCtxMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-2 mono-label text-fog/80 hover:bg-kinetic/10 hover:text-kinetic transition-colors"
+                >
+                  − DELETE VERTEX
+                </button>
+              ) : (
+                <div className="px-3 py-2 mono-label text-fog/30 cursor-not-allowed">
+                  − DELETE VERTEX
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* CONTROLS */}
         <div className="flex flex-col gap-7">
@@ -444,48 +506,67 @@ export default function DesignLab() {
                 </button>
               )}
               {editMode && (
-                <button
-                  type="button"
-                  onClick={resetFit}
-                  className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
-                >
-                  RESET
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={resetFit}
+                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                  >
+                    RESET
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyGeometry}
+                    className="mono-label px-4 py-2 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors"
+                  >
+                    {geomCopied ? 'COPIED' : 'COPY GEOM'}
+                  </button>
+                </>
               )}
             </div>
 
-            {editMode && selectedRegionId && customIds.includes(selectedRegionId) && (
-              <div className="mt-3 border border-steel p-3 flex items-center gap-3 flex-wrap">
-                <span className="mono-label text-fog/50">SHAPE COLOR</span>
-                <button
-                  type="button"
-                  onClick={() => setCustomColor(selectedRegionId, 'secondary')}
-                  className={`mono-label px-3 py-1.5 border transition-colors ${
-                    customShapes.find((c) => c.id === selectedRegionId)?.color === 'secondary'
-                      ? 'border-kinetic text-kinetic bg-kinetic/5'
-                      : 'border-steel text-fog/70 hover:border-fog/40'
-                  }`}
-                >
-                  ACCENT
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCustomColor(selectedRegionId, 'tertiary')}
-                  className={`mono-label px-3 py-1.5 border transition-colors ${
-                    customShapes.find((c) => c.id === selectedRegionId)?.color === 'tertiary'
-                      ? 'border-kinetic text-kinetic bg-kinetic/5'
-                      : 'border-steel text-fog/70 hover:border-fog/40'
-                  }`}
-                >
-                  ACCENT 2
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteRegion(selectedRegionId)}
-                  className="mono-label px-3 py-1.5 border border-steel text-fog/60 hover:border-kinetic hover:text-kinetic transition-colors ml-auto"
-                >
-                  DELETE SHAPE
-                </button>
+            {customShapes.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2">
+                <div className="mono-label text-fog/50">
+                  CUSTOM SHAPES ({customShapes.length})
+                </div>
+                {customShapes.map((c, idx) => (
+                  <div key={c.id} className="flex items-center gap-2 border border-steel p-2.5">
+                    <span className="mono-label text-fog/70 flex-1 min-w-0 truncate">
+                      SHAPE {idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCustomColor(c.id, 'secondary')}
+                      className={`mono-label px-3 py-1.5 border transition-colors ${
+                        c.color === 'secondary'
+                          ? 'border-kinetic text-kinetic bg-kinetic/5'
+                          : 'border-steel text-fog/70 hover:border-fog/40'
+                      }`}
+                    >
+                      ACCENT 1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCustomColor(c.id, 'tertiary')}
+                      className={`mono-label px-3 py-1.5 border transition-colors ${
+                        c.color === 'tertiary'
+                          ? 'border-kinetic text-kinetic bg-kinetic/5'
+                          : 'border-steel text-fog/70 hover:border-fog/40'
+                      }`}
+                    >
+                      ACCENT 2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteRegion(c.id)}
+                      className="text-fog/50 hover:text-kinetic p-1.5 border border-steel hover:border-kinetic transition-colors"
+                      aria-label="Delete shape"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

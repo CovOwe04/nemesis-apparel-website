@@ -6,16 +6,17 @@ const VIEW = 1024;
 // Draggable overlay for the active pattern regions. Renders in the same
 // 1024x1024 viewBox (xMidYMid meet) as the jersey template so handles sit
 // exactly on the seams. In adjust mode each region is click-to-select; only the
-// selected region shows corners + curve handles + add-vertex buttons. Drag a
-// corner to move it, drag a dot to curve its edge, tap + to insert a vertex
-// (bezier split), drag inside a region to move the whole shape.
+// selected region shows corners + curve handles. Drag a corner to move it,
+// drag a dot to curve its edge, drag inside to move the whole shape.
+// Right-click a region for a menu to add / delete a vertex (kept out of the way
+// instead of always-on + buttons).
 export default function PatternEditor({
   regionIds,
   geometry,
   selectedRegionId,
   onSelectRegion,
   onChange,
-  onInsertVertex,
+  onContextMenuRegion,
 }) {
   const svgRef = useRef(null);
 
@@ -32,6 +33,7 @@ export default function PatternEditor({
 
   // Move an entire region by dragging inside it.
   const startMove = (e, rid) => {
+    if (e.button !== 0) return; // ignore right-click — handled by context menu
     e.stopPropagation();
     e.preventDefault();
     onSelectRegion(rid);
@@ -79,11 +81,41 @@ export default function PatternEditor({
     window.addEventListener('pointerup', up);
   };
 
-  // Quadratic bezier point at t=0.5 — used to place the + button on the curve.
-  const edgeMidpoint = (a, c, b) => ({
-    x: 0.25 * a.x + 0.5 * c.x + 0.25 * b.x,
-    y: 0.25 * a.y + 0.5 * c.y + 0.25 * b.y,
-  });
+  // Right-click: find the nearest edge (for Add Vertex) and nearest vertex
+  // (for Delete Vertex) to the cursor, then surface a context menu.
+  const onContext = (e, rid) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelectRegion(rid);
+    const pt = toSvg(e.clientX, e.clientY);
+    const region = geometry[rid];
+    let bestEdge = 0;
+    let bestEdgeD = Infinity;
+    let bestV = 0;
+    let bestVD = Infinity;
+    region.anchors.forEach((a, i) => {
+      const b = region.anchors[(i + 1) % region.anchors.length];
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const de = Math.hypot(mid.x - pt.x, mid.y - pt.y);
+      if (de < bestEdgeD) {
+        bestEdgeD = de;
+        bestEdge = i;
+      }
+      const dv = Math.hypot(a.x - pt.x, a.y - pt.y);
+      if (dv < bestVD) {
+        bestVD = dv;
+        bestV = i;
+      }
+    });
+    onContextMenuRegion?.({
+      clientX: e.clientX,
+      clientY: e.clientY,
+      rid,
+      edgeIndex: bestEdge,
+      vertexIndex: bestV,
+      canDelete: region.anchors.length > 3,
+    });
+  };
 
   return (
     <svg
@@ -107,6 +139,7 @@ export default function PatternEditor({
               pointerEvents="all"
               cursor={selected ? 'move' : 'pointer'}
               onPointerDown={(e) => startMove(e, rid)}
+              onContextMenu={(e) => onContext(e, rid)}
             />
             <path
               d={d}
@@ -123,18 +156,6 @@ export default function PatternEditor({
                 const next = region.anchors[(i + 1) % region.anchors.length];
                 const c = region.handles[i];
                 const mid = { x: (a.x + next.x) / 2, y: (a.y + next.y) / 2 };
-                // Place the + button beside the edge, perpendicular to the handle
-                // stem, so it never overlaps the curve-handle dot — even when the
-                // edge is straight and the handle sits on the midpoint.
-                let sdx = c.x - mid.x;
-                let sdy = c.y - mid.y;
-                let slen = Math.hypot(sdx, sdy);
-                if (slen < 1) {
-                  sdx = next.x - a.x;
-                  sdy = next.y - a.y;
-                  slen = Math.hypot(sdx, sdy) || 1;
-                }
-                const cm = { x: mid.x + (-sdy / slen) * 48, y: mid.y + (sdx / slen) * 48 };
                 return (
                   <g key={i}>
                     <line
@@ -162,7 +183,7 @@ export default function PatternEditor({
                     <circle
                       cx={a.x}
                       cy={a.y}
-                      r="28"
+                      r="22"
                       fill="transparent"
                       pointerEvents="all"
                       cursor="move"
@@ -177,49 +198,6 @@ export default function PatternEditor({
                       strokeWidth="3"
                       pointerEvents="none"
                     />
-                    {/* Add-vertex button at the curve midpoint */}
-                    <g>
-                      <circle
-                        cx={cm.x}
-                        cy={cm.y}
-                        r="20"
-                        fill="transparent"
-                        pointerEvents="all"
-                        cursor="pointer"
-                        onPointerDown={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          onInsertVertex(rid, i);
-                        }}
-                      />
-                      <circle
-                        cx={cm.x}
-                        cy={cm.y}
-                        r="13"
-                        fill="#0A0A0A"
-                        stroke="#0066FF"
-                        strokeWidth="2.5"
-                        pointerEvents="none"
-                      />
-                      <line
-                        x1={cm.x - 6}
-                        y1={cm.y}
-                        x2={cm.x + 6}
-                        y2={cm.y}
-                        stroke="#0066FF"
-                        strokeWidth="2.5"
-                        pointerEvents="none"
-                      />
-                      <line
-                        x1={cm.x}
-                        y1={cm.y - 6}
-                        x2={cm.x}
-                        y2={cm.y + 6}
-                        stroke="#0066FF"
-                        strokeWidth="2.5"
-                        pointerEvents="none"
-                      />
-                    </g>
                   </g>
                 );
               })}

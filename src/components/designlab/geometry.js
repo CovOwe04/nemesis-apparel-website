@@ -168,3 +168,33 @@ export function buildPath(region) {
   }
   return `${d} Z`;
 }
+
+// Remove vertex `index` from a region. The two edges that met at that vertex
+// merge into one; its control handle becomes the straight midpoint between the
+// surviving neighbours. A region always keeps at least 3 vertices.
+export function deleteVertexFromRegion(region, index) {
+  const { anchors, handles } = region;
+  const n = anchors.length;
+  if (n <= 3) return region;
+  const k = ((index % n) + n) % n;
+  const newAnchors = [];
+  const newHandles = [];
+  for (let i = 0; i < n; i++) {
+    if (i === k) continue; // drop the deleted vertex + its outgoing handle
+    newAnchors.push(anchors[i]);
+    const nextI = (i + 1) % n;
+    let h;
+    if (nextI === k) {
+      // This edge crossed the deleted vertex — merge to the neighbour beyond it.
+      const skipNext = (k + 1) % n;
+      h = {
+        x: (anchors[i].x + anchors[skipNext].x) / 2,
+        y: (anchors[i].y + anchors[skipNext].y) / 2,
+      };
+    } else {
+      h = handles[i];
+    }
+    newHandles.push(h);
+  }
+  return { anchors: newAnchors, handles: newHandles };
+}

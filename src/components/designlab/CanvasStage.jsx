@@ -24,7 +24,7 @@ export default function CanvasStage({
   selectedRegionId,
   onSelectRegion,
   onChangeGeometry,
-  onInsertVertex,
+  onContextMenuRegion,
 }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -101,7 +101,7 @@ export default function CanvasStage({
             selectedRegionId={selectedRegionId}
             onSelectRegion={onSelectRegion}
             onChange={onChangeGeometry}
-            onInsertVertex={onInsertVertex}
+            onContextMenuRegion={onContextMenuRegion}
           />
         )}
       </div>
