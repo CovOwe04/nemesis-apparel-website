@@ -85,7 +85,7 @@ export default function DesignLab() {
 
   const addPlacement = (url, type) => {
     const id = makeId();
-    setPlacements((p) => [...p, { id, url, type, x: 50, y: 45, scale: 1 }]);
+    setPlacements((p) => [...p, { id, url, type, x: 50, y: 45, scale: 1, rotation: 0 }]);
     setSelectedId(id);
   };
   const updatePlacement = (id, patch) =>
@@ -182,7 +182,7 @@ export default function DesignLab() {
       `Graphics on jersey (${placements.length}):`,
       ...placements.map(
         (pl, i) =>
-          `  ${i + 1}. [${pl.type.toUpperCase()}] @ ${pl.x.toFixed(0)}%, ${pl.y.toFixed(0)}% (scale ${pl.scale.toFixed(2)}) — ${pl.url}`
+          `  ${i + 1}. [${pl.type.toUpperCase()}] @ ${pl.x.toFixed(0)}%, ${pl.y.toFixed(0)}% (scale ${pl.scale.toFixed(2)}, rot ${Math.round(pl.rotation || 0)}°) — ${pl.url}`
       ),
       '',
       'Logos uploaded:',
@@ -491,7 +491,7 @@ export default function DesignLab() {
                       : 'border-steel text-fog/70 hover:border-fog/40'
                   }`}
                 >
-                  {editMode ? 'DONE ADJUSTING' : 'ADJUST FIT'}
+                  {editMode ? 'DONE ADJUSTING' : 'ADJUST PATTERN'}
                 </button>
               )}
               {editMode && (

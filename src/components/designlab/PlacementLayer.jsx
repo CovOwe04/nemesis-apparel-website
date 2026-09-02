@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, RotateCw } from 'lucide-react';
 
 // Absolutely-positioned drag-and-drop layer over the jersey canvas. Each
 // placement stores x/y as percentages (0–100) so it scales with the canvas,
@@ -57,6 +57,28 @@ export default function PlacementLayer({ placements, selectedId, onSelect, onUpd
     window.addEventListener('pointerup', up);
   };
 
+  const startRotate = (e, id) => {
+    e.stopPropagation();
+    onSelect(id);
+    const p = placements.find((pl) => pl.id === id);
+    const rect = containerRef.current.getBoundingClientRect();
+    const cx = rect.left + (p.x / 100) * rect.width;
+    const cy = rect.top + (p.y / 100) * rect.height;
+    const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const startRot = p.rotation || 0;
+    const move = (ev) => {
+      const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx);
+      const deg = startRot + (angle - startAngle) * (180 / Math.PI);
+      onUpdate(id, { rotation: deg });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
       {placements.map((pl) => {
@@ -73,7 +95,7 @@ export default function PlacementLayer({ placements, selectedId, onSelect, onUpd
             style={{
               left: `${pl.x}%`,
               top: `${pl.y}%`,
-              transform: 'translate(-50%, -50%)',
+              transform: `translate(-50%, -50%) rotate(${pl.rotation || 0}deg)`,
               touchAction: 'none',
             }}
           >
@@ -105,6 +127,14 @@ export default function PlacementLayer({ placements, selectedId, onSelect, onUpd
                     className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-kinetic cursor-nwse-resize"
                     aria-label="Resize"
                   />
+                  <div className="absolute left-1/2 -top-6 h-6 w-px bg-kinetic -translate-x-1/2 pointer-events-none" />
+                  <div
+                    onPointerDown={(e) => startRotate(e, pl.id)}
+                    className="absolute left-1/2 -top-7 w-4 h-4 -translate-x-1/2 bg-kinetic rounded-full flex items-center justify-center cursor-grab"
+                    aria-label="Rotate"
+                  >
+                    <RotateCw size={9} className="text-void" />
+                  </div>
                 </>
               )}
             </div>
