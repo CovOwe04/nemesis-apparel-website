@@ -234,43 +234,73 @@ export default function IdentityLab() {
               {/* SIZE */}
               <div>
                 <div className="mono-label text-fog/50 mb-2">SIZE</div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={size}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                  className="w-full"
-                  aria-label="Name size"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'SMALL', value: 30 },
+                    { label: 'MEDIUM', value: 65 },
+                    { label: 'LARGE', value: 100 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setSize(opt.value)}
+                      className={`py-3 text-center mono-label border transition-colors ${
+                        size === opt.value
+                          ? 'border-kinetic text-kinetic bg-kinetic/5'
+                          : 'border-steel text-fog/70 hover:border-fog/40'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* CURVE */}
+              {/* ARCH CURVE */}
               <div>
                 <div className="mono-label text-fog/50 mb-2">ARCH CURVE</div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={curve}
-                  onChange={(e) => setCurve(Number(e.target.value))}
-                  className="w-full"
-                  aria-label="Name arch curvature"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'STRAIGHT', value: 0 },
+                    { label: 'MILD', value: 50 },
+                    { label: 'STRONG', value: 100 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setCurve(opt.value)}
+                      className={`py-3 text-center mono-label border transition-colors ${
+                        curve === opt.value
+                          ? 'border-kinetic text-kinetic bg-kinetic/5'
+                          : 'border-steel text-fog/70 hover:border-fog/40'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* VERTICAL POSITION */}
               <div>
                 <div className="mono-label text-fog/50 mb-2">VERTICAL POSITION</div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={height}
-                  onChange={(e) => setHeight(Number(e.target.value))}
-                  className="w-full"
-                  aria-label="Name vertical position"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'HIGH', value: 0 },
+                    { label: 'NORMAL', value: 50 },
+                    { label: 'LOW', value: 100 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setHeight(opt.value)}
+                      className={`py-3 text-center mono-label border transition-colors ${
+                        height === opt.value
+                          ? 'border-kinetic text-kinetic bg-kinetic/5'
+                          : 'border-steel text-fog/70 hover:border-fog/40'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}
