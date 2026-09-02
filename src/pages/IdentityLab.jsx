@@ -61,8 +61,8 @@ export default function IdentityLab() {
   // Size slider 0..100 → maps to 4px..44px (100% = the size that fits within the seams by the armpits)
   const baseSize = 4 + (size / 100) * 40; // 0% → 4px, 100% → 44px
   const curveAmount = (curve / 100) * 45; // 0 → 45
-  const baselineY = 100 + (height / 100) * 100; // vertical position on the back (100px span)
-  const ARC_WIDTH = 180; // 60% of canvas width — text stays within the seams
+  const baselineY = 100 + (height / 100) * 50; // vertical position on the back (50px span)
+  const ARC_WIDTH = 150; // 50% of canvas width — text stays within the seams
   const displayName = (canCustomize ? name : '').toUpperCase() || (canCustomize ? 'YOUR NAME' : '');
   // Word-wrap so the name stays inside the jersey seams at the chosen size.
   // Shrink only if a single word is too wide to fit; otherwise wrap onto more lines.
@@ -88,7 +88,7 @@ export default function IdentityLab() {
   const startBase = baselineY - ((numLines - 1) / 2) * lineHeight;
   const linePath = (i) => {
     const y = startBase + i * lineHeight;
-    return `M 60 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 240 ${y + curveAmount / 2}`;
+    return `M 75 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 225 ${y + curveAmount / 2}`;
   };
 
   const handleAdd = () => {
