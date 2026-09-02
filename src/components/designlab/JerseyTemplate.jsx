@@ -8,9 +8,9 @@ export const PATTERNS = [
 ];
 
 // Blank white jersey photo (front view, dark background) — the same kind of
-// jersey imagery used in the Arsenal. Used both as the visible fabric shading
-// and as a luminance mask that clips every color layer to the jersey
-// silhouette, so fills work for any color (including black).
+// jersey imagery used in the Arsenal. It acts as a single luminance mask over
+// the whole canvas, clipping every color layer to the jersey silhouette at
+// once (so the mask stays aligned regardless of each layer's size).
 const TEMPLATE_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/0afbde217_generated_image.png';
 
@@ -25,11 +25,8 @@ const maskStyle = {
   maskPosition: 'center',
   WebkitMaskMode: 'luminance',
   maskMode: 'luminance',
+  isolation: 'isolate',
 };
-
-function Layer({ className, style }) {
-  return <div className={`absolute ${className}`} style={{ ...maskStyle, ...style }} />;
-}
 
 export default function JerseyTemplate({ primary, secondary, tertiary, pattern }) {
   const accentSleeves = pattern === 'accent-sleeves' || pattern === 'tri-tone';
@@ -38,33 +35,33 @@ export default function JerseyTemplate({ primary, secondary, tertiary, pattern }
   const sidePanels = pattern === 'side-panels';
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0" style={maskStyle}>
       {/* Base fill */}
-      <Layer className="inset-0" style={{ backgroundColor: primary }} />
+      <div className="absolute inset-0" style={{ backgroundColor: primary }} />
 
       {/* Accent sleeves / shoulders */}
       {accentSleeves && (
-        <Layer className="inset-x-0 top-0 h-[26%]" style={{ backgroundColor: secondary }} />
+        <div className="absolute inset-x-0 top-0 h-[26%]" style={{ backgroundColor: secondary }} />
       )}
 
       {/* Chest band */}
       {chestBand && (
-        <Layer className="inset-x-0 top-[42%] h-[9%]" style={{ backgroundColor: tertiary }} />
+        <div className="absolute inset-x-0 top-[42%] h-[9%]" style={{ backgroundColor: tertiary }} />
       )}
 
       {/* Shoulder stripes */}
       {shoulderStripe && (
         <>
-          <Layer className="left-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
-          <Layer className="right-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
+          <div className="absolute left-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
+          <div className="absolute right-0 top-0 w-[30%] h-[28%]" style={{ backgroundColor: tertiary }} />
         </>
       )}
 
       {/* Side panels */}
       {sidePanels && (
         <>
-          <Layer className="left-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
-          <Layer className="right-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
+          <div className="absolute left-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
+          <div className="absolute right-0 top-0 w-[13%] h-full" style={{ backgroundColor: tertiary }} />
         </>
       )}
 
@@ -75,7 +72,6 @@ export default function JerseyTemplate({ primary, secondary, tertiary, pattern }
           backgroundImage: `url(${TEMPLATE_URL})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          ...maskStyle,
         }}
       />
     </div>
