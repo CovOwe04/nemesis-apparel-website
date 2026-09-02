@@ -7,7 +7,6 @@ import { REGIONS_BY_PATTERN, REGION_COLOR, DEFAULT_GEOMETRY, createCustomRegion,
 import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
-const SWATCHES = ['#FFFFFF', '#0A0A0A', '#FF1F3D', '#1E3A8A', '#15803D', '#F59E0B', '#6D28D9', '#DC2626'];
 const PRESETS = [
   { name: 'BLACKOUT', primary: '#0A0A0A', secondary: '#FFFFFF', tertiary: '#FF1F3D', patterns: ['accent-sleeves'], material: 'Polyester' },
   { name: 'BLOOD SPORT', primary: '#0A0A0A', secondary: '#FF1F3D', tertiary: '#FFFFFF', patterns: ['accent-sleeves', 'chest-band'], material: 'Performance Mesh' },
@@ -22,41 +21,18 @@ const makeId = () => `pl-${Date.now()}-${pid++}`;
 
 function ColorField({ label, value, onChange }) {
   return (
-    <div>
-    <div className="mono-label text-fog/50 mb-2">{label}</div>
-    <div className="flex flex-col gap-2.5">
-      <label className="flex items-center gap-3 cursor-pointer group">
-        <span className="relative w-10 h-10 border-2 border-kinetic overflow-hidden shrink-0">
-          <span className="absolute inset-0" style={{ backgroundColor: value }} />
-          <input
-            type="color"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
-        </span>
-        <span className="flex flex-col leading-tight">
-          <span className="mono-label text-kinetic">CUSTOM COLOR</span>
-          <span className="mono-label text-fog/40">CLICK TO PICK ANY SHADE</span>
-        </span>
-      </label>
-      <div className="flex flex-col gap-1.5">
-        <div className="mono-label text-fog/30">BASIC OPTIONS — SUGGESTIONS ONLY</div>
-        <div className="flex flex-wrap gap-1.5">
-          {SWATCHES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => onChange(c)}
-              className={`w-7 h-7 border ${value.toUpperCase() === c.toUpperCase() ? 'border-kinetic' : 'border-steel hover:border-fog/40'} transition-colors`}
-              style={{ backgroundColor: c }}
-              aria-label={c}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-    </div>
+    <label className="flex flex-col gap-2 cursor-pointer group">
+      <div className="mono-label text-fog/50">{label}</div>
+      <span className="relative w-full h-12 border border-steel group-hover:border-kinetic transition-colors overflow-hidden">
+        <span className="absolute inset-0" style={{ backgroundColor: value }} />
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </span>
+    </label>
   );
 }
 
@@ -417,10 +393,10 @@ export default function DesignLab() {
           <div className="h-px velocity-line opacity-60" />
 
           {/* COLORS */}
-          <div className="flex flex-col gap-5">
-            <ColorField label="PRIMARY (BASE)" value={primary} onChange={setPrimary} />
-            <ColorField label="SECONDARY (ACCENT)" value={secondary} onChange={setSecondary} />
-            <ColorField label="TERTIARY (ACCENT 2)" value={tertiary} onChange={setTertiary} />
+          <div className="grid grid-cols-3 gap-3">
+            <ColorField label="PRIMARY" value={primary} onChange={setPrimary} />
+            <ColorField label="SECONDARY" value={secondary} onChange={setSecondary} />
+            <ColorField label="TERTIARY" value={tertiary} onChange={setTertiary} />
           </div>
 
           {/* PATTERNS */}
