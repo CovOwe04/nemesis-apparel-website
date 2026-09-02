@@ -5,7 +5,7 @@ import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
 import { useDesignState } from '@/components/designlab/useDesignState';
 import { REGION_TO_PATTERN } from '@/components/designlab/geometry';
-import { ArrowLeft, Copy, Check, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
 const PRESETS = [
@@ -47,7 +47,6 @@ export default function DesignLab() {
   const [icons, setIcons] = useState([]);
   const [shirtSize, setShirtSize] = useState('M');
   const [quantity, setQuantity] = useState(1);
-  const [copied, setCopied] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -90,50 +89,6 @@ export default function DesignLab() {
   const handleDeleteRegion = (rid) => {
     design.deleteRegion(rid);
     setSelectedRegionId((s) => (s === rid ? null : s));
-  };
-
-  const buildSideBrief = (label, d) => [
-    `--- ${label} ---`,
-    `Base (Primary):      ${d.primary}`,
-    `Accent (Secondary):  ${d.secondary}`,
-    `Accent 2 (Tertiary): ${d.tertiary}`,
-    `Patterns: ${d.selectedPatterns.map((p) => PATTERNS.find((x) => x.id === p)?.label || p).join(', ') || 'none'}`,
-    `Custom shapes: ${d.customShapes.length}`,
-    `Graphics on jersey (${d.placements.length}):`,
-    ...d.placements.map(
-      (pl, i) =>
-        `  ${i + 1}. [${pl.type.toUpperCase()}] @ ${pl.x.toFixed(0)}%, ${pl.y.toFixed(0)}% (scale ${pl.scale.toFixed(2)}, rot ${Math.round(pl.rotation || 0)}°) — ${pl.url}`
-    ),
-  ];
-
-  const buildBrief = () => {
-    const lines = [
-      'NEMESIS APPAREL — CUSTOM JERSEY DESIGN BRIEF',
-      '-------------------------------------------',
-      `Material: ${material}`,
-      `Shirt Size: ${shirtSize}`,
-      `Quantity: ${quantity}`,
-      '',
-      ...buildSideBrief('FRONT', frontDesign),
-      '',
-      ...buildSideBrief('BACK', backDesign),
-      '',
-      'Logos uploaded:',
-      ...(logos.length ? logos.map((u) => `  - ${u}`) : ['  (none)']),
-      'Icons uploaded:',
-      ...(icons.length ? icons.map((u) => `  - ${u}`) : ['  (none)']),
-    ];
-    return lines.join('\n');
-  };
-
-  const copyBrief = async () => {
-    try {
-      await navigator.clipboard.writeText(buildBrief());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* ignore */
-    }
   };
 
   const handleSubmit = () => {
@@ -223,7 +178,7 @@ export default function DesignLab() {
           <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Design submitted</h1>
           <p className="mt-3 text-fog/60 max-w-md">
             Your custom jersey design has been sent to the Nemesis design team. A rep will review
-            your brief and follow up to finalize production.
+            your design and follow up to finalize production.
           </p>
           <div className="mt-8 flex gap-4">
             <div>
@@ -238,27 +193,6 @@ export default function DesignLab() {
                 <JerseyTemplate templateUrl={BACK_TEMPLATE_URL} primary={backDesign.primary} regions={backDesign.regions} geometry={backDesign.geometry} />
               </div>
             </div>
-          </div>
-          <div className="mt-8 border border-steel p-4 bg-steel/20 max-w-md text-left w-full">
-            <p className="mono-label text-kinetic mb-2">KEEP YOUR BRIEF</p>
-            <p className="text-fog/60 text-sm leading-relaxed">
-              Copy your design brief and save the details for your own records — our team may
-              reference it during production.
-            </p>
-            <button
-              onClick={copyBrief}
-              className="mt-4 inline-flex items-center gap-2 bg-kinetic px-5 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check size={16} /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy size={16} /> Copy brief
-                </>
-              )}
-            </button>
           </div>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <button
@@ -395,7 +329,7 @@ export default function DesignLab() {
             </h1>
             <p className="mt-3 text-fog/60 leading-relaxed">
               Start from a white template, dial your colors and pattern, drop in logos and icons,
-              then hand the brief to our design team for a production-ready finish.
+              then send it to our design team for a production-ready finish.
             </p>
           </div>
 
@@ -681,14 +615,6 @@ export default function DesignLab() {
             </p>
           </div>
 
-          <div className="border border-steel p-4 bg-steel/20">
-            <p className="mono-label text-kinetic mb-2">SAVE YOUR DETAILS</p>
-            <p className="text-fog/60 text-sm leading-relaxed">
-              Copy your design brief and keep it for your records before submitting — our team may
-              reference it during production.
-            </p>
-          </div>
-
           {/* QUANTITY */}
           <div>
             <div className="mono-label text-fog/50 mb-2">QUANTITY</div>
@@ -722,28 +648,12 @@ export default function DesignLab() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch gap-3">
-            <button
-              onClick={copyBrief}
-              className="inline-flex items-center justify-center gap-2 border border-steel px-6 py-4 font-heading uppercase text-fog hover:border-kinetic hover:text-kinetic transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check size={18} /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy size={18} /> Copy brief
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
-            >
-              Submit design
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            className="w-full inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
+          >
+            Submit design
+          </button>
         </div>
       </div>
     </div>
