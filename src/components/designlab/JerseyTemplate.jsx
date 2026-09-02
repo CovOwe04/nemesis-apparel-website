@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useState } from 'react';
 
 export const PATTERNS = [
   { id: 'solid', label: 'SOLID' },
@@ -9,15 +9,23 @@ export const PATTERNS = [
   { id: 'tri-tone', label: 'TRI-TONE' },
 ];
 
-// Vector jersey silhouette — seams, sleeve cuffs, side seams and a curved hem
-// are built in so every pattern fill follows the jersey, not the canvas box.
-const SILHOUETTE =
-  'M 125 78 Q 150 100 175 78 L 200 90 L 236 101 L 241 152 L 214 147 L 211 296 Q 150 320 89 296 L 86 147 L 59 152 L 64 101 L 100 90 Z';
+// Real white jersey photo (1024x1024, pure black background). Pattern fills are
+// drawn in the photo's native coordinate space and mapped to the jersey's
+// actual seams (detected landmarks), so each region follows the real jersey.
+const TEMPLATE_URL =
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/c14bd3065_generated_image.png';
+
+// Seam-derived regions in 1024x1024 photo space.
+const SLEEVE_LEFT = 'M 285 204 L 107 319 L 171 444 L 273 408 Z';
+const SLEEVE_RIGHT = 'M 725 204 L 893 319 L 829 444 L 727 408 Z';
+const CHEST_BAND = { y: 472, h: 72 };
+const SHOULDER_LEFT = 'M 427 196 L 285 204 L 273 360 L 427 300 Z';
+const SHOULDER_RIGHT = 'M 583 196 L 725 204 L 727 360 L 583 300 Z';
+const SIDE_LEFT = 'M 273 408 L 322 408 L 312 834 L 273 834 Z';
+const SIDE_RIGHT = 'M 727 408 L 678 408 L 688 834 L 727 834 Z';
 
 export default function JerseyTemplate({ primary, secondary, tertiary, pattern }) {
-  const uid = useId();
-  const clipId = `jersey-${uid}`;
-  const shadeId = `shade-${uid}`;
+  const [size, setSize] = useState({ w: 1024, h: 1024 });
 
   const accentSleeves = pattern === 'accent-sleeves' || pattern === 'tri-tone';
   const chestBand = pattern === 'chest-band' || pattern === 'tri-tone';
@@ -25,75 +33,60 @@ export default function JerseyTemplate({ primary, secondary, tertiary, pattern }
   const sidePanels = pattern === 'side-panels';
 
   return (
-    <svg
-      className="absolute inset-0 w-full h-full"
-      viewBox="0 0 300 400"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <defs>
-        <clipPath id={clipId}>
-          <path d={SILHOUETTE} />
-        </clipPath>
-        <linearGradient id={shadeId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
-          <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0.28" />
-        </linearGradient>
-      </defs>
+    <div className="absolute inset-0 bg-black" style={{ isolation: 'isolate' }}>
+      {/* Real jersey photo — provides the silhouette, seams and fabric shading */}
+      <img
+        src={TEMPLATE_URL}
+        alt="jersey template"
+        className="absolute inset-0 w-full h-full object-contain"
+        draggable={false}
+        onLoad={(e) => {
+          const nw = e.currentTarget.naturalWidth;
+          const nh = e.currentTarget.naturalHeight;
+          if (nw && nh) setSize({ w: nw, h: nh });
+        }}
+      />
 
-      <g clipPath={`url(#${clipId})`}>
-        {/* Base fill */}
-        <rect x="0" y="0" width="300" height="400" fill={primary} />
+      {/* Color overlay — multiply tints the white jersey (black background stays
+          black), and the photo's seams/shading show through the tint. Shapes are
+          positioned to the jersey's real seams so fills follow the jersey. */}
+      <svg
+        className="absolute inset-0 w-full h-full mix-blend-multiply"
+        viewBox={`0 0 ${size.w} ${size.h}`}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* Base tint */}
+        <rect x="0" y="0" width={size.w} height={size.h} fill={primary} />
 
-        {/* Accent sleeves */}
+        {/* Accent sleeves — follow the sleeve seams */}
         {accentSleeves && (
           <>
-            <path d="M 100 90 L 64 101 L 59 152 L 86 147 Z" fill={secondary} />
-            <path d="M 200 90 L 236 101 L 241 152 L 214 147 Z" fill={secondary} />
+            <path d={SLEEVE_LEFT} fill={secondary} />
+            <path d={SLEEVE_RIGHT} fill={secondary} />
           </>
         )}
 
-        {/* Chest band */}
-        {chestBand && <rect x="0" y="150" width="300" height="30" fill={tertiary} />}
+        {/* Chest band — sits across the chest below the armholes */}
+        {chestBand && (
+          <rect x="0" y={CHEST_BAND.y} width={size.w} height={CHEST_BAND.h} fill={tertiary} />
+        )}
 
-        {/* Shoulder stripes */}
+        {/* Shoulder stripes — follow the shoulder seams */}
         {shoulderStripe && (
           <>
-            <rect x="0" y="0" width="120" height="42" fill={tertiary} />
-            <rect x="180" y="0" width="120" height="42" fill={tertiary} />
+            <path d={SHOULDER_LEFT} fill={tertiary} />
+            <path d={SHOULDER_RIGHT} fill={tertiary} />
           </>
         )}
 
-        {/* Side panels */}
+        {/* Side panels — follow the side seams */}
         {sidePanels && (
           <>
-            <rect x="0" y="140" width="24" height="170" fill={tertiary} />
-            <rect x="276" y="140" width="24" height="170" fill={tertiary} />
+            <path d={SIDE_LEFT} fill={tertiary} />
+            <path d={SIDE_RIGHT} fill={tertiary} />
           </>
         )}
-
-        {/* Seam lines */}
-        <g stroke="rgba(0,0,0,0.35)" strokeWidth="2" fill="none" strokeLinecap="round">
-          <path d="M 125 78 Q 150 100 175 78" />
-          <path d="M 125 78 L 100 90" />
-          <path d="M 175 78 L 200 90" />
-          <path d="M 100 90 L 86 147" />
-          <path d="M 200 90 L 214 147" />
-          <path d="M 86 147 L 89 296" />
-          <path d="M 214 147 L 211 296" />
-          <path d="M 59 152 Q 72 150 86 147" />
-          <path d="M 241 152 Q 228 150 214 147" />
-        </g>
-
-        {/* Curved hem */}
-        <path d="M 89 296 Q 150 320 211 296" stroke="rgba(0,0,0,0.5)" strokeWidth="3" fill="none" />
-
-        {/* Fabric shading for depth */}
-        <rect x="0" y="0" width="300" height="400" fill={`url(#${shadeId})`} />
-      </g>
-
-      {/* Silhouette outline */}
-      <path d={SILHOUETTE} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth="2" />
-    </svg>
+      </svg>
+    </div>
   );
 }

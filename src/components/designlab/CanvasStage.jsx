@@ -65,7 +65,7 @@ export default function CanvasStage({
   return (
     <div
       ref={canvasRef}
-      className="relative mx-auto max-w-md aspect-[3/4] border border-steel bg-steel overflow-hidden"
+      className="relative mx-auto max-w-md aspect-[3/4] border border-steel bg-black overflow-hidden"
       onPointerDown={startPan}
       style={{ cursor: 'grab', touchAction: 'none' }}
     >
