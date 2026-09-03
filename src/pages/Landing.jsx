@@ -35,7 +35,7 @@ export default function Landing() {
           src={HERO_URL}
           alt="Macro detail of Nemesis performance jersey fabric"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '28% center', transform: 'scale(1.3)', transformOrigin: '28% center' }}
+          style={{ objectPosition: '0% 45%', transform: 'scale(1.5)', transformOrigin: '0% 45%' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-void/50 via-void/55 to-void" />
         <div className="absolute inset-0 bg-gradient-to-r from-void/70 to-transparent" />
