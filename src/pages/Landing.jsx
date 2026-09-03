@@ -6,7 +6,7 @@ import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
 
 const HERO_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/4487a64b3_generated_image.png';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/596fb7ce8_generated_image.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -33,7 +33,7 @@ export default function Landing() {
       <section className="relative h-[92vh] min-h-[600px] overflow-hidden">
         <img
           src={HERO_URL}
-          alt="Nemesis athletes mid-rally in an outdoor Spikeball match"
+          alt="Nemesis athletes mid-rally in a competitive Spikeball match"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '70% 50%' }}
         />
