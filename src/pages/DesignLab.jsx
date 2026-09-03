@@ -229,9 +229,9 @@ export default function DesignLab() {
 
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* CANVAS */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] flex flex-col lg:self-start">
           {/* SIDE TABS */}
-          <div className="flex mb-4">
+          <div className="flex mb-4 shrink-0">
             {['front', 'back'].map((side) => (
               <button
                 key={side}
@@ -247,28 +247,30 @@ export default function DesignLab() {
             ))}
           </div>
 
-          <CanvasStage
-            templateUrl={activeSide === 'front' ? TEMPLATE_URL : BACK_TEMPLATE_URL}
-            primary={design.primary}
-            regions={design.regions}
-            geometry={design.geometry}
-            placements={design.placements}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onUpdate={design.updatePlacement}
-            onDelete={handleDeletePlacement}
-            onBackgroundClick={() => {
-              setSelectedId(null);
-              setSelectedRegionId(null);
-            }}
-            editMode={editMode}
-            regionIds={design.activeRegionIds}
-            selectedRegionId={selectedRegionId}
-            onSelectRegion={setSelectedRegionId}
-            onChangeGeometry={design.updateGeometry}
-            onContextMenuRegion={setCtxMenu}
-          />
-          <div className="mt-4 text-center mono-label text-fog/40">
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <CanvasStage
+              templateUrl={activeSide === 'front' ? TEMPLATE_URL : BACK_TEMPLATE_URL}
+              primary={design.primary}
+              regions={design.regions}
+              geometry={design.geometry}
+              placements={design.placements}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onUpdate={design.updatePlacement}
+              onDelete={handleDeletePlacement}
+              onBackgroundClick={() => {
+                setSelectedId(null);
+                setSelectedRegionId(null);
+              }}
+              editMode={editMode}
+              regionIds={design.activeRegionIds}
+              selectedRegionId={selectedRegionId}
+              onSelectRegion={setSelectedRegionId}
+              onChangeGeometry={design.updateGeometry}
+              onContextMenuRegion={setCtxMenu}
+            />
+          </div>
+          <div className="mt-4 text-center mono-label text-fog/40 shrink-0">
             {editMode
               ? selectedRegionId
                 ? 'DRAG CORNERS TO MOVE · DOTS TO CURVE · RIGHT-CLICK TO ADD/DELETE VERTEX · DRAG INSIDE TO MOVE SHAPE'
