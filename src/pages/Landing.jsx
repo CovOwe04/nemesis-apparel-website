@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
 
 const HERO_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/74f7e9e1f_sddefault.jpg';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/77cdeddc9_generated_image.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
