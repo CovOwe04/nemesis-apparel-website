@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Image } from '@/components/ui/image';
-import { ArrowRight, Zap, Target, Layers } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
 
@@ -154,41 +154,6 @@ export default function Landing() {
           >
             View all <ArrowRight size={14} />
           </Link>
-        </div>
-      </section>
-
-      {/* PHILOSOPHY */}
-      <section className="border-t border-steel">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
-          <div className="mono-label text-kinetic mb-4">03 — DESIGN LANGUAGE</div>
-          <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog mb-12 max-w-2xl">
-            Precision Velocity, in every stitch.
-          </h2>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                icon: Zap,
-                title: 'High-contrast clarity',
-                body: 'Kinetic Blood red against Primary Void black. Every line is a blade — zero soft corners, only intent.',
-              },
-              {
-                icon: Target,
-                title: 'Identity ownership',
-                body: 'The Lab renders your name in real time. Pick the font, dial the arch, and make the kit yours in under a minute.',
-              },
-              {
-                icon: Layers,
-                title: 'Performance first',
-                body: 'Breathable polyester, flat-lock seams, and a fit tuned for diving. Built to move, built to intimidate.',
-              },
-            ].map((p) => (
-              <div key={p.title} className="border border-steel p-7 hover:border-kinetic/60 transition-colors">
-                <p.icon size={26} className="text-kinetic mb-5" strokeWidth={2} />
-                <h3 className="font-heading text-lg uppercase text-fog mb-3">{p.title}</h3>
-                <p className="text-fog/60 leading-relaxed text-sm">{p.body}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

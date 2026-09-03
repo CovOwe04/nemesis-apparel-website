@@ -74,7 +74,7 @@ export default function JerseyCard({ jersey }) {
             to={`/lab/${jersey.id}`}
             className="mono-label border border-steel px-3 py-2 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
           >
-            {jersey.enable_customization ? 'ENTER LAB' : 'VIEW'}
+            {jersey.enable_customization ? 'ADD NAME' : 'VIEW'}
           </Link>
         </div>
       </div>
