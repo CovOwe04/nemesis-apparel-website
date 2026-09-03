@@ -11,7 +11,7 @@ const HERO_URL =
 // client-side object-position/scale crop is preserved). Same transform pipeline
 // the platform Image component uses: unsharp mask + quality_auto + WebP.
 const HERO_URL_HQ =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/74f7e9e1f_sddefault.jpg/v1/fit/w_2560,h_2560,q_90,usm_0.66_1.00_0.01,enc_webp,quality_auto/74f7e9e1f_sddefault.webp';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/74f7e9e1f_sddefault.jpg/v1/fit/w_1920,h_1920,q_90,usm_2.5_1.5_0.0,enc_webp,quality_auto/74f7e9e1f_sddefault.webp';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -36,11 +36,23 @@ export default function Landing() {
     <div className="bg-void">
       {/* HERO */}
       <section className="relative h-[92vh] min-h-[600px] overflow-hidden">
+        {/* Client-side Laplacian unsharp-mask filter — sharpens edges on top of
+            the server-side unsharp transform to fight the source's low res. */}
+        <svg className="absolute w-0 h-0" aria-hidden="true">
+          <filter id="hero-sharpen">
+            <feConvolveMatrix
+              order="3"
+              kernelMatrix="0 -0.6 0 -0.6 3.4 -0.6 0 -0.6 0"
+              divisor="1"
+              preserveAlpha="true"
+            />
+          </filter>
+        </svg>
         <img
           src={HERO_URL_HQ}
           alt="Macro detail of Nemesis performance jersey fabric"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '0% 45%', transform: 'scale(1.5)', transformOrigin: '0% 45%', filter: 'contrast(1.06) saturate(1.1) brightness(1.02)' }}
+          style={{ objectPosition: '0% 45%', transform: 'scale(1.5)', transformOrigin: '0% 45%', filter: 'url(#hero-sharpen) contrast(1.08) saturate(1.12) brightness(1.02)' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-void/50 via-void/55 to-void" />
         <div className="absolute inset-0 bg-gradient-to-r from-void/70 to-transparent" />
