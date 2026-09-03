@@ -164,7 +164,7 @@ export default function Landing() {
             Step on the net. <br className="sm:hidden" />Look like a threat.
           </h2>
           <Link
-            to="/arsenal"
+            to="/design-lab"
             className="inline-flex items-center gap-3 bg-void px-7 py-4 font-heading uppercase text-fog hover:bg-steel transition-colors"
           >
             Build your jersey <ArrowRight size={18} />
