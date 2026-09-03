@@ -72,46 +72,12 @@ export default function Landing() {
                   className="transition-transform group-hover:translate-x-1"
                 />
               </Link>
-              <a
-                href="#mission"
-                className="mono-label border border-steel px-6 py-4 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
-              >
-                Our Mission
-              </a>
             </div>
           </motion.div>
         </div>
 
         {/* velocity line bottom */}
         <div className="absolute bottom-0 left-0 right-0 velocity-line h-px opacity-80" />
-      </section>
-
-      {/* MISSION */}
-      <section id="mission" className="border-t border-steel">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
-          <div className="grid gap-12 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <div className="mono-label text-kinetic mb-4">01 — MISSION</div>
-              <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
-                We don't make shirts. We build armor.
-              </h2>
-            </div>
-            <div className="lg:col-span-7 lg:pl-10">
-              <p className="text-fog/70 text-lg leading-relaxed">
-                Spikeball is friction, speed, and split-second instinct. Nemesis Apparel
-                was founded to match that energy — every jersey is engineered from
-                performance polyester with aggressive geometry and high-contrast clarity,
-                so the moment you step on the net you look like a threat.
-              </p>
-              <p className="mt-5 text-fog/60 leading-relaxed">
-                Our Identity Lab lets you claim the jersey as your own — add your name to
-                the back, pick your font, dial your arch, and walk onto the court with gear
-                that's unmistakably yours. No accounts, no friction. Just four clicks from
-                landing to cart.
-              </p>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* FEATURED ARSENAL */}
