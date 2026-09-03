@@ -5,7 +5,6 @@ import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
 import { useDesignState } from '@/components/designlab/useDesignState';
 import { REGION_TO_PATTERN } from '@/components/designlab/geometry';
-import ColorField from '@/components/designlab/ColorField';
 import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];
@@ -17,6 +16,23 @@ const PRESETS = [
   { name: 'STEALTH', primary: '#3F3F46', secondary: '#0A0A0A', tertiary: '#FF1F3D', patterns: ['side-panels'], material: 'Cotton' },
   { name: 'COURT KING', primary: '#1E3A8A', secondary: '#FFFFFF', tertiary: '#F59E0B', patterns: ['accent-sleeves', 'chest-band'], material: 'Silk' },
 ];
+
+function ColorField({ label, value, onChange }) {
+  return (
+    <label className="flex flex-col gap-2 cursor-pointer group">
+      <div className="mono-label text-fog/50">{label}</div>
+      <span className="relative w-full h-12 border border-steel group-hover:border-kinetic transition-colors overflow-hidden">
+        <span className="absolute inset-0" style={{ backgroundColor: value }} />
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </span>
+    </label>
+  );
+}
 
 export default function DesignLab() {
   // Two independent design states — front and back are fully separate.
