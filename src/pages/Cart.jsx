@@ -24,7 +24,7 @@ export default function Cart() {
         </div>
         <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Order received</h1>
         <p className="mt-3 text-fog/60 max-w-md">
-          Your kit is locked in. A Nemesis rep will confirm production and shipping details
+          Your jersey is locked in. A Nemesis rep will confirm production and shipping details
           shortly. Go again — the rally never stops.
         </p>
         <Link
@@ -42,7 +42,7 @@ export default function Cart() {
       <div className="bg-void min-h-[70vh] flex flex-col items-center justify-center px-5 text-center">
         <ShoppingBag size={40} className="text-steel mb-5" />
         <h1 className="font-heading text-3xl uppercase text-fog">Your cart is empty</h1>
-        <p className="mt-3 text-fog/60">No kits queued. Hit the arsenal and build your identity.</p>
+        <p className="mt-3 text-fog/60">No jerseys queued. Hit the arsenal and build your identity.</p>
         <Link
           to="/arsenal"
           className="mt-8 inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
@@ -64,7 +64,7 @@ export default function Cart() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10">
           <div className="mono-label text-kinetic mb-3">THE CART</div>
           <h1 className="font-heading text-4xl sm:text-5xl uppercase text-fog leading-[0.9]">
-            Your kits
+            Your jerseys
           </h1>
         </div>
       </div>

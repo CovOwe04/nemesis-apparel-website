@@ -121,7 +121,7 @@ export default function Landing() {
             <div>
               <div className="mono-label text-kinetic mb-3">02 — ARSENAL</div>
               <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
-                Featured kits
+                Featured jerseys
               </h2>
             </div>
             <Link
@@ -167,7 +167,7 @@ export default function Landing() {
             to="/arsenal"
             className="inline-flex items-center gap-3 bg-void px-7 py-4 font-heading uppercase text-fog hover:bg-steel transition-colors"
           >
-            Build your kit <ArrowRight size={18} />
+            Build your jersey <ArrowRight size={18} />
           </Link>
         </div>
       </section>

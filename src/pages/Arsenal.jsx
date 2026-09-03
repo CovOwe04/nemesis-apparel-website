@@ -53,7 +53,7 @@ export default function Arsenal() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12 sm:py-16">
           <div className="mono-label text-kinetic mb-3">THE ARSENAL</div>
           <h1 className="font-heading text-4xl sm:text-6xl uppercase leading-[0.9] text-fog">
-            Browse every kit.
+            Browse every jersey.
           </h1>
           <p className="mt-4 text-fog/60 max-w-xl">
             Filter by team and fit. Hover any card to preview the back. Hit the Lab to
@@ -102,12 +102,12 @@ export default function Arsenal() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="mono-label text-fog/50">NO KITS MATCH YOUR FILTERS.</p>
+            <p className="mono-label text-fog/50">NO JERSEYS MATCH YOUR FILTERS.</p>
           </div>
         ) : (
           <>
             <div className="mono-label text-fog/40 mb-6">
-              {filtered.length} {filtered.length === 1 ? 'KIT' : 'KITS'} AVAILABLE
+              {filtered.length} {filtered.length === 1 ? 'JERSEY' : 'JERSEYS'} AVAILABLE
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((j) => (

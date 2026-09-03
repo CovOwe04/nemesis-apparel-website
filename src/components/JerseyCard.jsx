@@ -48,11 +48,6 @@ export default function JerseyCard({ jersey }) {
         <div className="absolute top-3 right-3 bg-kinetic text-void font-heading text-sm px-2 py-1">
           ${jersey.price}
         </div>
-        {jersey.enable_customization && (
-          <div className="absolute bottom-3 left-3 mono-label text-kinetic border border-kinetic px-2 py-1 bg-void/70">
-            LAB ENABLED
-          </div>
-        )}
       </Link>
       <div className="flex items-end justify-between gap-3 pt-3">
         <div className="min-w-0">
