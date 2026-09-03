@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Image } from '@/components/ui/image';
 import { ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
@@ -32,13 +31,11 @@ export default function Landing() {
     <div className="bg-void">
       {/* HERO */}
       <section className="relative h-[92vh] min-h-[600px] overflow-hidden">
-        <Image
+        <img
           src={HERO_URL}
           alt="Macro detail of Nemesis performance jersey fabric"
-          fittingType="fill"
-          focalPointX={0.05}
-          focalPointY={0.5}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: '28% center', transform: 'scale(1.3)', transformOrigin: '28% center' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-void/50 via-void/55 to-void" />
         <div className="absolute inset-0 bg-gradient-to-r from-void/70 to-transparent" />
