@@ -36,7 +36,7 @@ export default function Landing() {
           src={HERO_URL}
           alt="Macro detail of Nemesis performance jersey fabric"
           fittingType="fill"
-          focalPointX={0.2}
+          focalPointX={0.05}
           focalPointY={0.5}
           className="absolute inset-0 w-full h-full"
         />
