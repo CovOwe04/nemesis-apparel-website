@@ -10,7 +10,7 @@ export default function Footer() {
         className="absolute inset-0"
         style={{
           backgroundImage: `url(https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png)`,
-          backgroundSize: '500%',
+          backgroundSize: '700%',
           backgroundRepeat: 'repeat',
           opacity: 0.5,
         }}
