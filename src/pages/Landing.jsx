@@ -96,10 +96,10 @@ export default function Landing() {
       {/* INFO STRIP */}
       <InfoStrip />
 
-      <section className="bg-kinetic py-8 mb-5">
-      </section>
       {/* WE GET IT DONE */}
       <WeGetItDone />
+
+      <section className="bg-kinetic py-8 mb-5"/>
 
       {/* FEATURED ARSENAL */}
       <section className=" bg-void">
