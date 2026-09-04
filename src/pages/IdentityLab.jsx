@@ -122,15 +122,13 @@ export default function IdentityLab() {
           {/* SHIRT SIZE */}
           <div>
             <div className="mono-label text-fog/50 mb-2">SHIRT SIZE</div>
-            <div className="grid grid-cols-5 gap-2">
-              {['XS', 'S', 'M', 'L', 'XL'].map((s) => (
+            <div className="grid grid-cols-4 gap-2">
+              {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((s) => (
                 <button
                   key={s}
                   onClick={() => setShirtSize(s)}
-                  className={`py-3 text-center font-heading text-sm border rounded-[6px] transition-colors ${
-                    shirtSize === s
-                      ? 'border-kinetic text-kinetic bg-kinetic/5'
-                      : 'border-steel text-fog/70 hover:border-fog/40'
+                  className={`btn-solid py-3 font-heading text-sm ${
+                    shirtSize === s ? 'bg-kinetic text-white' : ''
                   }`}
                 >
                   {s}
@@ -262,14 +260,16 @@ export default function IdentityLab() {
             </>
           )}
 
-          <div className="border border-steel p-4 bg-steel/20">
-            <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
-            <p className="text-fog/60 text-sm leading-relaxed">
-              Use the lab to print your own name on the back of your jersey. Names are applied
-              exactly as entered — however, our design team may professionally refine spacing,
-              curvature, or scale to ensure a clean, production-ready finish.
-            </p>
-          </div>
+          {canCustomize && (
+            <div className="border border-steel p-4 bg-steel/20">
+              <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
+              <p className="text-fog/60 text-sm leading-relaxed">
+                Use the lab to print your own name on the back of your jersey. Names are applied
+                exactly as entered — our design team will not make any refinements, but will
+                approve of your design before sending it out to the supplier.
+              </p>
+            </div>
+          )}
 
           {/* QTY + ADD */}
           <div className="flex items-center gap-4">
