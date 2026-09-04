@@ -35,7 +35,7 @@ export default function WhyChooseUs() {
             </div>
           ))}
 
-          <p className="mt-2 text-sm text-fog/70">Photos by Jacob Narayan</p>
+          <p className="mt-2 text-sm text-fog/70 justify-center">Photos by Jacob Narayan</p>
 
           <div className="mt-8">
             <Link
