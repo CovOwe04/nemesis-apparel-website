@@ -162,7 +162,7 @@ export default function Landing() {
           </h2>
           <Link
             to="/design-lab"
-            className="btn-solid gap-3 px-7 py-4 font-heading uppercase"
+            className="btn-solid btn-dark-fill gap-3 px-7 py-4 font-heading uppercase"
           >
             Build your jersey <ArrowRight size={18} />
           </Link>

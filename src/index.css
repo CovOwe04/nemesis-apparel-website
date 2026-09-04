@@ -152,6 +152,7 @@
   }
   .btn-solid:hover { background-color: #FF1F3D; color: #FFFFFF; }
   .btn-solid:active { background-color: #B3001E; color: #FFFFFF; }
+  .btn-dark-fill { background-color: #0A0A0A; color: #FFFFFF; }
 }
 
 @layer utilities {
