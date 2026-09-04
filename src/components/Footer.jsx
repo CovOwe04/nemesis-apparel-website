@@ -28,7 +28,7 @@ export default function Footer() {
         href="https://www.instagram.com/Nemesis.Sports.Apparel"
         target="_blank"
         rel="noreferrer"
-        className="btn-solid px-4 py-2"
+        className="btn-solid px-18 py-2"
         aria-label="Instagram"
       >
         <Instagram size={18} />
