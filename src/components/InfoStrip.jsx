@@ -28,7 +28,7 @@ export default function InfoStrip() {
             return (
               <div key={col.heading} className="flex flex-col sm:flex-row sm:flex-1 sm:items-stretch">
                 <div className="flex flex-1 flex-col items-center text-center px-6 py-6 sm:py-4">
-                  <Icon size={30} className="text-kinetic mb-5" strokeWidth={2} />
+                  <Icon size={30} className="text-kinetic mb-5" fill="currentColor" strokeWidth={0} />
                   <h3 className="font-heading text-lg sm:text-xl uppercase tracking-wide text-fog mb-3">
                     {col.heading}
                   </h3>
