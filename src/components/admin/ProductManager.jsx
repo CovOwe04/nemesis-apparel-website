@@ -29,8 +29,8 @@ const EMPTY_FORM = {
 function Toggle({ checked, onChange, label, disabled = false }) {
   return (
     <button type="button" onClick={() => !disabled && onChange(!checked)} disabled={disabled}
-      className={`flex items-center justify-between w-full border border-steel rounded-[6px] px-4 py-3 transition-colors ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:border-fog/40'}`}>
-      <span className="mono-label text-fog/70">{label}</span>
+      className={`btn-solid flex items-center justify-between w-full px-4 py-3 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+      <span className="mono-label text-void">{label}</span>
       <span className={`relative w-11 h-6 transition-colors rounded-[6px] ${checked ? 'bg-kinetic' : 'bg-steel'}`}>
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-void rounded-[4px] transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </span>
@@ -330,7 +330,7 @@ export default function ProductManager({ onSaved }) {
                             </div>
                           </div>
                           <div className="flex flex-col gap-1 shrink-0">
-                            <button onClick={() => startEdit(j)} className="mono-label text-fog/60 hover:text-kinetic px-2 py-1 border border-steel rounded-[4px] hover:border-kinetic transition-colors">
+                            <button onClick={() => startEdit(j)} className="btn-solid px-3 py-1.5 mono-label text-xs">
                               Edit
                             </button>
                             <button onClick={() => deleteJersey(j.id, j.name)} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors" aria-label={`Delete ${j.name}`}>
