@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
+import InfoStrip from '@/components/InfoStrip';
 
 const HERO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -90,6 +91,9 @@ export default function Landing() {
         {/* velocity line bottom */}
         <div className="absolute bottom-0 left-0 right-0 velocity-line h-px opacity-80" />
       </section>
+
+      {/* INFO STRIP */}
+      <InfoStrip />
 
       {/* FEATURED ARSENAL */}
       <section className="border-t border-steel bg-void">
