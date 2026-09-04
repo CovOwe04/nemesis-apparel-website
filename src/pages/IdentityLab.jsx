@@ -142,7 +142,7 @@ export default function IdentityLab() {
               <p className="mono-label text-kinetic mb-2">LAB LOCKED</p>
               <p className="text-fog/60 text-sm">
                 This kit ships as-is without name customization. Add it to your cart plain,
-                or pick a 'Lab-enabled kit' from the arsenal to add your name.
+                or pick a 'Lab-enabled' kit from the arsenal to add your name.
               </p>
             </div>
           ) : (
