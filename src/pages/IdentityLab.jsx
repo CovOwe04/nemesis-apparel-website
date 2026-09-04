@@ -138,7 +138,7 @@ export default function IdentityLab() {
           </div>
 
           {!canCustomize ? (
-            <div className="border border-steel p-5">
+            <div className="border border-steel rounded-[6px] p-5">
               <p className="mono-label text-kinetic mb-2">LAB LOCKED</p>
               <p className="text-fog/60 text-sm">
                 This kit ships as-is without name customization. Add it to your cart plain,
@@ -158,7 +158,7 @@ export default function IdentityLab() {
                   value={name}
                   onChange={(e) => setName(e.target.value.slice(0, 20))}
                   placeholder="ENTER NAME"
-                  className="w-full bg-white text-black border border-steel px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
+                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
                 />
                 <div className="mono-label text-fog/30 mt-1 text-right">
                   {name.length}/20
@@ -168,7 +168,7 @@ export default function IdentityLab() {
           )}
 
           {canCustomize && (
-            <div className="border border-steel p-4 bg-steel/20">
+            <div className="border border-steel rounded-[6px] p-4 bg-steel/20">
               <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
               <p className="text-fog/60 text-sm leading-relaxed">
                 Use the lab to print your own name on the back of your jersey. Names are applied
