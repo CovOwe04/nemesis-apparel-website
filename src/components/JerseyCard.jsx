@@ -54,7 +54,6 @@ export default function JerseyCard({ jersey }) {
           <h3 className="font-heading text-base text-fog leading-tight truncate">
             {jersey.name}
           </h3>
-          <p className="mono-label text-fog/50 mt-1">{jersey.fitting} FIT</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button

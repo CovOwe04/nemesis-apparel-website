@@ -108,7 +108,7 @@ export default function IdentityLab() {
         {/* CONTROLS */}
         <div className="flex flex-col gap-7">
           <div>
-            <div className="mono-label text-fog/40 mb-1">{jersey.team} — {jersey.fitting} FIT</div>
+            <div className="mono-label text-fog/40 mb-1">{jersey.team}</div>
             <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog leading-tight">
               {jersey.name}
             </h1>
