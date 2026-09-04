@@ -116,6 +116,7 @@ export default function Cart() {
                   <StaticNameOverlay
                     image={item.front_image}
                     customName={item.customName}
+                    customNumber={item.customNumber}
                     className="w-24 h-32 sm:w-28 sm:h-36 rounded-[12px] overflow-hidden"
                   />
                 </Link>
@@ -124,6 +125,7 @@ export default function Cart() {
                   <IdentityNameOverlay
                     back_image={item.back_image}
                     customName={item.customName}
+                    customNumber={item.customNumber}
                     fontId={item.font}
                     size={item.size}
                     curve={item.curve}
@@ -160,6 +162,7 @@ export default function Cart() {
                 ) : item.customName ? (
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 mono-label text-fog/50">
                     <span>NAME: <span className="text-fog">{item.customName}</span></span>
+                    {item.customNumber && <span>NUMBER: <span className="text-fog">{item.customNumber}</span></span>}
                     <span>FONT: <span className="text-fog">{FONT_LABELS[item.font] || item.font}</span></span>
                     <span>SIZE: <span className="text-fog">{item.size}%</span></span>
                     <span>ARCH: <span className="text-fog">{item.curve}%</span></span>

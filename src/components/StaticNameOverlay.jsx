@@ -7,6 +7,7 @@ import { Image } from '@/components/ui/image';
 export default function StaticNameOverlay({
   image,
   customName,
+  customNumber = '',
   showPlaceholder = false,
   posX = 30,
   posY = 39,
@@ -14,6 +15,7 @@ export default function StaticNameOverlay({
   className = '',
 }) {
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
+  const displayNumber = customNumber || '';
   const len = displayName.length;
   const baseSize = baseSizeOverride ?? 3;
   const fontSizeCqw = len > 10 ? Math.max(3, baseSize - (len - 10) * 0.25) : baseSize;
@@ -47,6 +49,31 @@ export default function StaticNameOverlay({
             }}
           >
             {displayName}
+          </span>
+        </div>
+      )}
+      {displayNumber && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: `${posX}%`,
+            top: `${posY + 16}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Archivo Black', sans-serif",
+              fontSize: `${fontSizeCqw * 1.8}cqw`,
+              lineHeight: 1.1,
+              color: '#FFFFFF',
+              textShadow:
+                '0.12em 0.12em 0 rgba(10,10,10,0.95), -0.06em -0.06em 0 rgba(10,10,10,0.95), 0.06em -0.06em 0 rgba(10,10,10,0.95), -0.06em 0.06em 0 rgba(10,10,10,0.95)',
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {displayNumber}
           </span>
         </div>
       )}

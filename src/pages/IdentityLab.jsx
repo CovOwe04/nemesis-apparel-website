@@ -14,6 +14,7 @@ export default function IdentityLab() {
   const [jersey, setJersey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
   const [fontId, setFontId] = useState('block');
   const [size, setSize] = useState(40);
   const [curve, setCurve] = useState(0);
@@ -62,6 +63,7 @@ export default function IdentityLab() {
       back_image: jersey.back_image,
       static_display: jersey.static_display,
       customName: canCustomize ? name.toUpperCase() : '',
+      customNumber: canCustomize ? number : '',
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
@@ -94,6 +96,7 @@ export default function IdentityLab() {
                 <StaticNameOverlay
                   image={jersey.front_image}
                   customName={canCustomize ? name.toUpperCase() : ''}
+                  customNumber={canCustomize ? number : ''}
                   showPlaceholder={canCustomize}
                   className="w-full h-full"
                 />
@@ -101,6 +104,7 @@ export default function IdentityLab() {
                 <IdentityNameOverlay
                   back_image={jersey.back_image}
                   customName={canCustomize ? name.toUpperCase() : ''}
+                  customNumber={canCustomize ? number : ''}
                   fontId={fontId}
                   size={size}
                   curve={curve}
@@ -174,6 +178,22 @@ export default function IdentityLab() {
                 <div className="mono-label text-fog/30 mt-1 text-right">
                   {name.length}/20
                 </div>
+              </div>
+
+              {/* NUMBER */}
+              <div>
+                <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
+                  NUMBER
+                </label>
+                <input
+                  id="number-input"
+                  type="text"
+                  inputMode="numeric"
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                  placeholder="0–999"
+                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
+                />
               </div>
             </>
           )}

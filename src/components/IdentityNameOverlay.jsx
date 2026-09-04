@@ -15,6 +15,7 @@ export const FONTS = [
 export default function IdentityNameOverlay({
   back_image,
   customName,
+  customNumber = '',
   fontId = 'block',
   size = 40,
   curve = 0,
@@ -29,6 +30,7 @@ export default function IdentityNameOverlay({
   const baselineY = 100 + (height / 100) * 50;
   const ARC_WIDTH = 150;
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
+  const displayNumber = customNumber || '';
   const charFactor = 0.7;
   const letterSpacing = 1.5;
   const words = displayName.split(' ').filter(Boolean);
@@ -88,6 +90,22 @@ export default function IdentityNameOverlay({
               </textPath>
             ))}
           </text>
+          {displayNumber && (
+            <text
+              fontFamily={font.family}
+              fontSize={fontSize * 2}
+              fill="#F5F5F7"
+              stroke="#0A0A0A"
+              strokeWidth="1.6"
+              paintOrder="stroke fill"
+              letterSpacing="2"
+              x="150"
+              y="260"
+              textAnchor="middle"
+            >
+              {displayNumber}
+            </text>
+          )}
         </svg>
       )}
     </div>
