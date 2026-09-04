@@ -1,21 +1,21 @@
 import { useId, useEffect } from 'react';
 
-// SVG text renderer that visualizes the three warp styles:
-// - arch: text follows a convex upward arc (rainbow/smile)
-// - rise: text tilted at a linear angle
-// - flag: text follows a rippling wave path (left up, right down)
-// Used in the admin product manager as a live preview of default text styling.
+// SVG text renderer that applies arch, rise, and flag simultaneously via
+// independent sliders (no single warp-mode select). Arch bows the text
+// upward, flag ripples it (left up / right down), rise tilts the whole group.
+// A placeholder number "00" is always shown so the number vertical position
+// slider has a visible target.
 export default function TextWarpPreview({
   text = 'NEMESIS',
-  number = '00',
-  warp = 'none',
+  archAmount = 0,
+  riseAngle = 0,
+  flagAmount = 0,
   color = '#F5F5F7',
   outline = true,
   outlineColor = '#0A0A0A',
   fontSize = 42,
-  nameY = 40,
-  numberY = 70,
-  showNumber = false,
+  nameY = 25,
+  numberY = 50,
   fontFamily = "'Archivo Black', sans-serif",
   customFontUrl = '',
   customFontName = '',
@@ -23,7 +23,6 @@ export default function TextWarpPreview({
   const uid = useId();
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : fontFamily;
 
-  // Inject @font-face for custom uploaded fonts so the preview renders correctly.
   useEffect(() => {
     if (!customFontUrl || !customFontName) return;
     const id = `fontface-${customFontName.replace(/\s+/g, '-')}`;
@@ -37,107 +36,66 @@ export default function TextWarpPreview({
   const displayName = (text || '').toUpperCase() || 'PREVIEW';
   const stroke = outline ? outlineColor : 'none';
   const strokeWidth = outline ? 1.4 : 0;
+  const archPct = archAmount / 100;
+  const flagPct = flagAmount / 100;
+  const hasCurve = archPct > 0 || flagPct > 0;
 
-  // Arch path: convex upward — middle peaks higher (lower Y)
-  const archPath = (y) => `M 40 ${y + 18} Q 150 ${y - 22} 260 ${y + 18}`;
+  // Combined path blending arch (upward bow) and flag (left-up, right-down wave)
+  const buildPath = (y) => {
+    const archOffset = 22 * archPct;
+    const flagLeft = -14 * flagPct;
+    const flagMid = 6 * flagPct;
+    const flagRight = 20 * flagPct;
+    const startY = y + flagLeft;
+    const midY = y - archOffset + flagMid;
+    const endY = y + 18 + flagRight;
+    return `M 40 ${startY} Q 95 ${startY} 150 ${midY} T 260 ${endY}`;
+  };
 
-  // Flag path: wave — left side up, right side down, rippling through middle
-  const flagPath = (y) => `M 40 ${y - 14} Q 95 ${y - 14} 150 ${y + 6} T 260 ${y + 20}`;
-
-  const renderText = (content, y, isNumber = false) => {
+  const renderText = (content, yPct, isNumber = false) => {
+    const y = yPct * 2;
     const fs = isNumber ? fontSize * 1.3 : fontSize;
-    if (warp === 'arch') {
+    const keyId = `${uid}-${isNumber ? 'num' : 'name'}`;
+    const rotation = riseAngle !== 0 ? `rotate(${-riseAngle} 150 ${y})` : undefined;
+
+    const textProps = {
+      fontFamily: fontFam,
+      fontSize: fs,
+      fill: color,
+      stroke,
+      strokeWidth,
+      paintOrder: 'stroke fill',
+      letterSpacing: '1.5',
+    };
+
+    if (hasCurve) {
       return (
-        <>
+        <g transform={rotation}>
           <defs>
-            <path id={`${uid}-arc-${isNumber ? 'num' : 'name'}`} d={archPath(y)} fill="none" />
+            <path id={`${keyId}-path`} d={buildPath(y)} fill="none" />
           </defs>
-          <text
-            fontFamily={fontFam}
-            fontSize={fs}
-            fill={color}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            paintOrder="stroke fill"
-            letterSpacing="1.5"
-          >
-            <textPath href={`#${uid}-arc-${isNumber ? 'num' : 'name'}`} startOffset="50%" textAnchor="middle">
+          <text {...textProps}>
+            <textPath href={`#${keyId}-path`} startOffset="50%" textAnchor="middle">
               {content}
             </textPath>
-          </text>
-        </>
-      );
-    }
-    if (warp === 'flag') {
-      return (
-        <>
-          <defs>
-            <path id={`${uid}-flag-${isNumber ? 'num' : 'name'}`} d={flagPath(y)} fill="none" />
-          </defs>
-          <text
-            fontFamily={fontFam}
-            fontSize={fs}
-            fill={color}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            paintOrder="stroke fill"
-            letterSpacing="1.5"
-          >
-            <textPath href={`#${uid}-flag-${isNumber ? 'num' : 'name'}`} startOffset="50%" textAnchor="middle">
-              {content}
-            </textPath>
-          </text>
-        </>
-      );
-    }
-    if (warp === 'rise') {
-      // Tilt the text group upward left-to-right (~15°)
-      return (
-        <g transform={`rotate(-15 150 ${y})`}>
-          <text
-            x="150"
-            y={y}
-            fontFamily={fontFam}
-            fontSize={fs}
-            fill={color}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            paintOrder="stroke fill"
-            letterSpacing="1.5"
-            textAnchor="middle"
-          >
-            {content}
           </text>
         </g>
       );
     }
-    // none — straight text
+
     return (
-      <text
-        x="150"
-        y={y}
-        fontFamily={fontFam}
-        fontSize={fs}
-        fill={color}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        paintOrder="stroke fill"
-        letterSpacing="1.5"
-        textAnchor="middle"
-      >
-        {content}
-      </text>
+      <g transform={rotation}>
+        <text x="150" y={y} {...textProps} textAnchor="middle">
+          {content}
+        </text>
+      </g>
     );
   };
 
   return (
-    <svg
-      viewBox="0 0 300 200"
-      className="w-full h-full"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {renderText(displayName, nameY * 2)}
-      {showNumber && renderText(number || '00', numberY * 2, true)}
+    <svg viewBox="0 0 300 200" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      {renderText(displayName, nameY)}
+      {renderText('00', numberY, true)}
     </svg>
   );
 }

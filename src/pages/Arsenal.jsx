@@ -20,7 +20,10 @@ export default function Arsenal() {
 
   useEffect(() => {
     base44.entities.Jersey.list('-created_date', 100)
-      .then((data) => setJerseys(data || []))
+      .then((data) => {
+        const sorted = (data || []).sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999));
+        setJerseys(sorted);
+      })
       .catch(() => setJerseys([]))
       .finally(() => setLoading(false));
   }, []);
