@@ -172,8 +172,8 @@ export default function IdentityLab() {
               <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
               <p className="text-fog/60 text-sm leading-relaxed">
                 Use the lab to print your own name on the back of your jersey. Names are applied
-                exactly as entered — our design team will not make any refinements, but will
-                approve of your design before sending it out to the supplier.
+                exactly as entered — our design team will approve of the design before sending it 
+                out to the supplier to ensure high-quality production.
               </p>
             </div>
           )}
