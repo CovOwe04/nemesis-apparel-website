@@ -23,9 +23,6 @@ export default function CustomerOpinion() {
 
         {/* CONTENT */}
         <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-14 lg:py-20">
-          <div className="mono-label text-kinetic mb-3">
-            <span className="h-px w-10 bg-kinetic" /> TESTIMONIALS
-          </div>
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl uppercase leading-[0.95] text-fog">
             Our customers opinion
           </h2>
