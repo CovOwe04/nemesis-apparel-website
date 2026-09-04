@@ -7,13 +7,20 @@ import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
 import ImagesEditor from '@/components/admin/ImagesEditor';
 
+const DEFAULT_NAME_STYLE = {
+  color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 50, vert_pos: 50, font_size: 42,
+};
+const DEFAULT_NUMBER_STYLE = {
+  ...DEFAULT_NAME_STYLE, font_size: 76,
+};
+
 const EMPTY_FORM = {
   name: '', team: '', category: 'Jersey', fitting: 'Regular', price: '',
   description: '', images: [],
   enable_customization: false,
-  text_color: '#F5F5F7', text_outline: true, text_outline_color: '#0A0A0A', text_outline_thickness: 1.4,
-  arch_amount: 0, rise_angle: 0, flag_amount: 0,
-  name_vertical_pos: 50, number_vertical_pos: 50,
+  name_style: { ...DEFAULT_NAME_STYLE },
+  number_style: { ...DEFAULT_NUMBER_STYLE },
   custom_font_url: '', custom_font_name: '',
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
@@ -63,6 +70,11 @@ export default function ProductManager({ onSaved }) {
   const [loadingList, setLoadingList] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [designerTab, setDesignerTab] = useState('name');
+
+  const styleKey = designerTab === 'name' ? 'name_style' : 'number_style';
+  const currentStyle = form[styleKey] || {};
+  const setStyle = (field, value) => setField(styleKey, { ...currentStyle, [field]: value });
 
   const loadJerseys = () => {
     setLoadingList(true);
@@ -84,7 +96,13 @@ export default function ProductManager({ onSaved }) {
     const images = j.images && j.images.length > 0
       ? j.images
       : [{ url: j.front_image, name: '', number: '' }, ...(j.back_image && j.back_image !== j.front_image ? [{ url: j.back_image, name: '', number: '' }] : [])];
-    setForm({ ...EMPTY_FORM, ...j, images });
+    setForm({
+      ...EMPTY_FORM,
+      ...j,
+      images,
+      name_style: { ...DEFAULT_NAME_STYLE, ...(j.name_style || {}) },
+      number_style: { ...DEFAULT_NUMBER_STYLE, ...(j.number_style || {}) },
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -199,7 +217,7 @@ export default function ProductManager({ onSaved }) {
             )}
           </Section>
 
-          {/* Designer — combined live preview + text properties */}
+          {/* Designer — combined live preview + per-part text properties */}
           {form.enable_customization && (
             <div className="border border-steel rounded-[6px] overflow-hidden">
               <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
@@ -208,15 +226,8 @@ export default function ProductManager({ onSaved }) {
                 <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
                     imageUrl={form.images[0]?.url}
-                    archAmount={form.arch_amount}
-                    riseAngle={form.rise_angle}
-                    flagAmount={form.flag_amount}
-                    color={form.text_color}
-                    outline={form.text_outline}
-                    outlineColor={form.text_outline_color}
-                    outlineThickness={form.text_outline_thickness}
-                    nameY={form.name_vertical_pos}
-                    numberY={form.number_vertical_pos}
+                    nameStyle={form.name_style}
+                    numberStyle={form.number_style}
                     customFontUrl={form.custom_font_url}
                     customFontName={form.custom_font_name}
                   />
@@ -225,24 +236,39 @@ export default function ProductManager({ onSaved }) {
                 <div className="p-4 space-y-2">
                   <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
                     onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
+
+                  {/* Name / Number tabs */}
+                  <div className="flex gap-2 pt-1">
+                    <button type="button" onClick={() => setDesignerTab('name')}
+                      className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                      NAME
+                    </button>
+                    <button type="button" onClick={() => setDesignerTab('number')}
+                      className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                      NUMBER
+                    </button>
+                  </div>
+
+                  {/* Tab-specific controls */}
                   <div className="flex items-center gap-3">
                     <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
-                    <input type="color" value={form.text_color} onChange={(e) => setField('text_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
+                    <input type="color" value={currentStyle.color} onChange={(e) => setStyle('color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
                     <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE COLOR</span>
-                    <input type="color" value={form.text_outline_color} onChange={(e) => setField('text_outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
+                    <input type="color" value={currentStyle.outline_color} onChange={(e) => setStyle('outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
                   </div>
-                  <Toggle checked={form.text_outline} onChange={(v) => setField('text_outline', v)} label="ENABLE TEXT OUTLINE" />
+                  <Toggle checked={currentStyle.outline} onChange={(v) => setStyle('outline', v)} label="ENABLE TEXT OUTLINE" />
                   <div className="flex items-center gap-2">
                     <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
-                    <input type="number" min={0} max={5} step={0.1} value={form.text_outline_thickness}
-                      onChange={(e) => setField('text_outline_thickness', Number(e.target.value))}
+                    <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
+                      onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
                       className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
                   </div>
-                  <PropRow label="ARCH" value={form.arch_amount} min={0} max={100} onChange={(v) => setField('arch_amount', v)} />
-                  <PropRow label="RISE" value={form.rise_angle} min={-45} max={45} onChange={(v) => setField('rise_angle', v)} />
-                  <PropRow label="FLAG" value={form.flag_amount} min={0} max={100} onChange={(v) => setField('flag_amount', v)} />
-                  <PropRow label="NAME VERT" value={form.name_vertical_pos} min={0} max={100} onChange={(v) => setField('name_vertical_pos', v)} />
-                  <PropRow label="NUMBER VERT" value={form.number_vertical_pos} min={0} max={100} onChange={(v) => setField('number_vertical_pos', v)} />
+                  <PropRow label="FONT SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
+                  <PropRow label="ARCH" value={currentStyle.arch} min={0} max={100} onChange={(v) => setStyle('arch', v)} />
+                  <PropRow label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
+                  <PropRow label="FLAG" value={currentStyle.flag} min={0} max={100} onChange={(v) => setStyle('flag', v)} />
+                  <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
+                  <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
                 </div>
               </div>
             </div>

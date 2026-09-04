@@ -1,30 +1,28 @@
 import { useId, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 
-// Designer preview: renders the admin's base image as the jersey background
-// with the text overlaid in the same position as the buy-screen IdentityNameOverlay
-// (viewBox 0 0 300 400). Arch, rise, and flag are applied simultaneously via
-// independent sliders. A placeholder number "00" is shown so the number
-// vertical position slider has a visible target.
+const NAME_DEFAULTS = {
+  color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 50, vert_pos: 50, font_size: 42,
+};
+const NUMBER_DEFAULTS = {
+  ...NAME_DEFAULTS, font_size: 76,
+};
+
+// Designer preview: renders the admin's base image (contained, not stretched)
+// with name and number text overlaid. Each part has its own style object so
+// the admin can customize them independently via the Name/Number tabs.
 export default function TextWarpPreview({
   imageUrl = '',
-  text = 'YOUR NAME',
-  number = '00',
-  archAmount = 0,
-  riseAngle = 0,
-  flagAmount = 0,
-  color = '#F5F5F7',
-  outline = true,
-  outlineColor = '#0A0A0A',
-  outlineThickness = 1.4,
-  fontSize = 42,
-  nameY = 25,
-  numberY = 50,
   fontFamily = "'Archivo Black', sans-serif",
   customFontUrl = '',
   customFontName = '',
+  nameStyle = {},
+  numberStyle = {},
 }) {
   const uid = useId();
+  const ns = { ...NAME_DEFAULTS, ...nameStyle };
+  const nus = { ...NUMBER_DEFAULTS, ...numberStyle };
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : fontFamily;
 
   useEffect(() => {
@@ -37,37 +35,24 @@ export default function TextWarpPreview({
     document.head.appendChild(style);
   }, [customFontUrl, customFontName]);
 
-  const displayName = (text || '').toUpperCase() || 'YOUR NAME';
-  const displayNumber = number || '00';
-  const stroke = outline ? outlineColor : 'none';
-  const strokeWidth = outline ? outlineThickness : 0;
-  const archPct = archAmount / 100;
-  const flagPct = flagAmount / 100;
-  const hasCurve = archPct > 0 || flagPct > 0;
-
-  // Match IdentityNameOverlay positioning (viewBox 0 0 300 400)
-  const nameBaselineY = 112.5 + (nameY - 50);
-  const numberBaselineY = 250 + (numberY - 50) * 2;
-
-  const buildPath = (y) => {
-    const archOffset = 22 * archPct;
-    const flagLeft = -14 * flagPct;
-    const flagMid = 6 * flagPct;
-    const flagRight = 20 * flagPct;
-    const startY = y + flagLeft;
-    const midY = y - archOffset + flagMid;
-    const endY = y + 18 + flagRight;
-    return `M 75 ${startY} Q 150 ${midY} 225 ${endY}`;
-  };
-
-  const renderText = (content, y, isNumber = false) => {
-    const fs = isNumber ? fontSize * 1.8 : fontSize;
+  const renderPart = (s, isNumber) => {
+    const text = isNumber ? '00' : 'YOUR NAME';
+    const archPct = s.arch / 100;
+    const flagPct = s.flag / 100;
+    const hasCurve = archPct > 0 || flagPct > 0;
+    const stroke = s.outline ? s.outline_color : 'none';
+    const strokeWidth = s.outline ? s.outline_thickness : 0;
+    const baselineY = isNumber
+      ? 250 + (s.vert_pos - 50) * 2
+      : 112.5 + (s.vert_pos - 50);
+    const x = 75 + (s.horiz_pos / 100) * 150;
+    const rotation = s.rise !== 0 ? `rotate(${-s.rise} ${x} ${baselineY})` : undefined;
     const keyId = `${uid}-${isNumber ? 'num' : 'name'}`;
-    const rotation = riseAngle !== 0 ? `rotate(${-riseAngle} 150 ${y})` : undefined;
+
     const textProps = {
       fontFamily: fontFam,
-      fontSize: fs,
-      fill: color,
+      fontSize: s.font_size,
+      fill: s.color,
       stroke,
       strokeWidth,
       paintOrder: 'stroke fill',
@@ -75,14 +60,21 @@ export default function TextWarpPreview({
     };
 
     if (hasCurve) {
+      const buildPath = (y) => {
+        const archOffset = 22 * archPct;
+        const flagLeft = -14 * flagPct;
+        const flagMid = 6 * flagPct;
+        const flagRight = 20 * flagPct;
+        return `M 75 ${y + flagLeft} Q 150 ${y - archOffset + flagMid} 225 ${y + 18 + flagRight}`;
+      };
       return (
         <g transform={rotation}>
           <defs>
-            <path id={`${keyId}-path`} d={buildPath(y)} fill="none" />
+            <path id={`${keyId}-path`} d={buildPath(baselineY)} fill="none" />
           </defs>
           <text {...textProps}>
-            <textPath href={`#${keyId}-path`} startOffset="50%" textAnchor="middle">
-              {content}
+            <textPath href={`#${keyId}-path`} startOffset={`${s.horiz_pos}%`} textAnchor="middle">
+              {text}
             </textPath>
           </text>
         </g>
@@ -90,8 +82,8 @@ export default function TextWarpPreview({
     }
     return (
       <g transform={rotation}>
-        <text x="150" y={y} {...textProps} textAnchor="middle">
-          {content}
+        <text x={x} y={baselineY} {...textProps} textAnchor="middle">
+          {text}
         </text>
       </g>
     );
@@ -107,8 +99,8 @@ export default function TextWarpPreview({
         </div>
       )}
       <svg viewBox="0 0 300 400" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-        {renderText(displayName, nameBaselineY)}
-        {renderText(displayNumber, numberBaselineY, true)}
+        {renderPart(ns, false)}
+        {renderPart(nus, true)}
       </svg>
     </div>
   );

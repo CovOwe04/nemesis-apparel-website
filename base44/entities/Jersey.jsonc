@@ -86,50 +86,97 @@
       "default": 0,
       "title": "Listing Sort Order"
     },
-    "text_color": {
-      "type": "string",
-      "default": "#F5F5F7",
-      "title": "Default Text Color"
+    "name_style": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "default": "#F5F5F7"
+        },
+        "outline": {
+          "type": "boolean",
+          "default": true
+        },
+        "outline_color": {
+          "type": "string",
+          "default": "#0A0A0A"
+        },
+        "outline_thickness": {
+          "type": "number",
+          "default": 1.4
+        },
+        "arch": {
+          "type": "number",
+          "default": 0
+        },
+        "rise": {
+          "type": "number",
+          "default": 0
+        },
+        "flag": {
+          "type": "number",
+          "default": 0
+        },
+        "horiz_pos": {
+          "type": "number",
+          "default": 50
+        },
+        "vert_pos": {
+          "type": "number",
+          "default": 50
+        },
+        "font_size": {
+          "type": "number",
+          "default": 42
+        }
+      },
+      "default": {}
     },
-    "text_outline": {
-      "type": "boolean",
-      "default": true,
-      "title": "Enable Text Outline"
-    },
-    "text_outline_color": {
-      "type": "string",
-      "default": "#0A0A0A",
-      "title": "Text Outline Color"
-    },
-    "text_outline_thickness": {
-      "type": "number",
-      "default": 1.4,
-      "title": "Text Outline Thickness"
-    },
-    "arch_amount": {
-      "type": "number",
-      "default": 0,
-      "title": "Arch Amount"
-    },
-    "rise_angle": {
-      "type": "number",
-      "default": 0,
-      "title": "Rise Angle"
-    },
-    "flag_amount": {
-      "type": "number",
-      "default": 0,
-      "title": "Flag Amount"
-    },
-    "name_vertical_pos": {
-      "type": "number",
-      "default": 50,
-      "title": "Name Vertical Position"
-    },
-    "number_vertical_pos": {
-      "type": "number",
-      "default": 50,
-      "title": "Number Vertical Position"
+    "number_style": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "default": "#F5F5F7"
+        },
+        "outline": {
+          "type": "boolean",
+          "default": true
+        },
+        "outline_color": {
+          "type": "string",
+          "default": "#0A0A0A"
+        },
+        "outline_thickness": {
+          "type": "number",
+          "default": 1.4
+        },
+        "arch": {
+          "type": "number",
+          "default": 0
+        },
+        "rise": {
+          "type": "number",
+          "default": 0
+        },
+        "flag": {
+          "type": "number",
+          "default": 0
+        },
+        "horiz_pos": {
+          "type": "number",
+          "default": 50
+        },
+        "vert_pos": {
+          "type": "number",
+          "default": 50
+        },
+        "font_size": {
+          "type": "number",
+          "default": 76
+        }
+      },
+      "default": {}
     },
     "custom_font_url": {
       "type": "string",
