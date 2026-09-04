@@ -10,6 +10,18 @@
       "type": "string",
       "title": "Team"
     },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Jersey",
+        "Long Sleeve",
+        "Hoodie",
+        "Bag",
+        "Hat"
+      ],
+      "default": "Jersey",
+      "title": "Product Category"
+    },
     "fitting": {
       "type": "string",
       "enum": [
@@ -49,6 +61,97 @@
       "type": "boolean",
       "default": false,
       "title": "Featured on Landing"
+    },
+    "display_height": {
+      "type": "number",
+      "default": 0,
+      "title": "Display Placement Height (Arsenal)"
+    },
+    "preset_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Configurable Preset Names"
+    },
+    "show_number": {
+      "type": "boolean",
+      "default": false,
+      "title": "Show Player Number"
+    },
+    "default_number": {
+      "type": "string",
+      "default": "",
+      "title": "Default Player Number"
+    },
+    "text_warp": {
+      "type": "string",
+      "enum": [
+        "none",
+        "arch",
+        "rise",
+        "flag"
+      ],
+      "default": "none",
+      "title": "Default Text Warp Style"
+    },
+    "text_color": {
+      "type": "string",
+      "default": "#F5F5F7",
+      "title": "Default Text Color"
+    },
+    "text_outline": {
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Text Outline"
+    },
+    "text_outline_color": {
+      "type": "string",
+      "default": "#0A0A0A",
+      "title": "Text Outline Color"
+    },
+    "name_vertical_pos": {
+      "type": "number",
+      "default": 25,
+      "title": "Name Vertical Position"
+    },
+    "number_vertical_pos": {
+      "type": "number",
+      "default": 50,
+      "title": "Number Vertical Position"
+    },
+    "custom_font_url": {
+      "type": "string",
+      "default": "",
+      "title": "Custom Font File URL"
+    },
+    "custom_font_name": {
+      "type": "string",
+      "default": "",
+      "title": "Custom Font Name"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": false,
+      "title": "Private (Club Exclusive)"
+    },
+    "private_access_code": {
+      "type": "string",
+      "default": "",
+      "title": "Private Access Code"
+    },
+    "available_from": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Available From"
+    },
+    "available_until": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Available Until"
     }
   },
   "required": [

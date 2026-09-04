@@ -7,6 +7,9 @@ export default function Arsenal() {
   const [jerseys, setJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All');
+  const [accessCode, setAccessCode] = useState('');
+  const [codeInput, setCodeInput] = useState('');
   const [currency, setCurrency] = useState(
     () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
   );
@@ -24,13 +27,20 @@ export default function Arsenal() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return jerseys;
-    return jerseys.filter(
-      (j) =>
-        (j.name || '').toLowerCase().includes(q) ||
-        (j.team || '').toLowerCase().includes(q)
-    );
-  }, [jerseys, query]);
+    const now = new Date();
+    return jerseys.filter((j) => {
+      // Category filter
+      if (category !== 'All' && (j.category || 'Jersey') !== category) return false;
+      // Privacy: hide private jerseys unless access code matches
+      if (j.is_private && j.private_access_code !== accessCode) return false;
+      // Scheduling: hide if not yet available or expired
+      if (j.available_from && new Date(j.available_from) > now) return false;
+      if (j.available_until && new Date(j.available_until) < now) return false;
+      // Search query
+      if (q && !(j.name || '').toLowerCase().includes(q) && !(j.team || '').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [jerseys, query, category, accessCode]);
 
   return (
     <div className="bg-void min-h-screen">
@@ -75,6 +85,37 @@ export default function Arsenal() {
               className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'CAD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
             >
               CAD
+            </button>
+          </div>
+        </div>
+
+        {/* Category filter + club access code */}
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 flex-wrap">
+            {['All', 'Jersey', 'Long Sleeve', 'Hoodie', 'Bag', 'Hat'].map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`mono-label px-3 py-2 border rounded-[6px] transition-colors ${category === c ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}
+              >
+                {c.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setAccessCode(codeInput.trim()); }}
+              placeholder="CLUB ACCESS CODE"
+              className="bg-white text-black border border-steel rounded-[6px] px-3 py-2 mono-label placeholder:text-black/40 focus:border-kinetic outline-none w-44"
+            />
+            <button
+              onClick={() => setAccessCode(codeInput.trim())}
+              className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors"
+            >
+              UNLOCK
             </button>
           </div>
         </div>

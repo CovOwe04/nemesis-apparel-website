@@ -1,0 +1,55 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "items_json": {
+      "type": "string",
+      "title": "Order Items (JSON)"
+    },
+    "customer_name": {
+      "type": "string",
+      "title": "Customer Name"
+    },
+    "customer_email": {
+      "type": "string",
+      "title": "Customer Email"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "fulfilled"
+      ],
+      "default": "pending",
+      "title": "Order Status"
+    },
+    "total": {
+      "type": "number",
+      "title": "Total (USD)"
+    },
+    "item_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Item Count"
+    },
+    "has_custom_names": {
+      "type": "boolean",
+      "default": false,
+      "title": "Has Custom Name Lab Items"
+    },
+    "admin_notes": {
+      "type": "string",
+      "default": "",
+      "title": "Admin Notes"
+    }
+  },
+  "required": [
+    "items_json",
+    "customer_name",
+    "customer_email",
+    "status",
+    "total"
+  ]
+}

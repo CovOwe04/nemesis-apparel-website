@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
@@ -16,6 +17,10 @@ const VERT_LABELS = { 10: 'HIGH', 25: 'NORMAL', 50: 'LOW' };
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, clearCart } = useCart();
   const [ordered, setOrdered] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
 
   if (ordered) {
     return (
@@ -54,9 +59,31 @@ export default function Cart() {
     );
   }
 
-  const checkout = () => {
-    clearCart();
-    setOrdered(true);
+  const checkout = async () => {
+    if (!customerName.trim() || !customerEmail.trim()) {
+      setFormError('Name and email are required to place your order.');
+      return;
+    }
+    setFormError('');
+    setSubmitting(true);
+    try {
+      const hasCustom = items.some((i) => i.customName || i.isCustomDesign);
+      await base44.entities.Order.create({
+        items_json: JSON.stringify(items),
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim(),
+        status: 'pending',
+        total: total,
+        item_count: items.reduce((s, i) => s + i.quantity, 0),
+        has_custom_names: hasCustom,
+      });
+      clearCart();
+      setOrdered(true);
+    } catch (err) {
+      alert('Order submission failed: ' + (err?.message || 'unknown error'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -184,11 +211,39 @@ export default function Cart() {
               <span className="font-heading text-fog">TOTAL</span>
               <span className="font-heading text-2xl text-kinetic">${total.toFixed(0)}</span>
             </div>
+
+            {/* Customer info for order submission */}
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="mono-label text-fog/50 block mb-1.5">YOUR NAME</label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="First & last name"
+                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 text-sm placeholder:text-black/40 focus:border-kinetic outline-none"
+                />
+              </div>
+              <div>
+                <label className="mono-label text-fog/50 block mb-1.5">EMAIL</label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 text-sm placeholder:text-black/40 focus:border-kinetic outline-none"
+                />
+              </div>
+            </div>
+            {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
+            <p className="mono-label text-fog/30 mb-4">Custom name orders are reviewed by our team before production.</p>
+
             <button
               onClick={checkout}
-              className="btn-solid w-full gap-2 px-6 py-4 font-heading uppercase"
+              disabled={submitting}
+              className="btn-solid w-full gap-2 px-6 py-4 font-heading uppercase disabled:opacity-60"
             >
-              Place order <ArrowRight size={18} />
+              {submitting ? 'Submitting…' : 'Place order'} <ArrowRight size={18} />
             </button>
             <Link
               to="/arsenal"
