@@ -7,47 +7,47 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 96%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
     --card: 0 0% 7%;
-    --card-foreground: 0 0% 96%;
+    --card-foreground: 0 0% 100%;
     --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 0 0% 96%;
-    --primary-foreground: 0 0% 4%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 62%;
-    --accent: 352 100% 56%;
+    --accent: 350 74% 47%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 352 100% 56%;
+    --destructive: 350 74% 47%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 352 100% 56%;
-    --chart-1: 352 100% 56%;
+    --ring: 350 74% 47%;
+    --chart-1: 350 74% 47%;
     --chart-2: 0 0% 60%;
-    --chart-3: 0 0% 96%;
+    --chart-3: 0 0% 100%;
     --chart-4: 0 0% 18%;
-    --chart-5: 352 100% 56%;
+    --chart-5: 350 74% 47%;
     --radius: 0.125rem;
     --font-heading: 'Jersey M54', 'Archivo Black', 'Space Grotesk', system-ui, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
     --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --kinetic: 352 100% 56%;
+    --kinetic: 350 74% 47%;
     --void: 0 0% 4%;
-    --fog: 0 0% 96%;
+    --fog: 0 0% 100%;
     --steel: 0 0% 18%;
     --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 352 100% 56%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 350 74% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 96%;
     --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 352 100% 56%;
+    --sidebar-ring: 350 74% 47%;
   }
 
   .dark {
