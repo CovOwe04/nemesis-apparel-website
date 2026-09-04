@@ -12,7 +12,7 @@ export default function Footer() {
         className="h-16 w-auto mb-4"
       />
       <p className="text-fog/90 text-sm mb-5">
-        Roundnet Jerseys don't have to be a headache
+        Jerseys don't have to be a headache
       </p>
       <a
         href="https://www.instagram.com/Nemesis.Sports.Apparel"
