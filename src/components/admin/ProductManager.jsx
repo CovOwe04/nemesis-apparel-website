@@ -269,6 +269,12 @@ export default function ProductManager({ onSaved }) {
                   <PropRow label="FLAG" value={currentStyle.flag} min={0} max={100} onChange={(v) => setStyle('flag', v)} />
                   <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
                   <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
+                  <button type="button" onClick={() => {
+                    const text = `${designerTab.toUpperCase()} — H:${currentStyle.horiz_pos} V:${currentStyle.vert_pos}`;
+                    navigator.clipboard.writeText(text);
+                  }} className="btn-solid px-3 py-1.5 mono-label text-xs w-full">
+                    COPY GEOM
+                  </button>
                 </div>
               </div>
             </div>
