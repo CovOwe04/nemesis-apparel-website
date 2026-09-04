@@ -37,8 +37,20 @@ export default function Landing() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '50% 0%', transform: 'scale(1.4)', transformOrigin: 'left top' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-void/70 via-void/40 to-void/95" />
-        <div className="absolute inset-0 bg-gradient-to-r from-steel/95 via-steel/75 to-steel/25" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(10,10,10,0.65) 0%, rgba(10,10,10,0.35) 35%, rgba(10,10,10,0.92) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to right, rgba(15,15,15,0.92) 0%, rgba(40,40,40,0.7) 45%, rgba(40,40,40,0.25) 100%)',
+          }}
+        />
 
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-center px-5 sm:px-8">
           <motion.div
