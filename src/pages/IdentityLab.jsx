@@ -22,6 +22,7 @@ export default function IdentityLab() {
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(0);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -52,6 +53,22 @@ export default function IdentityLab() {
   }
 
   const canCustomize = !!jersey.enable_customization;
+  const presets = jersey.images && jersey.images.length > 0
+    ? jersey.images
+    : [{ url: jersey.front_image, name: '', number: '' }];
+  const presetLabel = (img, index) => {
+    if (img.name) return img.name;
+    if (img.number) return img.number;
+    return `PRESET ${index + 1}`;
+  };
+  const selectedImage = presets[selectedPreset]?.url || jersey.front_image;
+  const selectPreset = (index) => {
+    setSelectedPreset(index);
+    if (canCustomize) {
+      setName(presets[index].name || '');
+      setNumber(presets[index].number || '');
+    }
+  };
 
   const handleAdd = () => {
     addItem({
@@ -59,8 +76,8 @@ export default function IdentityLab() {
       name: jersey.name,
       team: jersey.team,
       price: jersey.price,
-      front_image: jersey.front_image,
-      back_image: jersey.back_image,
+      front_image: selectedImage,
+      back_image: selectedImage,
       static_display: jersey.static_display,
       customName: canCustomize ? name.toUpperCase() : '',
       customNumber: canCustomize ? number : '',
@@ -94,7 +111,7 @@ export default function IdentityLab() {
             <div className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
               {jersey.static_display ? (
                 <StaticNameOverlay
-                  image={jersey.front_image}
+                  image={selectedImage}
                   customName={canCustomize ? name.toUpperCase() : ''}
                   customNumber={canCustomize ? number : ''}
                   showPlaceholder={canCustomize}
@@ -102,7 +119,7 @@ export default function IdentityLab() {
                 />
               ) : (
                 <IdentityNameOverlay
-                  back_image={jersey.back_image}
+                  back_image={selectedImage}
                   customName={canCustomize ? name.toUpperCase() : ''}
                   customNumber={canCustomize ? number : ''}
                   fontId={fontId}
@@ -151,6 +168,25 @@ export default function IdentityLab() {
               ))}
             </div>
           </div>
+
+          {canCustomize && presets.length > 1 && (
+            <div>
+              <div className="mono-label text-fog/50 mb-2">PRESETS</div>
+              <div className="flex flex-wrap gap-2">
+                {presets.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectPreset(i)}
+                    className={`mono-label px-3 py-2 border rounded-[6px] transition-colors ${
+                      selectedPreset === i ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
+                    }`}
+                  >
+                    {presetLabel(img, i)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!canCustomize ? (
             <div className="border border-steel rounded-[6px] p-5">

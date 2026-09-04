@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
-import { Upload, Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 
-// Multi-image editor: the first image is mandatory (name optional, defaults
-// to "Base" on save). Additional images require a name. Images are not
-// labeled as front/back — they show the product from whichever angle.
+// Multi-image editor: each image has optional name and number fields.
+// Both are optional for all images. The buy screen uses the name/number
+// as preset labels (name takes priority, then number, then a placeholder).
 export default function ImagesEditor({ images, onChange }) {
   const [uploading, setUploading] = useState(false);
 
@@ -13,7 +13,7 @@ export default function ImagesEditor({ images, onChange }) {
     setUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      onChange([...images, { url: file_url, name: '' }]);
+      onChange([...images, { url: file_url, name: '', number: '' }]);
     } catch {
       alert('Upload failed.');
     } finally {
@@ -21,13 +21,15 @@ export default function ImagesEditor({ images, onChange }) {
     }
   };
 
-  const updateName = (index, value) => {
-    onChange(images.map((img, i) => (i === index ? { ...img, name: value } : img)));
+  const updateField = (index, field, value) => {
+    onChange(images.map((img, i) => (i === index ? { ...img, [field]: value } : img)));
   };
 
   const removeImage = (index) => {
     onChange(images.filter((_, i) => i !== index));
   };
+
+  const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
 
   return (
     <div className="space-y-3">
@@ -36,18 +38,26 @@ export default function ImagesEditor({ images, onChange }) {
           <div className="w-20 h-24 bg-steel shrink-0 overflow-hidden rounded-[4px]">
             <Image src={img.url} alt="" fittingType="fill" className="w-full h-full" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 space-y-2">
             <input
               type="text"
               value={img.name || ''}
-              onChange={(e) => updateName(index, e.target.value)}
-              placeholder={index === 0 ? 'Base (optional)' : 'Name (required)'}
-              className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none"
+              onChange={(e) => updateField(index, 'name', e.target.value)}
+              placeholder="Name (optional)"
+              className={inputCls}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              value={img.number || ''}
+              onChange={(e) => updateField(index, 'number', e.target.value.replace(/\D/g, '').slice(0, 3))}
+              placeholder="Number (optional)"
+              className={inputCls}
             />
             <button
               type="button"
               onClick={() => removeImage(index)}
-              className="mt-2 mono-label text-fog/40 hover:text-kinetic inline-flex items-center gap-1 transition-colors"
+              className="mono-label text-fog/40 hover:text-kinetic inline-flex items-center gap-1 transition-colors"
             >
               <Trash2 size={12} /> REMOVE
             </button>

@@ -10,8 +10,8 @@ import ImagesEditor from '@/components/admin/ImagesEditor';
 const EMPTY_FORM = {
   name: '', team: '', category: 'Jersey', fitting: 'Regular', price: '',
   description: '', images: [],
-  enable_customization: true,
-  text_color: '#F5F5F7', text_outline: true, text_outline_color: '#0A0A0A',
+  enable_customization: false,
+  text_color: '#F5F5F7', text_outline: true, text_outline_color: '#0A0A0A', text_outline_thickness: 1.4,
   arch_amount: 0, rise_angle: 0, flag_amount: 0,
   name_vertical_pos: 25, number_vertical_pos: 50,
   custom_font_url: '', custom_font_name: '',
@@ -19,10 +19,10 @@ const EMPTY_FORM = {
   available_from: '', available_until: '',
 };
 
-function Toggle({ checked, onChange, label }) {
+function Toggle({ checked, onChange, label, disabled = false }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)}
-      className="flex items-center justify-between w-full border border-steel rounded-[6px] px-4 py-3 hover:border-fog/40 transition-colors">
+    <button type="button" onClick={() => !disabled && onChange(!checked)} disabled={disabled}
+      className={`flex items-center justify-between w-full border border-steel rounded-[6px] px-4 py-3 transition-colors ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:border-fog/40'}`}>
       <span className="mono-label text-fog/70">{label}</span>
       <span className={`relative w-11 h-6 transition-colors rounded-[6px] ${checked ? 'bg-kinetic' : 'bg-steel'}`}>
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-void rounded-[4px] transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -80,7 +80,7 @@ export default function ProductManager({ onSaved }) {
     setEditingId(j.id);
     const images = j.images && j.images.length > 0
       ? j.images
-      : [{ url: j.front_image, name: 'Base' }, ...(j.back_image && j.back_image !== j.front_image ? [{ url: j.back_image, name: '' }] : [])];
+      : [{ url: j.front_image, name: '', number: '' }, ...(j.back_image && j.back_image !== j.front_image ? [{ url: j.back_image, name: '', number: '' }] : [])];
     setForm({ ...EMPTY_FORM, ...j, images });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -107,17 +107,12 @@ export default function ProductManager({ onSaved }) {
       alert('Name, team, price, and at least 1 image are required.');
       return;
     }
-    for (let i = 1; i < form.images.length; i++) {
-      if (!form.images[i].name.trim()) {
-        alert(`Image ${i + 1} requires a name.`);
-        return;
-      }
-    }
     setSaving(true);
     try {
-      const images = form.images.map((img, i) => ({
-        ...img,
-        name: i === 0 ? (img.name.trim() || 'Base') : img.name.trim(),
+      const images = form.images.map((img) => ({
+        url: img.url,
+        name: img.name?.trim() || '',
+        number: img.number?.trim() || '',
       }));
       const front_image = images[0].url;
       const back_image = images[1]?.url || images[0].url;
@@ -187,50 +182,64 @@ export default function ProductManager({ onSaved }) {
           </Section>
 
           <Section title="IDENTITY LAB">
-            <Toggle checked={form.enable_customization} onChange={(v) => setField('enable_customization', v)} label="ENABLE IDENTITY LAB" />
+            <Toggle
+              checked={form.enable_customization}
+              onChange={(v) => {
+                if (v && form.images.length === 0) return;
+                setField('enable_customization', v);
+              }}
+              disabled={form.images.length === 0}
+              label="ENABLE IDENTITY LAB"
+            />
+            {form.images.length === 0 && (
+              <p className="mono-label text-fog/30">Upload at least 1 image to enable Identity Lab.</p>
+            )}
           </Section>
 
+          {/* Designer — combined live preview + text properties */}
           {form.enable_customization && (
-            <>
-              {/* Live preview right above Text Properties */}
-              <div className="border border-steel rounded-[6px] overflow-hidden">
-                <div className="mono-label text-fog/50 px-4 py-2 border-b border-steel">LIVE TEXT PREVIEW</div>
-                <div className="bg-void p-4">
+            <div className="border border-steel rounded-[6px] overflow-hidden">
+              <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
+              <div className="grid lg:grid-cols-2">
+                {/* Preview canvas */}
+                <div className="bg-void p-5 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
-                    text={form.name || 'NEMESIS'}
+                    imageUrl={form.images[0]?.url}
                     archAmount={form.arch_amount}
                     riseAngle={form.rise_angle}
                     flagAmount={form.flag_amount}
                     color={form.text_color}
                     outline={form.text_outline}
                     outlineColor={form.text_outline_color}
+                    outlineThickness={form.text_outline_thickness}
                     nameY={form.name_vertical_pos}
                     numberY={form.number_vertical_pos}
                     customFontUrl={form.custom_font_url}
                     customFontName={form.custom_font_name}
                   />
                 </div>
-              </div>
-
-              <Section title="TEXT PROPERTIES">
-                <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
-                  onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div><label className={labelCls}>TEXT COLOR</label>
-                    <input type="color" value={form.text_color} onChange={(e) => setField('text_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
+                {/* Text properties controls */}
+                <div className="p-5 space-y-4">
+                  <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
+                    onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div><label className={labelCls}>TEXT COLOR</label>
+                      <input type="color" value={form.text_color} onChange={(e) => setField('text_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
+                    </div>
+                    <div><label className={labelCls}>OUTLINE COLOR</label>
+                      <input type="color" value={form.text_outline_color} onChange={(e) => setField('text_outline_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
+                    </div>
                   </div>
-                  <div><label className={labelCls}>OUTLINE COLOR</label>
-                    <input type="color" value={form.text_outline_color} onChange={(e) => setField('text_outline_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
-                  </div>
+                  <Toggle checked={form.text_outline} onChange={(v) => setField('text_outline', v)} label="ENABLE TEXT OUTLINE" />
+                  <Slider label="OUTLINE THICKNESS" value={form.text_outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setField('text_outline_thickness', v)} />
+                  <Slider label="ARCH" value={form.arch_amount} min={0} max={100} onChange={(v) => setField('arch_amount', v)} />
+                  <Slider label="RISE" value={form.rise_angle} min={-45} max={45} onChange={(v) => setField('rise_angle', v)} />
+                  <Slider label="FLAG" value={form.flag_amount} min={0} max={100} onChange={(v) => setField('flag_amount', v)} />
+                  <Slider label="NAME VERTICAL POSITION" value={form.name_vertical_pos} min={0} max={100} onChange={(v) => setField('name_vertical_pos', v)} />
+                  <Slider label="NUMBER VERTICAL POSITION" value={form.number_vertical_pos} min={0} max={100} onChange={(v) => setField('number_vertical_pos', v)} />
                 </div>
-                <Toggle checked={form.text_outline} onChange={(v) => setField('text_outline', v)} label="ENABLE TEXT OUTLINE" />
-                <Slider label="ARCH" value={form.arch_amount} min={0} max={100} onChange={(v) => setField('arch_amount', v)} />
-                <Slider label="RISE" value={form.rise_angle} min={-45} max={45} onChange={(v) => setField('rise_angle', v)} />
-                <Slider label="FLAG" value={form.flag_amount} min={0} max={100} onChange={(v) => setField('flag_amount', v)} />
-                <Slider label="NAME VERTICAL POSITION" value={form.name_vertical_pos} min={0} max={100} onChange={(v) => setField('name_vertical_pos', v)} />
-                <Slider label="NUMBER VERTICAL POSITION" value={form.number_vertical_pos} min={0} max={100} onChange={(v) => setField('number_vertical_pos', v)} />
-              </Section>
-            </>
+              </div>
+            </div>
           )}
 
           <Section title="ACCESS & PUBLISHING">

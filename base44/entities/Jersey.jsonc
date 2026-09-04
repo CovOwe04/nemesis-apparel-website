@@ -45,6 +45,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "number": {
+            "type": "string"
           }
         }
       },
@@ -97,6 +100,11 @@
       "type": "string",
       "default": "#0A0A0A",
       "title": "Text Outline Color"
+    },
+    "text_outline_thickness": {
+      "type": "number",
+      "default": 1.4,
+      "title": "Text Outline Thickness"
     },
     "arch_amount": {
       "type": "number",
