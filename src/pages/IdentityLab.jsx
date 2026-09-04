@@ -89,7 +89,7 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-[4/3] bg-black' : 'aspect-[3/4] bg-steel'}`}>
+            <div className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
               {jersey.static_display ? (
                 <StaticNameOverlay
                   image={jersey.front_image}
