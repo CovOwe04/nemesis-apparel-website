@@ -29,7 +29,7 @@ export default function Cart() {
         </p>
         <Link
           to="/arsenal"
-          className="mt-8 inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
+          className="btn-solid mt-8 gap-2 px-6 py-3 font-heading uppercase"
         >
           Back to arsenal <ArrowRight size={16} />
         </Link>
@@ -45,7 +45,7 @@ export default function Cart() {
         <p className="mt-3 text-fog/60">No jerseys queued. Hit the arsenal and build your identity.</p>
         <Link
           to="/arsenal"
-          className="mt-8 inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors"
+          className="btn-solid mt-8 gap-2 px-6 py-3 font-heading uppercase"
         >
           Enter arsenal <ArrowRight size={16} />
         </Link>
@@ -78,7 +78,7 @@ export default function Cart() {
               className="flex gap-4 sm:gap-6 border border-steel p-4"
             >
               {item.isCustomDesign ? (
-                <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center">
+                <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center rounded-[12px]">
                   <span className="mono-label text-fog/40 text-center px-1 leading-tight">
                     CUSTOM<br />DESIGN
                   </span>
@@ -92,7 +92,7 @@ export default function Cart() {
                     size={item.size}
                     curve={item.curve}
                     height={item.height}
-                    className="w-24 h-32 sm:w-28 sm:h-36 bg-steel"
+                    className="w-24 h-32 sm:w-28 sm:h-36 bg-steel rounded-[12px] overflow-hidden"
                   />
                 </Link>
               )}
@@ -134,7 +134,7 @@ export default function Cart() {
                 )}
 
                 <div className="mt-auto pt-3 flex items-center justify-between">
-                  <div className="flex items-center border border-steel">
+                  <div className="flex items-center border border-steel rounded-[6px]">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="p-2 text-fog hover:text-kinetic transition-colors"
@@ -177,7 +177,7 @@ export default function Cart() {
             </div>
             <button
               onClick={checkout}
-              className="w-full inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
+              className="btn-solid w-full gap-2 px-6 py-4 font-heading uppercase"
             >
               Place order <ArrowRight size={18} />
             </button>

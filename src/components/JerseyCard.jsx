@@ -28,7 +28,7 @@ export default function JerseyCard({ jersey }) {
     <div className="group flex flex-col">
       <Link
         to={`/lab/${jersey.id}`}
-        className="relative block aspect-[3/4] overflow-hidden bg-steel"
+        className="relative block aspect-[3/4] overflow-hidden bg-steel rounded-[12px]"
       >
         <Image
           src={jersey.front_image}
@@ -45,7 +45,7 @@ export default function JerseyCard({ jersey }) {
         <div className="absolute top-3 left-3 mono-label text-fog/80 bg-void/60 px-2 py-1">
           {jersey.team}
         </div>
-        <div className="absolute top-3 right-3 bg-kinetic text-void font-heading text-sm px-2 py-1">
+        <div className="absolute top-3 right-3 bg-kinetic text-void font-heading text-sm px-2 py-1 rounded-[6px]">
           ${jersey.price}
         </div>
       </Link>
@@ -59,7 +59,7 @@ export default function JerseyCard({ jersey }) {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={quickAdd}
-            className="border border-steel p-2 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
+            className="btn-solid p-2"
             aria-label={`Quick add ${jersey.name} to cart`}
             title="Quick add"
           >
@@ -67,7 +67,7 @@ export default function JerseyCard({ jersey }) {
           </button>
           <Link
             to={`/lab/${jersey.id}`}
-            className="mono-label border border-steel px-3 py-2 text-fog hover:border-kinetic hover:text-kinetic transition-colors"
+            className="btn-solid mono-label px-3 py-2"
           >
             {jersey.enable_customization ? 'ADD NAME' : 'VIEW'}
           </Link>

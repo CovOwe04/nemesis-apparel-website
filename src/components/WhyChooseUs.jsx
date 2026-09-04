@@ -40,7 +40,7 @@ export default function WhyChooseUs() {
           <div className="mt-8">
             <Link
               to="/arsenal"
-              className="inline-flex items-center border border-fog px-7 py-4 font-heading uppercase text-fog hover:bg-fog hover:text-void transition-colors"
+              className="btn-solid px-7 py-4 font-heading uppercase"
             >
               Shop now
             </Link>
@@ -48,7 +48,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* IMAGE */}
-        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel order-1 lg:order-2">
+        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel rounded-[12px] order-1 lg:order-2">
           <img
             src={SECTION_IMAGE}
             alt="Athletes celebrating in custom Nemesis jerseys"

@@ -140,6 +140,20 @@
   }
 }
 
+@layer components {
+  .btn-solid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FFFFFF;
+    color: #0A0A0A;
+    border-radius: 6px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-solid:hover { background-color: #FF1F3D; color: #FFFFFF; }
+  .btn-solid:active { background-color: #B3001E; color: #FFFFFF; }
+}
+
 @layer utilities {
   .font-heading { font-family: 'Jersey M54', 'Archivo Black', 'Space Grotesk', system-ui, sans-serif; }
   .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }

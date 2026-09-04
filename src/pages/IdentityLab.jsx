@@ -87,7 +87,7 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div className="relative aspect-[3/4] overflow-hidden bg-steel">
+            <div className="relative aspect-[3/4] overflow-hidden bg-steel rounded-[12px]">
               <IdentityNameOverlay
                 back_image={jersey.back_image}
                 customName={canCustomize ? name.toUpperCase() : ''}
@@ -127,7 +127,7 @@ export default function IdentityLab() {
                 <button
                   key={s}
                   onClick={() => setShirtSize(s)}
-                  className={`py-3 text-center font-heading text-sm border transition-colors ${
+                  className={`py-3 text-center font-heading text-sm border rounded-[6px] transition-colors ${
                     shirtSize === s
                       ? 'border-kinetic text-kinetic bg-kinetic/5'
                       : 'border-steel text-fog/70 hover:border-fog/40'
@@ -176,7 +176,7 @@ export default function IdentityLab() {
                       key={f.id}
                       onClick={() => setFontId(f.id)}
                       style={{ fontFamily: f.family }}
-                      className={`py-4 text-center uppercase tracking-wide border transition-colors ${
+                      className={`py-4 text-center uppercase tracking-wide border rounded-[6px] transition-colors ${
                         fontId === f.id
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
                           : 'border-steel text-fog/70 hover:border-fog/40'
@@ -200,7 +200,7 @@ export default function IdentityLab() {
                     <button
                       key={opt.label}
                       onClick={() => setSize(opt.value)}
-                      className={`py-3 text-center mono-label border transition-colors ${
+                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
                         size === opt.value
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
                           : 'border-steel text-fog/70 hover:border-fog/40'
@@ -224,7 +224,7 @@ export default function IdentityLab() {
                     <button
                       key={opt.label}
                       onClick={() => setCurve(opt.value)}
-                      className={`py-3 text-center mono-label border transition-colors ${
+                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
                         curve === opt.value
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
                           : 'border-steel text-fog/70 hover:border-fog/40'
@@ -248,7 +248,7 @@ export default function IdentityLab() {
                     <button
                       key={opt.label}
                       onClick={() => setHeight(opt.value)}
-                      className={`py-3 text-center mono-label border transition-colors ${
+                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
                         height === opt.value
                           ? 'border-kinetic text-kinetic bg-kinetic/5'
                           : 'border-steel text-fog/70 hover:border-fog/40'
@@ -273,10 +273,10 @@ export default function IdentityLab() {
 
           {/* QTY + ADD */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center border border-steel">
+            <div className="flex items-center border border-steel rounded-[6px]">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="p-3 text-fog hover:text-kinetic transition-colors"
+                className="p-3 text-fog hover:text-kinetic transition-colors rounded-[6px]"
                 aria-label="Decrease quantity"
               >
                 <Minus size={16} />
@@ -284,7 +284,7 @@ export default function IdentityLab() {
               <span className="w-10 text-center font-heading text-fog">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="p-3 text-fog hover:text-kinetic transition-colors"
+                className="p-3 text-fog hover:text-kinetic transition-colors rounded-[6px]"
                 aria-label="Increase quantity"
               >
                 <Plus size={16} />
@@ -293,7 +293,7 @@ export default function IdentityLab() {
             <button
               onClick={handleAdd}
               disabled={added}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-kinetic px-6 py-4 font-heading uppercase text-void hover:bg-fog transition-colors disabled:opacity-70"
+              className="btn-solid flex-1 gap-2 px-6 py-4 font-heading uppercase disabled:opacity-70"
             >
               {added ? (
                 <>

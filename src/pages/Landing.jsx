@@ -80,7 +80,7 @@ export default function Landing() {
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 to="/arsenal"
-                className="group inline-flex items-center gap-3 bg-kinetic px-7 py-4 font-heading uppercase text-void hover:bg-fog transition-colors"
+                className="btn-solid group gap-3 px-7 py-4 font-heading uppercase"
               >
                 Enter the Arsenal
                 <ArrowRight
@@ -162,7 +162,7 @@ export default function Landing() {
           </h2>
           <Link
             to="/design-lab"
-            className="inline-flex items-center gap-3 bg-void px-7 py-4 font-heading uppercase text-fog hover:bg-steel transition-colors"
+            className="btn-solid gap-3 px-7 py-4 font-heading uppercase"
           >
             Build your jersey <ArrowRight size={18} />
           </Link>

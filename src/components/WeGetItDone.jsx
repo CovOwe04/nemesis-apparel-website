@@ -8,7 +8,7 @@ export default function WeGetItDone() {
     <section className="bg-black">
       <div className="mx-auto max-w-7xl grid lg:grid-cols-2 pb-12">
         {/* IMAGE */}
-        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel">
+        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel rounded-[12px]">
           <img
             src={SECTION_IMAGE}
             alt="Athlete wearing a custom Nemesis jersey"
@@ -42,7 +42,7 @@ export default function WeGetItDone() {
           <div className="mt-10">
             <Link
               to="/design-lab"
-              className="inline-flex items-center border border-fog px-7 py-4 font-heading uppercase text-fog hover:bg-fog hover:text-void transition-colors"
+              className="btn-solid px-7 py-4 font-heading uppercase"
             >
               Create your own
             </Link>

@@ -12,7 +12,7 @@ export default function CustomerOpinion() {
     <section className="bg-void">
       <div className="mx-auto max-w-7xl grid lg:grid-cols-2 py-12">
         {/* IMAGE */}
-        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel">
+        <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel rounded-[12px]">
           <img
             src={SECTION_IMAGE}
             alt="Team posing in custom Nemesis jerseys"

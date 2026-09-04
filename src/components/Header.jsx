@@ -73,19 +73,19 @@ export default function Header() {
           <div className="flex items-center gap-2">
             <Link
               to="/cart"
-              className="relative flex items-center gap-2 border border-steel px-3 py-2 hover:border-kinetic transition-colors"
+              className="btn-solid relative gap-2 px-3 py-2"
               aria-label={`Cart, ${count} items`}
             >
-              <ShoppingBag size={18} className="text-fog" />
-              <span className="hidden sm:inline mono-label text-fog/80">CART</span>
+              <ShoppingBag size={18} />
+              <span className="hidden sm:inline mono-label">CART</span>
               {count > 0 && (
-                <span className="absolute -top-2 -right-2 bg-kinetic text-void font-heading text-[0.65rem] leading-none w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-kinetic text-void font-heading text-[0.65rem] leading-none w-5 h-5 flex items-center justify-center rounded-[6px]">
                   {count}
                 </span>
               )}
             </Link>
             <button
-              className="md:hidden p-2 text-fog hover:text-kinetic transition-colors"
+              className="md:hidden p-2 text-fog hover:text-kinetic transition-colors rounded-[6px]"
               onClick={() => setOpen((o) => !o)}
               aria-label="Toggle menu"
             >
