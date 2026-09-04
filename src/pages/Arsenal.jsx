@@ -44,14 +44,14 @@ export default function Arsenal() {
       {/* Search bar */}
       <div className="sticky top-16 z-40 bg-void/95 backdrop-blur-sm border-b border-steel">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4">
-          <div className="flex items-center gap-3 bg-steel/40 border border-steel rounded-[6px] px-4 py-3">
-            <Search size={18} className="text-fog/50 shrink-0" />
+          <div className="flex items-center gap-3 bg-white border border-steel rounded-[6px] px-4 py-3">
+            <Search size={18} className="text-black/50 shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search jerseys by name or team"
-              className="flex-1 bg-transparent text-fog placeholder:text-fog/40 font-display uppercase tracking-wider text-sm outline-none"
+              className="flex-1 bg-transparent text-black placeholder:text-black/40 font-display uppercase tracking-wider text-sm outline-none"
             />
           </div>
         </div>
