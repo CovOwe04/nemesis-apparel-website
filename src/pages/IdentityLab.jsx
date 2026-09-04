@@ -158,7 +158,7 @@ export default function IdentityLab() {
                   value={name}
                   onChange={(e) => setName(e.target.value.slice(0, 20))}
                   placeholder="ENTER NAME"
-                  className="w-full bg-transparent border border-steel px-4 py-3 font-display text-lg uppercase tracking-wider text-fog placeholder:text-fog/30 focus:border-kinetic outline-none transition-colors"
+                  className="w-full bg-white text-black border border-steel px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
                 />
                 <div className="mono-label text-fog/30 mt-1 text-right">
                   {name.length}/20
