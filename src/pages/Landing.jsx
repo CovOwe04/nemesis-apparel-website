@@ -147,6 +147,8 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="bg-kinetic py-8 mt-5"/>
+
       {/* WHY CHOOSE US */}
       <WhyChooseUs />
 
