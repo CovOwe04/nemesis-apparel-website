@@ -103,7 +103,7 @@ export default function Landing() {
 
       {/* FEATURED ARSENAL */}
       <section className=" bg-void">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-16">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12">
           <div className="flex items-end justify-between gap-6 mb-10">
             <div>
               <div className="mono-label text-kinetic mb-3">
