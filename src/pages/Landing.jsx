@@ -100,7 +100,7 @@ export default function Landing() {
       {/* WE GET IT DONE */}
       <WeGetItDone />
 
-      <section className="bg-kinetic py-8 mt-5"/>
+      <section className="bg-kinetic py-8"/>
 
       {/* FEATURED ARSENAL */}
       <section className=" bg-void">
