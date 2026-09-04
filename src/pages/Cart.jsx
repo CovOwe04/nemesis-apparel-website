@@ -89,9 +89,6 @@ export default function Cart() {
                   <StaticNameOverlay
                     image={item.front_image}
                     customName={item.customName}
-                    posX={item.staticX}
-                    posY={item.staticY}
-                    baseSize={item.staticSize}
                     className="w-24 h-32 sm:w-28 sm:h-36 rounded-[12px] overflow-hidden"
                   />
                 </Link>

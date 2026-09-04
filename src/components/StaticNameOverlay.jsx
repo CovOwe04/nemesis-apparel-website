@@ -8,14 +8,14 @@ export default function StaticNameOverlay({
   image,
   customName,
   showPlaceholder = false,
-  posX = 25,
-  posY = 42,
+  posX = 30,
+  posY = 39,
   baseSize: baseSizeOverride,
   className = '',
 }) {
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
   const len = displayName.length;
-  const baseSize = baseSizeOverride ?? 6;
+  const baseSize = baseSizeOverride ?? 3;
   const fontSizeCqw = len > 10 ? Math.max(3, baseSize - (len - 10) * 0.25) : baseSize;
 
   return (
