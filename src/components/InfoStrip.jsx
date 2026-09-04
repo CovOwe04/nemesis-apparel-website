@@ -21,7 +21,7 @@ const COLUMNS = [
 export default function InfoStrip() {
   return (
     <section className="bg-black border-t border-steel">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10 sm:py-16">
         <div className="flex flex-col sm:flex-row sm:items-stretch">
           {COLUMNS.map((col, i) => {
             const Icon = col.icon;
