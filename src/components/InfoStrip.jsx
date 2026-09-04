@@ -4,7 +4,7 @@ const COLUMNS = [
   {
     icon: MapPin,
     heading: 'JERSEYS',
-    lines: ['Discover the future of Roundnet Apparel', 'No minimums'],
+    lines: ['Discover the future of Jersey Apparel', 'No minimums'],
   },
   {
     icon: Lock,
