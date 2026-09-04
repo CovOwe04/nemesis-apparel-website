@@ -67,11 +67,18 @@ export default function Landing() {
             <div className="mono-label text-kinetic mb-5 flex items-center gap-3">
               <span className="h-px w-10 bg-kinetic" /> JERSEYS DON'T HAVE TO BE A HEADACHE
             </div>
-            <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] text-fog tracking-tight">
-              For players
-              <br />
-              <span className="text-kinetic">beginner</span> to pro
-            </h1>
+            <div className="flex items-center gap-5 sm:gap-8">
+              <img
+                src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/219d97238_Asset73x.png"
+                alt="Nemesis Apparel"
+                className="w-24 sm:w-36 lg:w-44 shrink-0"
+              />
+              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] text-fog tracking-tight">
+                For players
+                <br />
+                <span className="text-kinetic">beginner</span> to pro
+              </h1>
+            </div>
             <p className="mt-6 max-w-xl text-fog/70 text-lg leading-relaxed">
               Nemesis Apparel builds jerseys for the modern competitor —
               breathable, intimidating, and built to move. Browse the arsenal, then
