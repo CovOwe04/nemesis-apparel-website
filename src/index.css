@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&family=Anton&display=swap');
+@import url('https://fonts.cdnfonts.com/css/jersey-m54');
 
 @tailwind base;
 @tailwind components;
@@ -31,7 +32,7 @@
     --chart-4: 0 0% 18%;
     --chart-5: 352 100% 56%;
     --radius: 0.125rem;
-    --font-heading: 'Archivo Black', 'Space Grotesk', system-ui, sans-serif;
+    --font-heading: 'Jersey M54', 'Archivo Black', 'Space Grotesk', system-ui, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
     --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -140,7 +141,7 @@
 }
 
 @layer utilities {
-  .font-heading { font-family: 'Archivo Black', 'Space Grotesk', system-ui, sans-serif; }
+  .font-heading { font-family: 'Jersey M54', 'Archivo Black', 'Space Grotesk', system-ui, sans-serif; }
   .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
   .text-kinetic { color: #FF1F3D; }
   .bg-kinetic { background-color: #FF1F3D; }
