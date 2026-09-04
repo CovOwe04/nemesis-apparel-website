@@ -5,15 +5,12 @@ import { useCart } from '@/lib/CartContext';
 
 function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2.5 group" aria-label="Nemesis Apparel home">
-      <svg width="26" height="26" viewBox="0 0 28 28" className="shrink-0">
-        <path d="M14 1 L27 14 L14 27 L1 14 Z" fill="#FF1F3D" />
-        <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0A0A0A" />
-      </svg>
-      <div className="leading-none">
-        <div className="font-heading text-lg tracking-tight text-fog">NEMESIS</div>
-        <div className="mono-label text-kinetic" style={{ fontSize: '0.55rem' }}>APPAREL</div>
-      </div>
+    <Link to="/" className="group" aria-label="Nemesis Apparel home">
+      <img
+        src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/4872430e2_Asset43x.png"
+        alt="Nemesis Apparel"
+        className="h-9 w-auto"
+      />
     </Link>
   );
 }

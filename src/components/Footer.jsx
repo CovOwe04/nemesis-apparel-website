@@ -1,7 +1,7 @@
 import { Instagram } from 'lucide-react';
 
 const LOGO_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/3f9aac29e_Asset53x.png';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/39e4667d3_Asset53x.png';
 
 export default function Footer() {
   return (
