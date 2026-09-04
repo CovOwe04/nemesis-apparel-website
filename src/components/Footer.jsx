@@ -5,7 +5,17 @@ const LOGO_URL =
 
 export default function Footer() {
   return (
-    <footer className="bg-black flex flex-col items-center text-center px-5 py-10">
+    <footer className="relative bg-black flex flex-col items-center text-center px-5 py-10 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png)`,
+          backgroundSize: 'auto',
+          backgroundRepeat: 'repeat',
+          opacity: 0.5,
+        }}
+      />
+      <div className="relative z-10 flex flex-col items-center">
       <img
         src={LOGO_URL}
         alt="Nemesis Apparel"
@@ -26,6 +36,7 @@ export default function Footer() {
       <p className="mt-5 text-fog/60 text-xs">
         ©2025 Nemesis Apparel Limited
       </p>
+      </div>
     </footer>
   );
 }
