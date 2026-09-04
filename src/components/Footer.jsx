@@ -1,7 +1,10 @@
 import { Instagram } from 'lucide-react';
+import { Image } from '@/components/ui/image';
 
 const LOGO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/39e4667d3_Asset53x.png';
+const PATTERN_URL =
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png';
 
 export default function Footer() {
   return (
@@ -9,14 +12,14 @@ export default function Footer() {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url(https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png)`,
+          backgroundImage: `url(${PATTERN_URL}/v1/fit/w_200,h_200,q_80,usm_0.66_1.00_0.01,enc_webp,quality_auto/8b81f75ac_Asset103x.webp)`,
           backgroundSize: '1250%',
           backgroundRepeat: 'repeat',
           opacity: 0.5,
         }}
       />
       <div className="relative z-10 flex flex-col items-center">
-      <img
+      <Image
         src={LOGO_URL}
         alt="Nemesis Apparel"
         className="h-16 w-auto mb-4"
