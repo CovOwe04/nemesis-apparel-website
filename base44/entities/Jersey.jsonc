@@ -36,6 +36,11 @@
       "default": true,
       "title": "Enable Identity Lab"
     },
+    "static_display": {
+      "type": "boolean",
+      "default": false,
+      "title": "Static Display (No Flip)"
+    },
     "description": {
       "type": "string",
       "title": "Description"

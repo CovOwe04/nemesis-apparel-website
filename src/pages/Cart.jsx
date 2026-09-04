@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
+import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 
@@ -83,6 +84,14 @@ export default function Cart() {
                     CUSTOM<br />DESIGN
                   </span>
                 </div>
+              ) : item.static_display ? (
+                <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
+                  <StaticNameOverlay
+                    image={item.front_image}
+                    customName={item.customName}
+                    className="w-24 h-32 sm:w-28 sm:h-36 rounded-[12px] overflow-hidden"
+                  />
+                </Link>
               ) : (
                 <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
                   <IdentityNameOverlay

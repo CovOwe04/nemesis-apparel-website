@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
+import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check } from 'lucide-react';
 
@@ -59,6 +60,7 @@ export default function IdentityLab() {
       price: jersey.price,
       front_image: jersey.front_image,
       back_image: jersey.back_image,
+      static_display: jersey.static_display,
       customName: canCustomize ? name.toUpperCase() : '',
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
@@ -87,21 +89,30 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div className="relative aspect-[3/4] overflow-hidden bg-steel rounded-[12px]">
-              <IdentityNameOverlay
-                back_image={jersey.back_image}
-                customName={canCustomize ? name.toUpperCase() : ''}
-                fontId={fontId}
-                size={size}
-                curve={curve}
-                height={height}
-                showPlaceholder={canCustomize}
-                className="w-full h-full"
-              />
+            <div className={`relative aspect-[3/4] overflow-hidden rounded-[12px] ${jersey.static_display ? 'bg-black' : 'bg-steel'}`}>
+              {jersey.static_display ? (
+                <StaticNameOverlay
+                  image={jersey.front_image}
+                  customName={canCustomize ? name.toUpperCase() : ''}
+                  showPlaceholder={canCustomize}
+                  className="w-full h-full"
+                />
+              ) : (
+                <IdentityNameOverlay
+                  back_image={jersey.back_image}
+                  customName={canCustomize ? name.toUpperCase() : ''}
+                  fontId={fontId}
+                  size={size}
+                  curve={curve}
+                  height={height}
+                  showPlaceholder={canCustomize}
+                  className="w-full h-full"
+                />
+              )}
             </div>
           </div>
           <div className="mt-4 text-center mono-label text-fog/40">
-            {canCustomize ? 'LIVE PREVIEW — UPPER BACK' : 'CUSTOMIZATION DISABLED FOR THIS KIT'}
+            {canCustomize ? (jersey.static_display ? 'LIVE PREVIEW — LEFT SIDE' : 'LIVE PREVIEW — UPPER BACK') : 'CUSTOMIZATION DISABLED FOR THIS KIT'}
           </div>
         </div>
 

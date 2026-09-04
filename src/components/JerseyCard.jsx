@@ -23,6 +23,7 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
       price: jersey.price,
       front_image: jersey.front_image,
       back_image: jersey.back_image,
+      static_display: jersey.static_display,
       customName: '',
       font: '',
       size: 0,
@@ -35,20 +36,22 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
     <div className="group flex flex-col">
       <Link
         to={`/lab/${jersey.id}`}
-        className="relative block aspect-[3/4] overflow-hidden bg-steel rounded-[12px]"
+        className={`relative block aspect-[3/4] overflow-hidden rounded-[12px] ${jersey.static_display ? 'bg-black' : 'bg-steel'}`}
       >
         <Image
           src={jersey.front_image}
           alt={`${jersey.name} front`}
-          fittingType="fill"
-          className="w-full h-full transition-opacity duration-300 group-hover:opacity-0"
+          fittingType={jersey.static_display ? 'fit' : 'fill'}
+          className={`w-full h-full ${jersey.static_display ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}`}
         />
-        <Image
-          src={jersey.back_image}
-          alt={`${jersey.name} back`}
-          fittingType="fill"
-          className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        />
+        {!jersey.static_display && (
+          <Image
+            src={jersey.back_image}
+            alt={`${jersey.name} back`}
+            fittingType="fill"
+            className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          />
+        )}
         <div className="absolute top-3 left-3 mono-label text-fog/80 bg-void/60 px-2 py-1">
           {jersey.team}
         </div>
