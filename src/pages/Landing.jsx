@@ -69,7 +69,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-5 sm:gap-8">
               <img
-                src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/219d97238_Asset73x.png"
+                src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/52025014f_Asset93x.png"
                 alt="Nemesis Apparel"
                 className="w-24 sm:w-36 lg:w-44 shrink-0"
               />
