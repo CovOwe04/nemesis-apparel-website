@@ -96,17 +96,19 @@ export default function Landing() {
       {/* INFO STRIP */}
       <InfoStrip />
 
-      <section className="border-t border-steel bg-kinetic py-8 mb-5">
+      <section className="bg-kinetic py-8 mb-5">
       </section>
       {/* WE GET IT DONE */}
       <WeGetItDone />
 
       {/* FEATURED ARSENAL */}
-      <section className="border-t border-steel bg-void">
+      <section className=" bg-void">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-20 sm:py-28">
           <div className="flex items-end justify-between gap-6 mb-10">
             <div>
-              <div className="mono-label text-kinetic mb-3">02 — ARSENAL</div>
+              <div className="mono-label text-kinetic mb-3">
+                <span className="h-px w-10 bg-kinetic" /> ARSENAL
+              </div>
               <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
                 Featured jerseys
               </h2>
