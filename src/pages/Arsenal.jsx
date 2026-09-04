@@ -45,7 +45,7 @@ export default function Arsenal() {
         
 
       {/* Grid */}
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-10">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4">
           <div className="flex items-center gap-3 bg-white border border-steel rounded-[6px] px-4 py-3">
             <Search size={18} className="text-black/50 shrink-0" />
