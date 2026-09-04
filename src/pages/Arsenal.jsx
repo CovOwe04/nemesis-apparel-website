@@ -32,11 +32,10 @@ export default function Arsenal() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12 sm:py-16">
           <div className="mono-label text-kinetic mb-3">THE ARSENAL</div>
           <h1 className="font-heading text-4xl sm:text-6xl uppercase leading-[0.9] text-fog">
-            Browse every jersey.
+            Browse Community Jerseys
           </h1>
           <p className="mt-4 text-fog/60 max-w-xl">
-            Search for your jersey. Hover any card to preview the back. Hit the Lab to
-            stamp your name on it.
+            From fan favourites to custom club kits — order your jersey today
           </p>
         </div>
       </div>
