@@ -5,7 +5,7 @@ const SECTION_IMAGE =
 
 export default function WeGetItDone() {
   return (
-    <section className="bg-black border-t border-steel">
+    <section className="bg-black">
       <div className="mx-auto max-w-7xl grid lg:grid-cols-2">
         {/* IMAGE */}
         <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel">
