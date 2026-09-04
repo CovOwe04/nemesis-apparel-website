@@ -156,105 +156,12 @@ export default function IdentityLab() {
                   id="name-input"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value.slice(0, 25))}
+                  onChange={(e) => setName(e.target.value.slice(0, 20))}
                   placeholder="ENTER NAME"
                   className="w-full bg-transparent border border-steel px-4 py-3 font-display text-lg uppercase tracking-wider text-fog placeholder:text-fog/30 focus:border-kinetic outline-none transition-colors"
                 />
                 <div className="mono-label text-fog/30 mt-1 text-right">
-                  {name.length}/25
-                </div>
-              </div>
-
-              {/* FONT */}
-              <div>
-                <div className="mono-label text-fog/50 mb-2">FONT</div>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                  {FONTS.map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => setFontId(f.id)}
-                      style={{ fontFamily: f.family }}
-                      className={`py-4 text-center uppercase tracking-wide border rounded-[6px] transition-colors ${
-                        fontId === f.id
-                          ? 'border-kinetic text-kinetic bg-kinetic/5'
-                          : 'border-steel text-fog/70 hover:border-fog/40'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* SIZE */}
-              <div>
-                <div className="mono-label text-fog/50 mb-2">SIZE</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'SMALL', value: 25 },
-                    { label: 'MEDIUM', value: 40 },
-                    { label: 'LARGE', value: 55 },
-                  ].map((opt) => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setSize(opt.value)}
-                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
-                        size === opt.value
-                          ? 'border-kinetic text-kinetic bg-kinetic/5'
-                          : 'border-steel text-fog/70 hover:border-fog/40'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ARCH CURVE */}
-              <div>
-                <div className="mono-label text-fog/50 mb-2">ARCH CURVE</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'STRAIGHT', value: 0 },
-                    { label: 'MILD', value: 50 },
-                    { label: 'STRONG', value: 100 },
-                  ].map((opt) => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setCurve(opt.value)}
-                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
-                        curve === opt.value
-                          ? 'border-kinetic text-kinetic bg-kinetic/5'
-                          : 'border-steel text-fog/70 hover:border-fog/40'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* VERTICAL POSITION */}
-              <div>
-                <div className="mono-label text-fog/50 mb-2">VERTICAL POSITION</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'NORMAL', value: 25 },
-                    { label: 'HIGH', value: 10 },
-                    { label: 'LOW', value: 50 },
-                  ].map((opt) => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setHeight(opt.value)}
-                      className={`py-3 text-center mono-label border rounded-[6px] transition-colors ${
-                        height === opt.value
-                          ? 'border-kinetic text-kinetic bg-kinetic/5'
-                          : 'border-steel text-fog/70 hover:border-fog/40'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                  {name.length}/20
                 </div>
               </div>
             </>
