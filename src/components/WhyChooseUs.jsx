@@ -21,7 +21,7 @@ const BLOCKS = [
 export default function WhyChooseUs() {
   return (
     <section className="bg-black">
-      <div className="mx-auto max-w-7xl grid lg:grid-cols-2">
+      <div className="mx-auto max-w-7xl grid lg:grid-cols-2 py-12">
         {/* CONTENT */}
         <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-14 lg:py-20 order-2 lg:order-1">
           {BLOCKS.map((b) => (
