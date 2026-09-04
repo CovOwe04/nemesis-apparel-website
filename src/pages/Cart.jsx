@@ -19,7 +19,7 @@ export default function Cart() {
   if (ordered) {
     return (
       <div className="bg-void min-h-[70vh] flex flex-col items-center justify-center px-5 text-center">
-        <div className="w-14 h-14 border-2 border-kinetic flex items-center justify-center mb-6">
+        <div className="w-14 h-14 border-2 border-kinetic rounded-[6px] flex items-center justify-center mb-6">
           <Check size={28} className="text-kinetic" />
         </div>
         <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Order received</h1>
@@ -75,7 +75,7 @@ export default function Cart() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex gap-4 sm:gap-6 border border-steel p-4"
+              className="flex gap-4 sm:gap-6 border border-steel rounded-[6px] p-4"
             >
               {item.isCustomDesign ? (
                 <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center rounded-[12px]">
@@ -160,7 +160,7 @@ export default function Cart() {
 
         {/* Summary */}
         <div className="lg:col-span-4">
-          <div className="border border-steel p-6 lg:sticky lg:top-24">
+          <div className="border border-steel rounded-[6px] p-6 lg:sticky lg:top-24">
             <h2 className="font-heading text-xl uppercase text-fog mb-5">Summary</h2>
             <div className="flex items-center justify-between text-fog/70 mb-3">
               <span className="mono-label">SUBTOTAL</span>
