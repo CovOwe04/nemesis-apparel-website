@@ -33,7 +33,7 @@ export default function Landing() {
       <section className="relative h-[92vh] min-h-[600px] overflow-hidden">
         <img
           src={HERO_URL}
-          alt="Spikeball athlete celebrating mid-rally at the Roundnet World Championships"
+          alt="Athlete celebrating mid-rally"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '70% 20%' }}
         />
@@ -48,15 +48,15 @@ export default function Landing() {
             className="max-w-3xl"
           >
             <div className="mono-label text-kinetic mb-5 flex items-center gap-3">
-              <span className="h-px w-10 bg-kinetic" /> PRECISION VELOCITY
+              <span className="h-px w-10 bg-kinetic" /> JERSEYS DON'T HAVE TO BE A HEADACHE
             </div>
             <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] text-fog tracking-tight">
-              Engineered
+              For players
               <br />
-              <span className="text-kinetic">for the</span> rally.
+              <span className="text-kinetic">beginner</span> to pro
             </h1>
             <p className="mt-6 max-w-xl text-fog/70 text-lg leading-relaxed">
-              Nemesis Apparel builds Spikeball jerseys for the modern competitor —
+              Nemesis Apparel builds jerseys for the modern competitor —
               breathable, intimidating, and built to move. Browse the arsenal, then
               stamp your identity on the back in the Lab.
             </p>
@@ -126,7 +126,7 @@ export default function Landing() {
       <section className="border-t border-steel bg-kinetic">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
           <h2 className="font-heading text-2xl sm:text-4xl uppercase text-void leading-tight">
-            Step on the net. <br className="sm:hidden" />Look like a threat.
+            Look like a threat. <br className="sm:hidden" />Play like one.
           </h2>
           <Link
             to="/design-lab"
@@ -149,7 +149,7 @@ export default function Landing() {
               <span className="font-heading text-fog">NEMESIS APPAREL</span>
             </div>
             <p className="mono-label text-fog/40">
-              © {new Date().getFullYear()} NEMESIS APPAREL — PRECISION VELOCITY
+              © {new Date().getFullYear()} NEMESIS APPAREL — JERSEYS DON'T HAVE TO BE A HEADACHE
             </p>
           </div>
         </div>
