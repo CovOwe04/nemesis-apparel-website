@@ -3,7 +3,14 @@ import { Image } from '@/components/ui/image';
 import { Plus } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 
-export default function JerseyCard({ jersey }) {
+const CAD_RATE = 1.36;
+
+function formatPrice(priceUsd, currency) {
+  const value = currency === 'CAD' ? Math.round(priceUsd * CAD_RATE) : priceUsd;
+  return currency === 'CAD' ? `CA$${value}` : `$${value}`;
+}
+
+export default function JerseyCard({ jersey, currency = 'USD' }) {
   const { addItem } = useCart();
 
   const quickAdd = (e) => {
@@ -46,7 +53,7 @@ export default function JerseyCard({ jersey }) {
           {jersey.team}
         </div>
         <div className="absolute top-3 right-3 bg-kinetic text-void font-heading text-sm px-2 py-1 rounded-[6px]">
-          ${jersey.price}
+          {formatPrice(jersey.price, currency)}
         </div>
       </Link>
       <div className="flex items-end justify-between gap-3 pt-3">

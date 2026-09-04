@@ -7,6 +7,13 @@ export default function Arsenal() {
   const [jerseys, setJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [currency, setCurrency] = useState(
+    () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('nemesis-currency', currency);
+  }, [currency]);
 
   useEffect(() => {
     base44.entities.Jersey.list('-created_date', 100)
@@ -45,8 +52,8 @@ export default function Arsenal() {
 
       {/* Grid */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-10">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4">
-          <div className="flex items-center gap-3 bg-white border border-steel rounded-[6px] px-4 py-3">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4 flex items-center gap-3">
+          <div className="flex-1 flex items-center gap-3 bg-white border border-steel rounded-[6px] px-4 py-3">
             <Search size={18} className="text-black/50 shrink-0" />
             <input
               type="text"
@@ -55,6 +62,20 @@ export default function Arsenal() {
               placeholder="Search jerseys by name or team"
               className="flex-1 bg-transparent text-black placeholder:text-black/40 font-display uppercase tracking-wider text-sm outline-none"
             />
+          </div>
+          <div className="flex items-center gap-1 bg-steel/40 border border-steel rounded-[6px] p-1">
+            <button
+              onClick={() => setCurrency('USD')}
+              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'USD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+            >
+              USD
+            </button>
+            <button
+              onClick={() => setCurrency('CAD')}
+              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'CAD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+            >
+              CAD
+            </button>
           </div>
         </div>
         {loading ? (
@@ -74,7 +95,7 @@ export default function Arsenal() {
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((j) => (
-                <JerseyCard key={j.id} jersey={j} />
+                <JerseyCard key={j.id} jersey={j} currency={currency} />
               ))}
             </div>
           </>
