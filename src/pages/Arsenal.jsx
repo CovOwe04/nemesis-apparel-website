@@ -42,7 +42,10 @@ export default function Arsenal() {
       </div>
 
       {/* Search bar */}
-      <div className="sticky top-16 z-40 bg-void/95 backdrop-blur-sm border-b border-steel">
+        
+
+      {/* Grid */}
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4">
           <div className="flex items-center gap-3 bg-white border border-steel rounded-[6px] px-4 py-3">
             <Search size={18} className="text-black/50 shrink-0" />
@@ -55,10 +58,6 @@ export default function Arsenal() {
             />
           </div>
         </div>
-      </div>
-
-      {/* Grid */}
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-10">
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2, 3, 4, 5].map((i) => (
