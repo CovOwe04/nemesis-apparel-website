@@ -7,6 +7,7 @@ import JerseyCard from '@/components/JerseyCard';
 import InfoStrip from '@/components/InfoStrip';
 import WeGetItDone from '@/components/WeGetItDone';
 import WhyChooseUs from '@/components/WhyChooseUs';
+import CustomerOpinion from '@/components/CustomerOpinion';
 
 const HERO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -166,6 +167,9 @@ export default function Landing() {
           </Link>
         </div>
       </section>
+
+      {/* CUSTOMER OPINION */}
+      <CustomerOpinion />
 
       {/* FOOTER */}
       <footer className="border-t border-steel bg-void">
