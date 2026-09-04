@@ -46,8 +46,8 @@ export default function TextWarpPreview({
   const hasCurve = archPct > 0 || flagPct > 0;
 
   // Match IdentityNameOverlay positioning (viewBox 0 0 300 400)
-  const nameBaselineY = 100 + (nameY / 100) * 50;
-  const numberBaselineY = 200 + (numberY / 100) * 100;
+  const nameBaselineY = 112.5 + (nameY - 50);
+  const numberBaselineY = 250 + (numberY - 50) * 2;
 
   const buildPath = (y) => {
     const archOffset = 22 * archPct;
@@ -100,7 +100,7 @@ export default function TextWarpPreview({
   return (
     <div className="relative w-full overflow-hidden bg-steel rounded-[6px]" style={{ aspectRatio: '3/4' }}>
       {imageUrl ? (
-        <Image src={imageUrl} alt="preview" fittingType="fill" className="absolute inset-0 w-full h-full" />
+        <Image src={imageUrl} alt="preview" fittingType="fit" className="absolute inset-0 w-full h-full" />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="mono-label text-fog/30 text-center px-4">UPLOAD A BASE IMAGE TO PREVIEW</span>

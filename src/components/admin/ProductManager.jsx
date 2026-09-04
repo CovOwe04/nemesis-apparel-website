@@ -13,7 +13,7 @@ const EMPTY_FORM = {
   enable_customization: false,
   text_color: '#F5F5F7', text_outline: true, text_outline_color: '#0A0A0A', text_outline_thickness: 1.4,
   arch_amount: 0, rise_angle: 0, flag_amount: 0,
-  name_vertical_pos: 25, number_vertical_pos: 50,
+  name_vertical_pos: 50, number_vertical_pos: 50,
   custom_font_url: '', custom_font_name: '',
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
@@ -40,13 +40,16 @@ function Section({ title, children }) {
   );
 }
 
-function Slider({ label, value, min, max, step = 1, onChange }) {
+function PropRow({ label, value, min, max, step = 1, onChange }) {
   return (
-    <div>
-      <div className="mono-label text-fog/50 mb-2">{label}</div>
+    <div className="flex items-center gap-2">
+      <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">{label}</span>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full" />
+        className="flex-1 min-w-0" />
+      <input type="number" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
     </div>
   );
 }
@@ -202,7 +205,7 @@ export default function ProductManager({ onSaved }) {
               <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
               <div className="grid lg:grid-cols-2">
                 {/* Preview canvas */}
-                <div className="bg-void p-5 border-b lg:border-b-0 lg:border-r border-steel">
+                <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
                     imageUrl={form.images[0]?.url}
                     archAmount={form.arch_amount}
@@ -219,24 +222,27 @@ export default function ProductManager({ onSaved }) {
                   />
                 </div>
                 {/* Text properties controls */}
-                <div className="p-5 space-y-4">
+                <div className="p-4 space-y-2">
                   <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
                     onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div><label className={labelCls}>TEXT COLOR</label>
-                      <input type="color" value={form.text_color} onChange={(e) => setField('text_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
-                    </div>
-                    <div><label className={labelCls}>OUTLINE COLOR</label>
-                      <input type="color" value={form.text_outline_color} onChange={(e) => setField('text_outline_color', e.target.value)} className="w-full h-12 bg-white border border-steel rounded-[6px] cursor-pointer" />
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
+                    <input type="color" value={form.text_color} onChange={(e) => setField('text_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
+                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE COLOR</span>
+                    <input type="color" value={form.text_outline_color} onChange={(e) => setField('text_outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
                   </div>
                   <Toggle checked={form.text_outline} onChange={(v) => setField('text_outline', v)} label="ENABLE TEXT OUTLINE" />
-                  <Slider label="OUTLINE THICKNESS" value={form.text_outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setField('text_outline_thickness', v)} />
-                  <Slider label="ARCH" value={form.arch_amount} min={0} max={100} onChange={(v) => setField('arch_amount', v)} />
-                  <Slider label="RISE" value={form.rise_angle} min={-45} max={45} onChange={(v) => setField('rise_angle', v)} />
-                  <Slider label="FLAG" value={form.flag_amount} min={0} max={100} onChange={(v) => setField('flag_amount', v)} />
-                  <Slider label="NAME VERTICAL POSITION" value={form.name_vertical_pos} min={0} max={100} onChange={(v) => setField('name_vertical_pos', v)} />
-                  <Slider label="NUMBER VERTICAL POSITION" value={form.number_vertical_pos} min={0} max={100} onChange={(v) => setField('number_vertical_pos', v)} />
+                  <div className="flex items-center gap-2">
+                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
+                    <input type="number" min={0} max={5} step={0.1} value={form.text_outline_thickness}
+                      onChange={(e) => setField('text_outline_thickness', Number(e.target.value))}
+                      className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
+                  </div>
+                  <PropRow label="ARCH" value={form.arch_amount} min={0} max={100} onChange={(v) => setField('arch_amount', v)} />
+                  <PropRow label="RISE" value={form.rise_angle} min={-45} max={45} onChange={(v) => setField('rise_angle', v)} />
+                  <PropRow label="FLAG" value={form.flag_amount} min={0} max={100} onChange={(v) => setField('flag_amount', v)} />
+                  <PropRow label="NAME VERT" value={form.name_vertical_pos} min={0} max={100} onChange={(v) => setField('name_vertical_pos', v)} />
+                  <PropRow label="NUMBER VERT" value={form.number_vertical_pos} min={0} max={100} onChange={(v) => setField('number_vertical_pos', v)} />
                 </div>
               </div>
             </div>

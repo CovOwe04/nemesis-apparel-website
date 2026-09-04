@@ -123,7 +123,7 @@
     },
     "name_vertical_pos": {
       "type": "number",
-      "default": 25,
+      "default": 50,
       "title": "Name Vertical Position"
     },
     "number_vertical_pos": {

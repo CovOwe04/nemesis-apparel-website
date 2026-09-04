@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, Type } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
-// Uploads a custom font file (.ttf/.otf/.woff) and reports the URL + chosen name
-// back to the parent. The parent stores both on the Jersey entity so the
-// Identity Lab and admin preview can load the font via an injected @font-face.
+// Minimal font uploader: just the button, with the font name and a remove
+// link shown inline when a font is already uploaded.
 export default function FontUploader({ fontUrl, fontName, onChange }) {
   const [uploading, setUploading] = useState(false);
 
@@ -20,35 +19,26 @@ export default function FontUploader({ fontUrl, fontName, onChange }) {
       alert('Font upload failed. Try again.');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
   return (
-    <div className="border border-steel rounded-[6px] p-4">
-      <div className="mono-label text-fog/50 mb-3">CUSTOM FONT</div>
-      {fontUrl ? (
-        <div className="flex items-center gap-3 mb-3">
-          <Type size={18} className="text-kinetic" />
-          <div className="flex-1 min-w-0">
-            <div className="font-display text-fog text-sm truncate">{fontName || 'Unnamed font'}</div>
-            <div className="mono-label text-fog/30 truncate">{fontUrl}</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange({ url: '', name: '' })}
-            className="mono-label text-fog/40 hover:text-kinetic transition-colors"
-          >
-            REMOVE
-          </button>
-        </div>
-      ) : (
-        <p className="text-fog/40 text-sm mb-3">Upload a .ttf, .otf, or .woff file to use as the jersey text font.</p>
-      )}
-      <label className="inline-flex items-center gap-2 border border-steel px-4 py-2 cursor-pointer hover:border-kinetic transition-colors rounded-[6px]">
-        <Upload size={16} className="text-fog/60" />
-        <span className="mono-label text-fog/60">{uploading ? 'UPLOADING…' : 'UPLOAD FONT'}</span>
+    <div className="flex items-center gap-2 flex-wrap">
+      <label className="inline-flex items-center gap-2 border border-steel px-3 py-2 cursor-pointer hover:border-kinetic transition-colors rounded-[6px]">
+        <Upload size={14} className="text-fog/60" />
+        <span className="mono-label text-fog/60 text-[0.65rem]">{uploading ? 'UPLOADING…' : 'UPLOAD FONT'}</span>
         <input type="file" accept=".ttf,.otf,.woff,.woff2" onChange={handle} className="hidden" />
       </label>
+      {fontUrl && (
+        <>
+          <span className="mono-label text-fog/40 text-[0.65rem] truncate max-w-32">{fontName}</span>
+          <button type="button" onClick={() => onChange({ url: '', name: '' })}
+            className="mono-label text-fog/40 hover:text-kinetic text-[0.65rem] transition-colors">
+            REMOVE
+          </button>
+        </>
+      )}
     </div>
   );
 }
