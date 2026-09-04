@@ -96,7 +96,7 @@ export default function Landing() {
       {/* INFO STRIP */}
       <InfoStrip />
 
-      <section className="border-t border-steel bg-kinetic py-8 my-5">
+      <section className="border-t border-steel bg-kinetic py-8 mb-5">
       </section>
       {/* WE GET IT DONE */}
       <WeGetItDone />
