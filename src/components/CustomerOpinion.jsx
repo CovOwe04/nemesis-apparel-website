@@ -10,7 +10,7 @@ const QUOTES = [
 export default function CustomerOpinion() {
   return (
     <section className="bg-void">
-      <div className="mx-auto max-w-7xl grid lg:grid-cols-2">
+      <div className="mx-auto max-w-7xl grid lg:grid-cols-2 py-12">
         {/* IMAGE */}
         <div className="relative aspect-[4/5] lg:aspect-auto lg:min-h-[640px] overflow-hidden bg-steel">
           <img
