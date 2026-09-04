@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
 import InfoStrip from '@/components/InfoStrip';
 import WeGetItDone from '@/components/WeGetItDone';
+import WhyChooseUs from '@/components/WhyChooseUs';
 
 const HERO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -145,6 +146,9 @@ export default function Landing() {
           </Link>
         </div>
       </section>
+
+      {/* WHY CHOOSE US */}
+      <WhyChooseUs />
 
       {/* CTA BAND */}
       <section className="border-t border-steel bg-kinetic">
