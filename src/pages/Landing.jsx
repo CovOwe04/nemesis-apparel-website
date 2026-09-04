@@ -8,6 +8,7 @@ import InfoStrip from '@/components/InfoStrip';
 import WeGetItDone from '@/components/WeGetItDone';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import CustomerOpinion from '@/components/CustomerOpinion';
+import Footer from '@/components/Footer';
 
 const HERO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -172,22 +173,7 @@ export default function Landing() {
       <CustomerOpinion />
 
       {/* FOOTER */}
-      <footer className="border-t border-steel bg-void">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <svg width="22" height="22" viewBox="0 0 28 28">
-                <path d="M14 1 L27 14 L14 27 L1 14 Z" fill="#FF1F3D" />
-                <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0A0A0A" />
-              </svg>
-              <span className="font-heading text-fog">NEMESIS APPAREL</span>
-            </div>
-            <p className="mono-label text-fog/40">
-              © {new Date().getFullYear()} NEMESIS APPAREL — JERSEYS DON'T HAVE TO BE A HEADACHE
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
