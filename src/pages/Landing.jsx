@@ -41,14 +41,14 @@ export default function Landing() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to bottom, rgba(180,180,180,0.18) 0%, rgba(180,180,180,0.08) 40%, rgba(180,180,180,0.35) 100%)',
+              'linear-gradient(to bottom, rgba(120,120,120,0.28) 0%, rgba(120,120,120,0.14) 40%, rgba(120,120,120,0.5) 100%)',
           }}
         />
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to right, rgba(190,190,190,0.28) 0%, rgba(190,190,190,0.14) 45%, rgba(190,190,190,0.04) 100%)',
+              'linear-gradient(to right, rgba(130,130,130,0.4) 0%, rgba(130,130,130,0.2) 45%, rgba(130,130,130,0.06) 100%)',
           }}
         />
 
