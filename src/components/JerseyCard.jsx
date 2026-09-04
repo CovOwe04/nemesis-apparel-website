@@ -36,7 +36,7 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
     <div className="group flex flex-col">
       <Link
         to={`/lab/${jersey.id}`}
-        className={`relative block aspect-[3/4] overflow-hidden rounded-[12px] ${jersey.static_display ? 'bg-black' : 'bg-steel'}`}
+        className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-[4/3] bg-black' : 'aspect-[3/4] bg-steel'}`}
       >
         <Image
           src={jersey.front_image}
