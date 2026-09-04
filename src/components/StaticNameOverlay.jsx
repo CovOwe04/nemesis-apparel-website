@@ -8,11 +8,15 @@ export default function StaticNameOverlay({
   image,
   customName,
   showPlaceholder = false,
+  posX = 25,
+  posY = 42,
+  baseSize: baseSizeOverride,
   className = '',
 }) {
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
   const len = displayName.length;
-  const fontSizeCqw = len > 10 ? Math.max(3, 6 - (len - 10) * 0.25) : 6;
+  const baseSize = baseSizeOverride ?? 6;
+  const fontSizeCqw = len > 10 ? Math.max(3, baseSize - (len - 10) * 0.25) : baseSize;
 
   return (
     <div
@@ -24,8 +28,8 @@ export default function StaticNameOverlay({
         <div
           className="absolute pointer-events-none"
           style={{
-            left: '25%',
-            top: '42%',
+            left: `${posX}%`,
+            top: `${posY}%`,
             transform: 'translate(-50%, -50%)',
           }}
         >

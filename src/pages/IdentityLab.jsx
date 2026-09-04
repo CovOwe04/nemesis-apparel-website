@@ -21,6 +21,10 @@ export default function IdentityLab() {
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
+  const [staticX, setStaticX] = useState(25);
+  const [staticY, setStaticY] = useState(42);
+  const [staticSize, setStaticSize] = useState(6);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -66,11 +70,22 @@ export default function IdentityLab() {
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
       height: canCustomize ? height : 0,
+      staticX: canCustomize && jersey.static_display ? staticX : undefined,
+      staticY: canCustomize && jersey.static_display ? staticY : undefined,
+      staticSize: canCustomize && jersey.static_display ? staticSize : undefined,
       shirtSize,
       quantity: qty,
     });
     setAdded(true);
     setTimeout(() => navigate('/cart'), 700);
+  };
+
+  const copyGeom = () => {
+    const geom = JSON.stringify({ posX: staticX, posY: staticY, baseSize: staticSize });
+    navigator.clipboard.writeText(geom).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   };
 
   return (
@@ -95,6 +110,9 @@ export default function IdentityLab() {
                   image={jersey.front_image}
                   customName={canCustomize ? name.toUpperCase() : ''}
                   showPlaceholder={canCustomize}
+                  posX={staticX}
+                  posY={staticY}
+                  baseSize={staticSize}
                   className="w-full h-full"
                 />
               ) : (
@@ -175,6 +193,52 @@ export default function IdentityLab() {
                   {name.length}/20
                 </div>
               </div>
+
+              {jersey.static_display && (
+                <div className="border border-steel rounded-[6px] p-4 space-y-4">
+                  <div className="mono-label text-kinetic">ADJUST FIT</div>
+                  <div>
+                    <div className="mono-label text-fog/50 mb-2">HORIZONTAL</div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={staticX}
+                      onChange={(e) => setStaticX(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="mono-label text-fog/50 mb-2">VERTICAL</div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={staticY}
+                      onChange={(e) => setStaticY(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="mono-label text-fog/50 mb-2">SIZE</div>
+                    <input
+                      type="range"
+                      min="2"
+                      max="12"
+                      step="0.5"
+                      value={staticSize}
+                      onChange={(e) => setStaticSize(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <button
+                    onClick={copyGeom}
+                    className="btn-solid w-full py-3 mono-label"
+                  >
+                    {copied ? 'COPIED!' : 'COPY GEOM'}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
