@@ -1,19 +1,23 @@
 import { Instagram } from 'lucide-react';
+import { Image } from '@/components/ui/image';
 
 const LOGO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/39e4667d3_Asset53x.png';
 
+const BG_PATTERN_URL =
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png';
+
 export default function Footer() {
   return (
     <footer className="relative bg-black flex flex-col items-center text-center px-5 py-10 overflow-hidden">
-      {/* CSS-only texture pattern — renders instantly, no network wait */}
-      <div
-        className="absolute inset-0 opacity-50"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, transparent 0, transparent 3px, rgba(255,255,255,0.025) 3px, rgba(255,255,255,0.025) 4px), repeating-linear-gradient(-45deg, transparent 0, transparent 3px, rgba(255,31,61,0.02) 3px, rgba(255,31,61,0.02) 4px)',
-        }}
-      />
+      {/* Background pattern with blur-up placeholder — no empty flash */}
+      <div className="absolute inset-0 opacity-50">
+        <Image
+          src={BG_PATTERN_URL}
+          fittingType="fill"
+          className="w-full h-full"
+        />
+      </div>
       <div className="relative z-10 flex flex-col items-center">
         <img
           src={LOGO_URL}
