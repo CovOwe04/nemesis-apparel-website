@@ -23,8 +23,9 @@ export default function Footer() {
         src={LOGO_URL}
         alt="Nemesis Apparel"
         className="h-16 w-auto mb-4"
-        loading="lazy"
+        loading="eager"
         decoding="async"
+        fetchpriority="high"
       />
       <p className="text-fog/90 text-sm mb-5">
         Jerseys don't have to be a headache
