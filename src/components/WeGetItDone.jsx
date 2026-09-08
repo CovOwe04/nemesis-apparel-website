@@ -30,11 +30,11 @@ export default function WeGetItDone() {
 
           <div className="mt-10 flex flex-wrap gap-10 sm:gap-14">
             <div>
-              <div className="font-heading text-4xl sm:text-5xl text-kinetic leading-none">10+</div>
+              <div className="font-heading text-4xl sm:text-5xl text-kinetic leading-none">10<span className="font-display">+</span></div>
               <div className="mono-label text-fog mt-2">YEARS DESIGN EXPERIENCE</div>
             </div>
             <div>
-              <div className="font-heading text-4xl sm:text-5xl text-kinetic leading-none">600+</div>
+              <div className="font-heading text-4xl sm:text-5xl text-kinetic leading-none">600<span className="font-display">+</span></div>
               <div className="mono-label text-fog mt-2">SATISFIED CUSTOMERS</div>
             </div>
           </div>
