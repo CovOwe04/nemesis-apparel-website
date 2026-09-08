@@ -10,7 +10,7 @@ const BG_PATTERN_URL =
 export default function Footer() {
   return (
     <footer className="relative bg-black flex flex-col items-center text-center px-5 py-10 overflow-hidden">
-      {/* Background pattern with blur-up placeholder — no empty flash */}
+      {/* Blur-up base layer — shows instantly while tiled pattern loads */}
       <div className="absolute inset-0 opacity-50">
         <Image
           src={BG_PATTERN_URL}
@@ -18,6 +18,16 @@ export default function Footer() {
           className="w-full h-full"
         />
       </div>
+      {/* Tiled pattern at 1250% — loads on top of the blur-up */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${BG_PATTERN_URL})`,
+          backgroundSize: '1250%',
+          backgroundRepeat: 'repeat',
+          opacity: 0.5,
+        }}
+      />
       <div className="relative z-10 flex flex-col items-center">
         <img
           src={LOGO_URL}
