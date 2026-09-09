@@ -83,11 +83,17 @@ export default function JerseyEditor() {
       // Migrate old images to colors if colors is empty
       let colors = j.colors || [];
       let combos = j.name_number_combos || [];
-      if (colors.length === 0 && j.images && j.images.length > 0) {
-        colors = [{ name: 'Default', hex: '#000000', images: j.images.map((img) => ({ url: img.url })) }];
-        combos = j.images.
-        filter((img) => img.name || img.number).
-        map((img) => ({ name: img.name || '', number: img.number || '' }));
+      if (colors.length === 0) {
+        if (j.images && j.images.length > 0) {
+          colors = [{ name: 'Default', hex: '#000000', images: j.images.map((img) => ({ url: img.url })) }];
+          combos = j.images
+            .filter((img) => img.name || img.number)
+            .map((img) => ({ name: img.name || '', number: img.number || '' }));
+        } else if (j.front_image) {
+          const imgs = [{ url: j.front_image }];
+          if (j.back_image && j.back_image !== j.front_image) imgs.push({ url: j.back_image });
+          colors = [{ name: 'Default', hex: '#000000', images: imgs }];
+        }
       }
       setForm({
         ...EMPTY_FORM,
