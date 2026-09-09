@@ -16,7 +16,7 @@ export default function Footer() {
           backgroundImage: `url(${BG_PATTERN_URL})`,
           backgroundSize: '100%',
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
+          backgroundPosition: 'top left',
           opacity: 0.5,
         }}
       />
