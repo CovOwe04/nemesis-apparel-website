@@ -79,7 +79,7 @@ export default function Landing() {
                 <span className="text-kinetic">beginner</span> to pro
               </h1>
             </div>
-            <p className="mt-6 max-w-xl text-fog/70 text-lg leading-relaxed">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[hsl(var(--background))]">
               Nemesis Apparel builds jerseys for the modern competitor —
               breathable, intimidating, and built to move. Browse the arsenal, then
               stamp your identity on the back in the Lab.
