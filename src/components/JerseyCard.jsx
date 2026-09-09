@@ -10,8 +10,18 @@ function formatPrice(priceUsd, currency) {
   return currency === 'CAD' ? `CA$${value}` : `$${value}`;
 }
 
+function getColors(jersey) {
+  if (jersey.colors && jersey.colors.length > 0) return jersey.colors;
+  if (jersey.images && jersey.images.length > 0)
+    return [{ name: 'Default', hex: '#000000', images: jersey.images.map((img) => ({ url: img.url })) }];
+  return [{ name: 'Default', hex: '#000000', images: [{ url: jersey.front_image }] }];
+}
+
 export default function JerseyCard({ jersey, currency = 'USD' }) {
   const { addItem } = useCart();
+  const colors = getColors(jersey);
+  const front = colors[0]?.images?.[0]?.url || jersey.front_image;
+  const back = colors[0]?.images?.[1]?.url || front;
 
   const quickAdd = (e) => {
     e.preventDefault();
@@ -21,8 +31,8 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
       name: jersey.name,
       team: jersey.team,
       price: jersey.price,
-      front_image: jersey.front_image,
-      back_image: jersey.back_image,
+      front_image: front,
+      back_image: back,
       static_display: jersey.static_display,
       customName: '',
       font: '',
@@ -39,14 +49,14 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
         className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
       >
         <Image
-          src={jersey.front_image}
+          src={front}
           alt={`${jersey.name} front`}
           fittingType={jersey.static_display ? 'fit' : 'fill'}
           className={`w-full h-full ${jersey.static_display ? '' : 'transition-opacity duration-300 group-hover:opacity-0'}`}
         />
-        {!jersey.static_display && (
+        {!jersey.static_display && back !== front && (
           <Image
-            src={jersey.back_image}
+            src={back}
             alt={`${jersey.name} back`}
             fittingType="fill"
             className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -60,10 +70,19 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
         </div>
       </Link>
       <div className="flex items-end justify-between gap-3 pt-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="font-heading text-base text-fog leading-tight truncate">
             {jersey.name}
           </h3>
+          {colors.length > 1 && (
+            <div className="flex items-center gap-1 mt-1.5">
+              {colors.map((c, i) => (
+                <span key={i} className="w-3.5 h-3.5 rounded-full border border-steel"
+                  style={{ backgroundColor: c.hex || '#000' }}
+                  title={c.name || 'Default'} />
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button

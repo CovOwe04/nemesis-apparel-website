@@ -35,6 +35,50 @@
       "type": "number",
       "title": "Price (USD)"
     },
+    "colors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "hex": {
+            "type": "string",
+            "default": "#000000"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "default": [],
+      "title": "Color Variants"
+    },
+    "name_number_combos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "title": "Name & Number Presets"
+    },
     "images": {
       "type": "array",
       "items": {
@@ -52,7 +96,7 @@
         }
       },
       "default": [],
-      "title": "Product Images"
+      "title": "Product Images (Legacy)"
     },
     "front_image": {
       "type": "string",

@@ -5,7 +5,8 @@ import { Plus, Save, ArrowLeft } from 'lucide-react';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
 import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
-import ImagesEditor from '@/components/admin/ImagesEditor';
+import ColorsEditor from '@/components/admin/ColorsEditor';
+import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -18,7 +19,7 @@ const DEFAULT_NUMBER_STYLE = {
 
 const EMPTY_FORM = {
   name: '', team: '', category: 'Jersey', fitting: 'Regular', price: '',
-  description: '', images: [],
+  description: '', colors: [], name_number_combos: [],
   enable_customization: false,
   enable_name: true,
   enable_number: true,
@@ -79,13 +80,20 @@ export default function JerseyEditor() {
   useEffect(() => {
     if (!jerseyId) return;
     base44.entities.Jersey.get(jerseyId).then((j) => {
-      const images = j.images && j.images.length > 0
-        ? j.images
-        : [{ url: j.front_image, name: '', number: '' }, ...(j.back_image && j.back_image !== j.front_image ? [{ url: j.back_image, name: '', number: '' }] : [])];
+      // Migrate old images to colors if colors is empty
+      let colors = j.colors || [];
+      let combos = j.name_number_combos || [];
+      if (colors.length === 0 && j.images && j.images.length > 0) {
+        colors = [{ name: 'Default', hex: '#000000', images: j.images.map((img) => ({ url: img.url })) }];
+        combos = j.images
+          .filter((img) => img.name || img.number)
+          .map((img) => ({ name: img.name || '', number: img.number || '' }));
+      }
       setForm({
         ...EMPTY_FORM,
         ...j,
-        images,
+        colors,
+        name_number_combos: combos,
         name_style: { ...DEFAULT_NAME_STYLE, ...(j.name_style || {}) },
         number_style: { ...DEFAULT_NUMBER_STYLE, ...(j.number_style || {}) },
       });
@@ -107,22 +115,21 @@ export default function JerseyEditor() {
     else if (designerTab === 'number' && !form.enable_number && form.enable_name) setDesignerTab('name');
   }, [form.enable_name, form.enable_number, designerTab]);
 
+  const hasImages = form.colors.some((c) => c.images && c.images.length > 0);
+
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.team || !form.price || form.images.length === 0) {
-      alert('Name, team, price, and at least 1 image are required.');
+    if (!form.name || !form.team || !form.price || !hasImages) {
+      alert('Name, team, price, and at least 1 color with images are required.');
       return;
     }
     setSaving(true);
     try {
-      const images = form.images.map((img) => ({
-        url: img.url,
-        name: img.name?.trim() || '',
-        number: img.number?.trim() || '',
-      }));
-      const front_image = images[0].url;
-      const back_image = images[1]?.url || images[0].url;
-      const payload = { ...form, images, front_image, back_image, price: Number(form.price) };
+      const firstColorImages = form.colors.find((c) => c.images && c.images.length > 0)?.images || [];
+      const front_image = firstColorImages[0]?.url || '';
+      const back_image = firstColorImages[1]?.url || firstColorImages[0]?.url || '';
+      const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
+      const payload = { ...form, front_image, back_image, images, price: Number(form.price) };
       if (jerseyId) {
         await base44.entities.Jersey.update(jerseyId, payload);
       } else {
@@ -184,22 +191,27 @@ export default function JerseyEditor() {
             </div>
           </Section>
 
-          <Section title="IMAGES">
-            <ImagesEditor images={form.images} onChange={(imgs) => setField('images', imgs)} />
+          <Section title="COLORS & IMAGES">
+            <ColorsEditor colors={form.colors} onChange={(c) => setField('colors', c)} />
+          </Section>
+
+          <Section title="NAME & NUMBER COMBOS">
+            <p className="mono-label text-fog/30 text-[0.65rem] mb-2">Presets shown on the buy screen — unrelated to specific images.</p>
+            <NameNumberCombosEditor combos={form.name_number_combos} onChange={(c) => setField('name_number_combos', c)} />
           </Section>
 
           <Section title="IDENTITY LAB">
             <Toggle
               checked={form.enable_customization}
               onChange={(v) => {
-                if (v && form.images.length === 0) return;
+                if (v && !hasImages) return;
                 setField('enable_customization', v);
               }}
-              disabled={form.images.length === 0}
+              disabled={!hasImages}
               label="ENABLE IDENTITY LAB"
             />
-            {form.images.length === 0 && (
-              <p className="mono-label text-fog/30">Upload at least 1 image to enable Identity Lab.</p>
+            {!hasImages && (
+              <p className="mono-label text-fog/30">Add at least 1 color with images to enable Identity Lab.</p>
             )}
             {form.enable_customization && (
               <>
@@ -223,7 +235,7 @@ export default function JerseyEditor() {
               <div className="grid lg:grid-cols-2">
                 <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
-                    imageUrl={form.images[0]?.url}
+                    imageUrl={form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url}
                     nameStyle={form.name_style}
                     numberStyle={form.number_style}
                     customFontUrl={form.custom_font_url}

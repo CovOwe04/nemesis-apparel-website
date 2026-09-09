@@ -6,6 +6,23 @@ import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check } from 'lucide-react';
 
+function getColors(jersey) {
+  if (jersey.colors && jersey.colors.length > 0) return jersey.colors;
+  if (jersey.images && jersey.images.length > 0)
+    return [{ name: 'Default', hex: '#000000', images: jersey.images.map((img) => ({ url: img.url })) }];
+  return [{ name: 'Default', hex: '#000000', images: [{ url: jersey.front_image }] }];
+}
+
+function getCombos(jersey) {
+  if (jersey.name_number_combos && jersey.name_number_combos.length > 0) return jersey.name_number_combos;
+  if (jersey.images) {
+    return jersey.images
+      .filter((img) => img.name || img.number)
+      .map((img) => ({ name: img.name || '', number: img.number || '' }));
+  }
+  return [];
+}
+
 export default function IdentityLab() {
   const { jerseyId } = useParams();
   const navigate = useNavigate();
@@ -23,16 +40,12 @@ export default function IdentityLab() {
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
-      .then((j) => {
-        setJersey(j);
-        if (j && !j.enable_customization) {
-          // keep defaults but lock controls
-        }
-      })
+      .then((j) => { setJersey(j); })
       .catch(() => setJersey(null))
       .finally(() => setLoading(false));
   }, [jerseyId]);
@@ -56,21 +69,20 @@ export default function IdentityLab() {
   const canCustomize = !!jersey.enable_customization;
   const canCustomizeName = canCustomize && !!jersey.enable_name;
   const canCustomizeNumber = canCustomize && !!jersey.enable_number;
-  const presets = jersey.images && jersey.images.length > 0
-    ? jersey.images
-    : [{ url: jersey.front_image, name: '', number: '' }];
-  const presetLabel = (img, index) => {
-    if (img.name) return img.name;
-    if (img.number) return img.number;
-    return `PRESET ${index + 1}`;
+  const colors = getColors(jersey);
+  const combos = getCombos(jersey);
+  const currentColor = colors[Math.min(selectedColor, colors.length - 1)];
+  const currentImages = currentColor?.images || [];
+  const selectedImage = currentImages[Math.min(selectedImageIdx, currentImages.length - 1)]?.url || jersey.front_image;
+
+  const selectColor = (idx) => {
+    setSelectedColor(idx);
+    setSelectedImageIdx(0);
   };
-  const selectedImage = presets[selectedPreset]?.url || jersey.front_image;
-  const selectPreset = (index) => {
-    setSelectedPreset(index);
-    if (canCustomize) {
-      setName(presets[index].name || '');
-      setNumber(presets[index].number || '');
-    }
+
+  const selectCombo = (combo) => {
+    if (canCustomizeName) setName(combo.name || '');
+    if (canCustomizeNumber) setNumber(combo.number || '');
   };
 
   const handleAdd = () => {
@@ -157,6 +169,49 @@ export default function IdentityLab() {
 
           <div className="h-px velocity-line opacity-60" />
 
+          {/* COLOR SELECTION */}
+          {colors.length > 1 && (
+            <div>
+              <div className="mono-label text-fog/50 mb-2">COLOR</div>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((c, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectColor(i)}
+                    className={`flex items-center gap-2 px-3 py-2 border rounded-[6px] transition-colors ${
+                      selectedColor === i ? 'border-kinetic bg-kinetic/10' : 'border-steel hover:border-fog/30'
+                    }`}
+                  >
+                    <span className="w-4 h-4 rounded-full border border-steel" style={{ backgroundColor: c.hex || '#000' }} />
+                    <span className={`mono-label text-[0.65rem] ${selectedColor === i ? 'text-kinetic' : 'text-fog/60'}`}>
+                      {c.name || 'DEFAULT'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* IMAGE THUMBNAILS (if multiple images in current color) */}
+          {currentImages.length > 1 && (
+            <div>
+              <div className="mono-label text-fog/50 mb-2">VIEW</div>
+              <div className="flex flex-wrap gap-2">
+                {currentImages.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImageIdx(i)}
+                    className={`w-16 h-20 overflow-hidden rounded-[4px] border-2 transition-colors ${
+                      selectedImageIdx === i ? 'border-kinetic' : 'border-steel hover:border-fog/30'
+                    }`}
+                  >
+                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* SHIRT SIZE */}
           <div>
             <div className="mono-label text-fog/50 mb-2">SHIRT SIZE</div>
@@ -175,19 +230,18 @@ export default function IdentityLab() {
             </div>
           </div>
 
-          {canCustomize && presets.length > 1 && (
+          {/* NAME & NUMBER COMBO PRESETS */}
+          {canCustomize && combos.length > 0 && (canCustomizeName || canCustomizeNumber) && (
             <div>
-              <div className="mono-label text-fog/50 mb-2">PRESETS</div>
+              <div className="mono-label text-fog/50 mb-2">PRESET COMBOS</div>
               <div className="flex flex-wrap gap-2">
-                {presets.map((img, i) => (
+                {combos.map((combo, i) => (
                   <button
                     key={i}
-                    onClick={() => selectPreset(i)}
-                    className={`mono-label px-3 py-2 border rounded-[6px] transition-colors ${
-                      selectedPreset === i ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
-                    }`}
+                    onClick={() => selectCombo(combo)}
+                    className="mono-label px-3 py-2 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
                   >
-                    {presetLabel(img, i)}
+                    {combo.name || combo.number || `COMBO ${i + 1}`}
                   </button>
                 ))}
               </div>

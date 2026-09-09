@@ -2,8 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, GripVertical } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Lock, Star } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+
+function getColors(j) {
+  if (j.colors && j.colors.length > 0) return j.colors;
+  if (j.images && j.images.length > 0)
+    return [{ name: 'Default', hex: '#000000', images: j.images.map((img) => ({ url: img.url })) }];
+  return [{ name: 'Default', hex: '#000000', images: [{ url: j.front_image }] }];
+}
+
+function totalImages(j) {
+  return getColors(j).reduce((sum, c) => sum + (c.images?.length || 0), 0);
+}
 
 export default function ProductManager() {
   const [jerseys, setJerseys] = useState([]);
@@ -51,7 +62,7 @@ export default function ProductManager() {
         </Link>
       </div>
       {loadingList ? (
-        <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-20 bg-steel animate-pulse rounded-[6px]" />)}</div>
+        <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-28 bg-steel animate-pulse rounded-[6px]" />)}</div>
       ) : jerseys.length === 0 ? (
         <p className="mono-label text-fog/40">NO JERSEYS IN INVENTORY.</p>
       ) : (
@@ -59,36 +70,68 @@ export default function ProductManager() {
           <Droppable droppableId="jersey-list">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3">
-                {jerseys.map((j, index) => (
-                  <Draggable key={j.id} draggableId={j.id} index={index}>
-                    {(p) => (
-                      <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}
-                        className="flex items-center gap-3 border border-steel rounded-[6px] p-3 bg-void">
-                        <GripVertical size={16} className="text-fog/30 shrink-0" />
-                        <span className="mono-label text-fog/30 w-5 text-center shrink-0">{index + 1}</span>
-                        <div className="w-12 h-16 bg-steel shrink-0 overflow-hidden rounded-[4px]">
-                          <Image src={j.front_image} alt={j.name} fittingType="fill" className="w-full h-full" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-heading text-fog text-sm truncate">{j.name}</div>
-                          <div className="mono-label text-fog/40 mt-0.5">{j.team} · {j.category || 'Jersey'} · ${j.price}</div>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {j.enable_customization && <span className="mono-label text-kinetic">LAB</span>}
-                            {j.is_private && <span className="mono-label text-kinetic">PRIVATE</span>}
+                {jerseys.map((j, index) => {
+                  const colors = getColors(j);
+                  const imgCount = totalImages(j);
+                  const comboCount = (j.name_number_combos || []).length;
+                  const now = new Date();
+                  const upcoming = j.available_from && new Date(j.available_from) > now;
+                  const expired = j.available_until && new Date(j.available_until) < now;
+                  return (
+                    <Draggable key={j.id} draggableId={j.id} index={index}>
+                      {(p) => (
+                        <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}
+                          className="flex items-start gap-3 border border-steel rounded-[6px] p-3 bg-void">
+                          <GripVertical size={16} className="text-fog/30 shrink-0 mt-1" />
+                          <span className="mono-label text-fog/30 w-5 text-center shrink-0 mt-1">{index + 1}</span>
+                          <div className="w-16 h-20 bg-steel shrink-0 overflow-hidden rounded-[4px]">
+                            <Image src={j.front_image} alt={j.name} fittingType="fill" className="w-full h-full" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-heading text-fog text-sm">{j.name}</span>
+                              {j.featured && <Star size={12} className="text-kinetic fill-kinetic" />}
+                              {j.is_private && <Lock size={12} className="text-kinetic" />}
+                            </div>
+                            <div className="mono-label text-fog/40 mt-0.5">{j.team} · {j.category || 'Jersey'} · {j.fitting || 'Regular'} · ${j.price}</div>
+                            {j.description && (
+                              <p className="text-fog/40 text-xs mt-1 line-clamp-1">{j.description}</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                              {/* Color swatches */}
+                              <div className="flex items-center gap-1">
+                                {colors.slice(0, 6).map((c, ci) => (
+                                  <span key={ci} className="w-4 h-4 rounded-full border border-steel"
+                                    style={{ backgroundColor: c.hex || '#000' }}
+                                    title={c.name || 'Default'} />
+                                ))}
+                                {colors.length > 6 && <span className="mono-label text-fog/30 text-[0.6rem]">+{colors.length - 6}</span>}
+                              </div>
+                              <span className="mono-label text-fog/30 text-[0.6rem]">{colors.length} COLOR{colors.length !== 1 ? 'S' : ''} · {imgCount} IMG{imgCount !== 1 ? 'S' : ''}</span>
+                              {comboCount > 0 && <span className="mono-label text-fog/30 text-[0.6rem]">· {comboCount} COMBO{comboCount !== 1 ? 'S' : ''}</span>}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              {j.enable_customization && <span className="mono-label text-kinetic text-[0.6rem]">LAB</span>}
+                              {j.enable_customization && j.enable_name && <span className="mono-label text-fog/40 text-[0.6rem]">NAME</span>}
+                              {j.enable_customization && j.enable_number && <span className="mono-label text-fog/40 text-[0.6rem]">NUM</span>}
+                              {j.is_private && <span className="mono-label text-kinetic text-[0.6rem]">PRIVATE</span>}
+                              {upcoming && <span className="mono-label text-fog/40 text-[0.6rem]">SCHEDULED</span>}
+                              {expired && <span className="mono-label text-fog/30 text-[0.6rem]">EXPIRED</span>}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1 shrink-0">
+                            <Link to={`/nexus-control/editor/${j.id}`} className="btn-solid px-3 py-1.5 mono-label text-xs">
+                              Edit
+                            </Link>
+                            <button onClick={() => deleteJersey(j.id, j.name)} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors" aria-label={`Delete ${j.name}`}>
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1 shrink-0">
-                          <Link to={`/nexus-control/editor/${j.id}`} className="btn-solid px-3 py-1.5 mono-label text-xs">
-                            Edit
-                          </Link>
-                          <button onClick={() => deleteJersey(j.id, j.name)} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors" aria-label={`Delete ${j.name}`}>
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
+                      )}
+                    </Draggable>
+                  );
+                })}
                 {provided.placeholder}
               </div>
             )}
