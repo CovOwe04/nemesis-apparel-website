@@ -163,18 +163,20 @@ export default function Landing() {
       <WhyChooseUs />
 
       {/* CTA BAND */}
-      <section className="border-t border-steel bg-kinetic">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <h2 className="font-heading text-2xl sm:text-4xl uppercase text-void leading-tight">
+      <section className="bg-void">
+        <SectionDivider variant="top" />
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-14 flex flex-col items-center justify-center gap-6 text-center">
+          <h2 className="font-heading text-2xl sm:text-4xl uppercase text-fog leading-tight">
             Look like a threat. <br className="sm:hidden" />Play like one.
           </h2>
           <Link
             to="/design-lab"
-            className="btn-solid btn-dark-hover gap-3 px-7 py-4 font-heading uppercase">
+            className="btn-solid gap-3 px-7 py-4 font-heading uppercase">
             
             Build your jersey <ArrowRight size={18} />
           </Link>
         </div>
+        <SectionDivider variant="bottom" />
       </section>
 
       {/* CUSTOMER OPINION */}
