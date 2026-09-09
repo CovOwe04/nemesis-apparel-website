@@ -11,11 +11,11 @@ import CustomerOpinion from '@/components/CustomerOpinion';
 import Footer from '@/components/Footer';
 
 const HERO_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
+'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
 };
 
 export default function Landing() {
@@ -23,13 +23,13 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Jersey.list('-created_date', 50)
-      .then((all) => {
-        const f = (all || []).filter((j) => j.featured);
-        setFeatured(f.length ? f.slice(0, 3) : (all || []).slice(0, 3));
-      })
-      .catch(() => setFeatured([]))
-      .finally(() => setLoading(false));
+    base44.entities.Jersey.list('-created_date', 50).
+    then((all) => {
+      const f = (all || []).filter((j) => j.featured);
+      setFeatured(f.length ? f.slice(0, 3) : (all || []).slice(0, 3));
+    }).
+    catch(() => setFeatured([])).
+    finally(() => setLoading(false));
   }, []);
 
   return (
@@ -40,30 +40,30 @@ export default function Landing() {
           src={HERO_URL}
           alt="Athlete celebrating mid-rally"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '50% 0%', transform: 'scale(1.4)', transformOrigin: 'left top' }}
-        />
+          style={{ objectPosition: '50% 0%', transform: 'scale(1.4)', transformOrigin: 'left top' }} />
+        
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to bottom, rgba(120,120,120,0.28) 0%, rgba(120,120,120,0.14) 40%, rgba(120,120,120,0.5) 100%)',
-          }}
-        />
+            'linear-gradient(to bottom, rgba(120,120,120,0.28) 0%, rgba(120,120,120,0.14) 40%, rgba(120,120,120,0.5) 100%)'
+          }} />
+        
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to right, rgba(130,130,130,0.4) 0%, rgba(130,130,130,0.2) 45%, rgba(130,130,130,0.06) 100%)',
-          }}
-        />
+            'linear-gradient(to right, rgba(130,130,130,0.4) 0%, rgba(130,130,130,0.2) 45%, rgba(130,130,130,0.06) 100%)'
+          }} />
+        
 
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-center px-5 sm:px-8">
           <motion.div
             initial="hidden"
             animate="show"
             variants={fadeUp}
-            className="max-w-3xl"
-          >
+            className="max-w-3xl">
+            
             <div className="mono-label text-kinetic mb-5 flex items-center gap-3">
               <span className="h-px w-10 bg-kinetic" /> JERSEYS DON'T HAVE TO BE A HEADACHE
             </div>
@@ -71,9 +71,9 @@ export default function Landing() {
               <img
                 src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/52025014f_Asset93x.png"
                 alt="Nemesis Apparel"
-                className="w-24 sm:w-36 lg:w-44 shrink-0"
-              />
-              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] text-fog tracking-tight">
+                className="w-24 sm:w-36 lg:w-44 shrink-0" />
+              
+              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tight text-[hsl(var(--background))]">
                 For players
                 <br />
                 <span className="text-kinetic">beginner</span> to pro
@@ -87,13 +87,13 @@ export default function Landing() {
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 to="/arsenal"
-                className="btn-solid group gap-3 px-7 py-4 font-heading uppercase"
-              >
+                className="btn-solid group gap-3 px-7 py-4 font-heading uppercase">
+                
                 Enter the Arsenal
                 <ArrowRight
                   size={18}
-                  className="transition-transform group-hover:translate-x-1"
-                />
+                  className="transition-transform group-hover:translate-x-1" />
+                
               </Link>
             </div>
           </motion.div>
@@ -109,7 +109,7 @@ export default function Landing() {
       {/* WE GET IT DONE */}
       <WeGetItDone />
 
-      <section className="bg-kinetic py-8"/>
+      <section className="bg-kinetic py-8" />
 
       {/* FEATURED ARSENAL */}
       <section className=" bg-void">
@@ -125,38 +125,38 @@ export default function Landing() {
             </div>
             <Link
               to="/arsenal"
-              className="mono-label hidden sm:inline-flex items-center gap-2 text-fog hover:text-kinetic transition-colors"
-            >
+              className="mono-label hidden sm:inline-flex items-center gap-2 text-fog hover:text-kinetic transition-colors">
+              
               View all <ArrowRight size={14} />
             </Link>
           </div>
 
-          {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="aspect-[3/4] bg-steel animate-pulse" />
-              ))}
+          {loading ?
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((i) =>
+            <div key={i} className="aspect-[3/4] bg-steel animate-pulse" />
+            )}
+            </div> :
+          featured.length === 0 ?
+          <p className="text-fog/50 mono-label">NO JERSEYS LOADED YET.</p> :
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((j) =>
+            <JerseyCard key={j.id} jersey={j} />
+            )}
             </div>
-          ) : featured.length === 0 ? (
-            <p className="text-fog/50 mono-label">NO JERSEYS LOADED YET.</p>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featured.map((j) => (
-                <JerseyCard key={j.id} jersey={j} />
-              ))}
-            </div>
-          )}
+          }
 
           <Link
             to="/arsenal"
-            className="mt-8 sm:hidden mono-label inline-flex items-center gap-2 text-kinetic"
-          >
+            className="mt-8 sm:hidden mono-label inline-flex items-center gap-2 text-kinetic">
+            
             View all <ArrowRight size={14} />
           </Link>
         </div>
       </section>
 
-      <section className="bg-kinetic py-8"/>
+      <section className="bg-kinetic py-8" />
 
       {/* WHY CHOOSE US */}
       <WhyChooseUs />
@@ -169,8 +169,8 @@ export default function Landing() {
           </h2>
           <Link
             to="/design-lab"
-            className="btn-solid btn-dark-hover gap-3 px-7 py-4 font-heading uppercase"
-          >
+            className="btn-solid btn-dark-hover gap-3 px-7 py-4 font-heading uppercase">
+            
             Build your jersey <ArrowRight size={18} />
           </Link>
         </div>
@@ -181,6 +181,6 @@ export default function Landing() {
 
       {/* FOOTER */}
       <Footer />
-    </div>
-  );
+    </div>);
+
 }
