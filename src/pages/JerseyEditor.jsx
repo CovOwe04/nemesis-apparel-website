@@ -10,11 +10,11 @@ import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
 };
 
 const EMPTY_FORM = {
@@ -27,19 +27,19 @@ const EMPTY_FORM = {
   number_style: { ...DEFAULT_NUMBER_STYLE },
   custom_font_url: '', custom_font_name: '',
   is_private: false, private_access_code: '',
-  available_from: '', available_until: '',
+  available_from: '', available_until: ''
 };
 
 function Toggle({ checked, onChange, label, disabled = false }) {
   return (
     <button type="button" onClick={() => !disabled && onChange(!checked)} disabled={disabled}
-      className={`btn-solid flex items-center justify-between w-full px-4 py-3 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+    className={`btn-solid flex items-center justify-between w-full px-4 py-3 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
       <span className="mono-label text-void">{label}</span>
       <span className={`relative w-11 h-6 transition-colors rounded-[6px] ${checked ? 'bg-kinetic' : 'bg-steel'}`}>
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-void rounded-[4px] transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </span>
-    </button>
-  );
+    </button>);
+
 }
 
 function Section({ title, children }) {
@@ -47,8 +47,8 @@ function Section({ title, children }) {
     <div className="border border-steel rounded-[6px] p-5">
       <div className="mono-label text-kinetic mb-4">{title}</div>
       <div className="space-y-4">{children}</div>
-    </div>
-  );
+    </div>);
+
 }
 
 function PropRow({ label, value, min, max, step = 1, onChange }) {
@@ -56,13 +56,13 @@ function PropRow({ label, value, min, max, step = 1, onChange }) {
     <div className="flex items-center gap-2">
       <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">{label}</span>
       <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="flex-1 min-w-0" />
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="flex-1 min-w-0" />
       <input type="number" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
-    </div>
-  );
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
+    </div>);
+
 }
 
 const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
@@ -85,9 +85,9 @@ export default function JerseyEditor() {
       let combos = j.name_number_combos || [];
       if (colors.length === 0 && j.images && j.images.length > 0) {
         colors = [{ name: 'Default', hex: '#000000', images: j.images.map((img) => ({ url: img.url })) }];
-        combos = j.images
-          .filter((img) => img.name || img.number)
-          .map((img) => ({ name: img.name || '', number: img.number || '' }));
+        combos = j.images.
+        filter((img) => img.name || img.number).
+        map((img) => ({ name: img.name || '', number: img.number || '' }));
       }
       setForm({
         ...EMPTY_FORM,
@@ -95,7 +95,7 @@ export default function JerseyEditor() {
         colors,
         name_number_combos: combos,
         name_style: { ...DEFAULT_NAME_STYLE, ...(j.name_style || {}) },
-        number_style: { ...DEFAULT_NUMBER_STYLE, ...(j.number_style || {}) },
+        number_style: { ...DEFAULT_NUMBER_STYLE, ...(j.number_style || {}) }
       });
       setLoading(false);
     }).catch(() => {
@@ -111,8 +111,8 @@ export default function JerseyEditor() {
   const setStyle = (field, value) => setField(styleKey, { ...currentStyle, [field]: value });
 
   useEffect(() => {
-    if (designerTab === 'name' && !form.enable_name && form.enable_number) setDesignerTab('number');
-    else if (designerTab === 'number' && !form.enable_number && form.enable_name) setDesignerTab('name');
+    if (designerTab === 'name' && !form.enable_name && form.enable_number) setDesignerTab('number');else
+    if (designerTab === 'number' && !form.enable_number && form.enable_name) setDesignerTab('name');
   }, [form.enable_name, form.enable_number, designerTab]);
 
   const hasImages = form.colors.some((c) => c.images && c.images.length > 0);
@@ -147,8 +147,8 @@ export default function JerseyEditor() {
   if (loading) return (
     <div className="bg-void min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-steel border-t-kinetic rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
+
 
   return (
     <div className="bg-void min-h-screen">
@@ -196,7 +196,7 @@ export default function JerseyEditor() {
           </Section>
 
           <Section title="NAME & NUMBER COMBOS">
-            <p className="mono-label text-fog/30 text-[0.65rem] mb-2">Presets shown on the buy screen — unrelated to specific images.</p>
+            <p className="mono-label text-fog/30 text-[0.65rem] mb-2 hidden">Presets shown on the buy screen — unrelated to specific images.</p>
             <NameNumberCombosEditor combos={form.name_number_combos} onChange={(c) => setField('name_number_combos', c)} />
           </Section>
 
@@ -208,61 +208,61 @@ export default function JerseyEditor() {
                 setField('enable_customization', v);
               }}
               disabled={!hasImages}
-              label="ENABLE IDENTITY LAB"
-            />
-            {!hasImages && (
-              <p className="mono-label text-fog/30">Add at least 1 color with images to enable Identity Lab.</p>
-            )}
-            {form.enable_customization && (
-              <>
+              label="ENABLE IDENTITY LAB" />
+            
+            {!hasImages &&
+            <p className="mono-label text-fog/30">Add at least 1 color with images to enable Identity Lab.</p>
+            }
+            {form.enable_customization &&
+            <>
                 <Toggle
-                  checked={form.enable_name}
-                  onChange={(v) => setField('enable_name', v)}
-                  label="ENABLE NAME CUSTOMIZATION"
-                />
+                checked={form.enable_name}
+                onChange={(v) => setField('enable_name', v)}
+                label="ENABLE NAME CUSTOMIZATION" />
+              
                 <Toggle
-                  checked={form.enable_number}
-                  onChange={(v) => setField('enable_number', v)}
-                  label="ENABLE NUMBER CUSTOMIZATION"
-                />
+                checked={form.enable_number}
+                onChange={(v) => setField('enable_number', v)}
+                label="ENABLE NUMBER CUSTOMIZATION" />
+              
               </>
-            )}
+            }
           </Section>
 
-          {form.enable_customization && (
-            <div className="border border-steel rounded-[6px] overflow-hidden">
+          {form.enable_customization &&
+          <div className="border border-steel rounded-[6px] overflow-hidden">
               <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
               <div className="grid lg:grid-cols-2">
                 <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
-                    imageUrl={form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url}
-                    nameStyle={form.name_style}
-                    numberStyle={form.number_style}
-                    customFontUrl={form.custom_font_url}
-                    customFontName={form.custom_font_name}
-                    enableName={form.enable_name}
-                    enableNumber={form.enable_number}
-                  />
+                  imageUrl={form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url}
+                  nameStyle={form.name_style}
+                  numberStyle={form.number_style}
+                  customFontUrl={form.custom_font_url}
+                  customFontName={form.custom_font_name}
+                  enableName={form.enable_name}
+                  enableNumber={form.enable_number} />
+                
                 </div>
                 <div className="p-4 space-y-2">
                   <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
-                    onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
+                onChange={({ url, name }) => {setField('custom_font_url', url);setField('custom_font_name', name);}} />
 
-                  {(form.enable_name || form.enable_number) ? (
-                    <>
+                  {form.enable_name || form.enable_number ?
+                <>
                       <div className="flex gap-2 pt-1">
-                        {form.enable_name && (
-                          <button type="button" onClick={() => setDesignerTab('name')}
-                            className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                        {form.enable_name &&
+                    <button type="button" onClick={() => setDesignerTab('name')}
+                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
                             NAME
                           </button>
-                        )}
-                        {form.enable_number && (
-                          <button type="button" onClick={() => setDesignerTab('number')}
-                            className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                    }
+                        {form.enable_number &&
+                    <button type="button" onClick={() => setDesignerTab('number')}
+                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
                             NUMBER
                           </button>
-                        )}
+                    }
                       </div>
 
                       <div className="flex items-center gap-3">
@@ -275,8 +275,8 @@ export default function JerseyEditor() {
                       <div className="flex items-center gap-2">
                         <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
                         <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
-                          onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
-                          className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
+                    onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
+                    className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
                       </div>
                       <PropRow label="FONT SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
                       <PropRow label="ARCH" value={currentStyle.arch} min={0} max={100} onChange={(v) => setStyle('arch', v)} />
@@ -284,22 +284,22 @@ export default function JerseyEditor() {
                       <PropRow label="FLAG" value={currentStyle.flag} min={0} max={100} onChange={(v) => setStyle('flag', v)} />
                       <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
                       <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
-                    </>
-                  ) : (
-                    <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
-                  )}
+                    </> :
+
+                <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
+                }
                 </div>
               </div>
             </div>
-          )}
+          }
 
           <Section title="ACCESS & PUBLISHING">
             <Toggle checked={form.is_private} onChange={(v) => setField('is_private', v)} label="PRIVATE (CLUB EXCLUSIVE)" />
             <div>
               <label className={labelCls}>PRIVATE ACCESS CODE</label>
               <input value={form.private_access_code} onChange={(e) => setField('private_access_code', e.target.value)}
-                placeholder="e.g. CLUB2026" disabled={!form.is_private}
-                className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`} />
+              placeholder="e.g. CLUB2026" disabled={!form.is_private}
+              className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div><label className={labelCls}>AVAILABLE FROM</label>
@@ -313,7 +313,7 @@ export default function JerseyEditor() {
 
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving}
-              className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
+            className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
               {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update jersey'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add to arsenal'}</>}
             </button>
             <Link to="/nexus-control" className="mono-label text-fog/50 hover:text-kinetic transition-colors px-4 py-3">
@@ -322,6 +322,6 @@ export default function JerseyEditor() {
           </div>
         </form>
       </div>
-    </div>
-  );
+    </div>);
+
 }
