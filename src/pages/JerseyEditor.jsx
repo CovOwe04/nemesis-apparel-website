@@ -196,7 +196,7 @@ export default function JerseyEditor() {
           </Section>
 
           <Section title="NAME & NUMBER COMBOS">
-            <p className="mono-label text-fog/30 text-[0.65rem] mb-2 hidden">Presets shown on the buy screen — unrelated to specific images.</p>
+            
             <NameNumberCombosEditor combos={form.name_number_combos} onChange={(c) => setField('name_number_combos', c)} />
           </Section>
 
