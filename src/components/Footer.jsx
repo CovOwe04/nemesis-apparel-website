@@ -1,23 +1,25 @@
 import { Instagram } from 'lucide-react';
-import { Image } from '@/components/ui/image';
 
 const LOGO_URL =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/39e4667d3_Asset53x.png';
 
 const BG_PATTERN_URL =
-  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/8b81f75ac_Asset103x.png';
+  'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/e640f258a_Cropped-Asset103x.png';
 
 export default function Footer() {
   return (
     <footer className="relative bg-black flex flex-col items-center text-center px-5 py-10 overflow-hidden">
-      {/* Cropped background — 2 logos visible, blur-up prevents flash */}
-      <div className="absolute inset-0 opacity-50">
-        <Image
-          src={BG_PATTERN_URL}
-          fittingType="fill"
-          className="w-full h-full"
-        />
-      </div>
+      {/* Cropped background at 100% size */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${BG_PATTERN_URL})`,
+          backgroundSize: '100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          opacity: 0.5,
+        }}
+      />
       <div className="relative z-10 flex flex-col items-center">
         <img
           src={LOGO_URL}

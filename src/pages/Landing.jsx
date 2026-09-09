@@ -9,6 +9,7 @@ import WeGetItDone from '@/components/WeGetItDone';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import CustomerOpinion from '@/components/CustomerOpinion';
 import Footer from '@/components/Footer';
+import SectionDivider from '@/components/SectionDivider';
 
 const HERO_URL =
 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -109,7 +110,7 @@ export default function Landing() {
       {/* WE GET IT DONE */}
       <WeGetItDone />
 
-      <section className="bg-kinetic py-8" />
+      <SectionDivider variant="top" />
 
       {/* FEATURED ARSENAL */}
       <section className=" bg-void">
@@ -156,7 +157,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="bg-kinetic py-8" />
+      <SectionDivider variant="bottom" />
 
       {/* WHY CHOOSE US */}
       <WhyChooseUs />
