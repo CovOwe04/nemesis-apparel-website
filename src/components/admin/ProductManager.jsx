@@ -252,6 +252,8 @@ export default function ProductManager({ onSaved }) {
                     numberStyle={form.number_style}
                     customFontUrl={form.custom_font_url}
                     customFontName={form.custom_font_name}
+                    enableName={form.enable_name}
+                    enableNumber={form.enable_number}
                   />
                 </div>
                 {/* Text properties controls */}

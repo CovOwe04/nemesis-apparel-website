@@ -19,6 +19,8 @@ export default function TextWarpPreview({
   customFontName = '',
   nameStyle = {},
   numberStyle = {},
+  enableName = true,
+  enableNumber = true,
 }) {
   const uid = useId();
   const ns = { ...NAME_DEFAULTS, ...nameStyle };
@@ -99,8 +101,8 @@ export default function TextWarpPreview({
         </div>
       )}
       <svg viewBox="0 0 300 400" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-        {renderPart(ns, false)}
-        {renderPart(nus, true)}
+        {enableName && renderPart(ns, false)}
+        {enableNumber && renderPart(nus, true)}
       </svg>
     </div>
   );

@@ -44,7 +44,7 @@ export default function StaticNameOverlay({
               color: '#FFFFFF',
               textShadow:
                 '0.12em 0.12em 0 rgba(10,10,10,0.95), -0.06em -0.06em 0 rgba(10,10,10,0.95), 0.06em -0.06em 0 rgba(10,10,10,0.95), -0.06em 0.06em 0 rgba(10,10,10,0.95)',
-              letterSpacing: `${letterSpacing / 100}em`,
+              letterSpacing: `${letterSpacing / 1000}em`,
               whiteSpace: 'nowrap',
               textTransform: 'uppercase',
             }}
@@ -70,7 +70,7 @@ export default function StaticNameOverlay({
               color: '#FFFFFF',
               textShadow:
                 '0.12em 0.12em 0 rgba(10,10,10,0.95), -0.06em -0.06em 0 rgba(10,10,10,0.95), 0.06em -0.06em 0 rgba(10,10,10,0.95), -0.06em 0.06em 0 rgba(10,10,10,0.95)',
-              letterSpacing: `${letterSpacing / 100}em`,
+              letterSpacing: `${letterSpacing / 1000}em`,
               whiteSpace: 'nowrap',
             }}
           >

@@ -19,7 +19,7 @@ export default function IdentityLab() {
   const [size, setSize] = useState(40);
   const [curve, setCurve] = useState(0);
   const [height, setHeight] = useState(25);
-  const [letterSpacing, setLetterSpacing] = useState(1.5);
+  const [letterSpacing, setLetterSpacing] = useState(0);
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
@@ -246,11 +246,27 @@ export default function IdentityLab() {
               {(canCustomizeName || canCustomizeNumber) && (
                 <div>
                   <label className="mono-label text-fog/50 block mb-2">LETTER SPACING</label>
-                  <div className="flex items-center gap-3">
-                    <input type="range" min={0} max={10} step={0.5} value={letterSpacing}
-                      onChange={(e) => setLetterSpacing(Number(e.target.value))}
-                      className="flex-1" />
-                    <span className="mono-label text-fog/60 w-8 text-center">{letterSpacing}</span>
+                  <div className="grid grid-cols-5 gap-1">
+                    {[
+                      { label: 'Least', value: -50 },
+                      { label: 'Less', value: -25 },
+                      { label: 'None', value: 0 },
+                      { label: 'More', value: 25 },
+                      { label: 'Most', value: 50 },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setLetterSpacing(opt.value)}
+                        className={`mono-label px-2 py-2 border rounded-[4px] text-[0.65rem] transition-colors ${
+                          letterSpacing === opt.value
+                            ? 'bg-kinetic text-void border-kinetic'
+                            : 'border-steel text-fog/60 hover:text-fog'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}

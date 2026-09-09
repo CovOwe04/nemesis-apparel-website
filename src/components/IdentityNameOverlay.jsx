@@ -81,7 +81,7 @@ export default function IdentityNameOverlay({
             stroke="#0A0A0A"
             strokeWidth="1.4"
             paintOrder="stroke fill"
-            letterSpacing={letterSpacing}
+            letterSpacing={letterSpacing / 10}
             style={{ textTransform: 'uppercase' }}
           >
             {lines.map((line, i) => (
@@ -98,7 +98,7 @@ export default function IdentityNameOverlay({
               stroke="#0A0A0A"
               strokeWidth="1.6"
               paintOrder="stroke fill"
-              letterSpacing={letterSpacing}
+              letterSpacing={letterSpacing / 10}
               x="150"
               y="260"
               textAnchor="middle"
