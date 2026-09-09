@@ -19,6 +19,7 @@ export default function IdentityLab() {
   const [size, setSize] = useState(40);
   const [curve, setCurve] = useState(0);
   const [height, setHeight] = useState(25);
+  const [letterSpacing, setLetterSpacing] = useState(1.5);
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
   const [added, setAdded] = useState(false);
@@ -87,6 +88,7 @@ export default function IdentityLab() {
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
       height: canCustomize ? height : 0,
+      letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
     });
@@ -116,6 +118,7 @@ export default function IdentityLab() {
                   image={selectedImage}
                   customName={canCustomizeName ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber ? number : ''}
+                  letterSpacing={letterSpacing}
                   showPlaceholder={canCustomize}
                   className="w-full h-full"
                 />
@@ -128,6 +131,7 @@ export default function IdentityLab() {
                   size={size}
                   curve={curve}
                   height={height}
+                  letterSpacing={letterSpacing}
                   showPlaceholder={canCustomize}
                   className="w-full h-full"
                 />
@@ -235,6 +239,19 @@ export default function IdentityLab() {
                     placeholder="0–999"
                     className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
                   />
+                </div>
+              )}
+
+              {/* LETTER SPACING */}
+              {(canCustomizeName || canCustomizeNumber) && (
+                <div>
+                  <label className="mono-label text-fog/50 block mb-2">LETTER SPACING</label>
+                  <div className="flex items-center gap-3">
+                    <input type="range" min={0} max={10} step={0.5} value={letterSpacing}
+                      onChange={(e) => setLetterSpacing(Number(e.target.value))}
+                      className="flex-1" />
+                    <span className="mono-label text-fog/60 w-8 text-center">{letterSpacing}</span>
+                  </div>
                 </div>
               )}
             </>

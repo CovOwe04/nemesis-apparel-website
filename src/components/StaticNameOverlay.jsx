@@ -12,6 +12,7 @@ export default function StaticNameOverlay({
   posX = 30,
   posY = 39,
   baseSize: baseSizeOverride,
+  letterSpacing = 1.5,
   className = '',
 }) {
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
@@ -43,7 +44,7 @@ export default function StaticNameOverlay({
               color: '#FFFFFF',
               textShadow:
                 '0.12em 0.12em 0 rgba(10,10,10,0.95), -0.06em -0.06em 0 rgba(10,10,10,0.95), 0.06em -0.06em 0 rgba(10,10,10,0.95), -0.06em 0.06em 0 rgba(10,10,10,0.95)',
-              letterSpacing: '0.04em',
+              letterSpacing: `${letterSpacing / 100}em`,
               whiteSpace: 'nowrap',
               textTransform: 'uppercase',
             }}
@@ -69,7 +70,7 @@ export default function StaticNameOverlay({
               color: '#FFFFFF',
               textShadow:
                 '0.12em 0.12em 0 rgba(10,10,10,0.95), -0.06em -0.06em 0 rgba(10,10,10,0.95), 0.06em -0.06em 0 rgba(10,10,10,0.95), -0.06em 0.06em 0 rgba(10,10,10,0.95)',
-              letterSpacing: '0.04em',
+              letterSpacing: `${letterSpacing / 100}em`,
               whiteSpace: 'nowrap',
             }}
           >

@@ -20,6 +20,7 @@ export default function IdentityNameOverlay({
   size = 40,
   curve = 0,
   height = 25,
+  letterSpacing = 1.5,
   showPlaceholder = false,
   className = '',
 }) {
@@ -32,7 +33,6 @@ export default function IdentityNameOverlay({
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
   const displayNumber = customNumber || '';
   const charFactor = 0.7;
-  const letterSpacing = 1.5;
   const words = displayName.split(' ').filter(Boolean);
   const longestWord = Math.max(...words.map((w) => w.length), 1);
   const fitForLongest =
@@ -81,7 +81,7 @@ export default function IdentityNameOverlay({
             stroke="#0A0A0A"
             strokeWidth="1.4"
             paintOrder="stroke fill"
-            letterSpacing="1.5"
+            letterSpacing={letterSpacing}
             style={{ textTransform: 'uppercase' }}
           >
             {lines.map((line, i) => (
@@ -98,7 +98,7 @@ export default function IdentityNameOverlay({
               stroke="#0A0A0A"
               strokeWidth="1.6"
               paintOrder="stroke fill"
-              letterSpacing="2"
+              letterSpacing={letterSpacing}
               x="150"
               y="260"
               textAnchor="middle"

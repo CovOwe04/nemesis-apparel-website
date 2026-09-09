@@ -79,6 +79,11 @@ export default function ProductManager({ onSaved }) {
   const currentStyle = form[styleKey] || {};
   const setStyle = (field, value) => setField(styleKey, { ...currentStyle, [field]: value });
 
+  useEffect(() => {
+    if (designerTab === 'name' && !form.enable_name && form.enable_number) setDesignerTab('number');
+    else if (designerTab === 'number' && !form.enable_number && form.enable_name) setDesignerTab('name');
+  }, [form.enable_name, form.enable_number, designerTab]);
+
   const loadJerseys = () => {
     setLoadingList(true);
     base44.entities.Jersey.list('-created_date', 100)
@@ -254,44 +259,48 @@ export default function ProductManager({ onSaved }) {
                   <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
                     onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }} />
 
-                  {/* Name / Number tabs */}
-                  <div className="flex gap-2 pt-1">
-                    <button type="button" onClick={() => setDesignerTab('name')}
-                      className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                      NAME
-                    </button>
-                    <button type="button" onClick={() => setDesignerTab('number')}
-                      className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                      NUMBER
-                    </button>
-                  </div>
+                  {(form.enable_name || form.enable_number) ? (
+                    <>
+                      {/* Name / Number tabs */}
+                      <div className="flex gap-2 pt-1">
+                        {form.enable_name && (
+                          <button type="button" onClick={() => setDesignerTab('name')}
+                            className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                            NAME
+                          </button>
+                        )}
+                        {form.enable_number && (
+                          <button type="button" onClick={() => setDesignerTab('number')}
+                            className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                            NUMBER
+                          </button>
+                        )}
+                      </div>
 
-                  {/* Tab-specific controls */}
-                  <div className="flex items-center gap-3">
-                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
-                    <input type="color" value={currentStyle.color} onChange={(e) => setStyle('color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
-                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE COLOR</span>
-                    <input type="color" value={currentStyle.outline_color} onChange={(e) => setStyle('outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
-                  </div>
-                  <Toggle checked={currentStyle.outline} onChange={(v) => setStyle('outline', v)} label="ENABLE TEXT OUTLINE" />
-                  <div className="flex items-center gap-2">
-                    <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
-                    <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
-                      onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
-                      className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
-                  </div>
-                  <PropRow label="FONT SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
-                  <PropRow label="ARCH" value={currentStyle.arch} min={0} max={100} onChange={(v) => setStyle('arch', v)} />
-                  <PropRow label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
-                  <PropRow label="FLAG" value={currentStyle.flag} min={0} max={100} onChange={(v) => setStyle('flag', v)} />
-                  <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
-                  <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
-                  <button type="button" onClick={() => {
-                    const text = `${designerTab.toUpperCase()} — H:${currentStyle.horiz_pos} V:${currentStyle.vert_pos}`;
-                    navigator.clipboard.writeText(text);
-                  }} className="btn-solid px-3 py-1.5 mono-label text-xs w-full">
-                    COPY GEOM
-                  </button>
+                      {/* Tab-specific controls */}
+                      <div className="flex items-center gap-3">
+                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
+                        <input type="color" value={currentStyle.color} onChange={(e) => setStyle('color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
+                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE COLOR</span>
+                        <input type="color" value={currentStyle.outline_color} onChange={(e) => setStyle('outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
+                      </div>
+                      <Toggle checked={currentStyle.outline} onChange={(v) => setStyle('outline', v)} label="ENABLE TEXT OUTLINE" />
+                      <div className="flex items-center gap-2">
+                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
+                        <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
+                          onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
+                          className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
+                      </div>
+                      <PropRow label="FONT SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
+                      <PropRow label="ARCH" value={currentStyle.arch} min={0} max={100} onChange={(v) => setStyle('arch', v)} />
+                      <PropRow label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
+                      <PropRow label="FLAG" value={currentStyle.flag} min={0} max={100} onChange={(v) => setStyle('flag', v)} />
+                      <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
+                      <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
+                    </>
+                  ) : (
+                    <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
+                  )}
                 </div>
               </div>
             </div>
