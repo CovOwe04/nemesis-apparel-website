@@ -53,6 +53,8 @@ export default function IdentityLab() {
   }
 
   const canCustomize = !!jersey.enable_customization;
+  const canCustomizeName = canCustomize && !!jersey.enable_name;
+  const canCustomizeNumber = canCustomize && !!jersey.enable_number;
   const presets = jersey.images && jersey.images.length > 0
     ? jersey.images
     : [{ url: jersey.front_image, name: '', number: '' }];
@@ -79,8 +81,8 @@ export default function IdentityLab() {
       front_image: selectedImage,
       back_image: selectedImage,
       static_display: jersey.static_display,
-      customName: canCustomize ? name.toUpperCase() : '',
-      customNumber: canCustomize ? number : '',
+      customName: canCustomizeName ? name.toUpperCase() : '',
+      customNumber: canCustomizeNumber ? number : '',
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
@@ -112,16 +114,16 @@ export default function IdentityLab() {
               {jersey.static_display ? (
                 <StaticNameOverlay
                   image={selectedImage}
-                  customName={canCustomize ? name.toUpperCase() : ''}
-                  customNumber={canCustomize ? number : ''}
+                  customName={canCustomizeName ? name.toUpperCase() : ''}
+                  customNumber={canCustomizeNumber ? number : ''}
                   showPlaceholder={canCustomize}
                   className="w-full h-full"
                 />
               ) : (
                 <IdentityNameOverlay
                   back_image={selectedImage}
-                  customName={canCustomize ? name.toUpperCase() : ''}
-                  customNumber={canCustomize ? number : ''}
+                  customName={canCustomizeName ? name.toUpperCase() : ''}
+                  customNumber={canCustomizeNumber ? number : ''}
                   fontId={fontId}
                   size={size}
                   curve={curve}
@@ -199,38 +201,42 @@ export default function IdentityLab() {
           ) : (
             <>
               {/* NAME */}
-              <div>
-                <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
-                  NAME
-                </label>
-                <input
-                  id="name-input"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value.slice(0, 20))}
-                  placeholder="ENTER NAME"
-                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
-                />
-                <div className="mono-label text-fog/30 mt-1 text-right">
-                  {name.length}/20
+              {canCustomizeName && (
+                <div>
+                  <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
+                    NAME
+                  </label>
+                  <input
+                    id="name-input"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.slice(0, 20))}
+                    placeholder="ENTER NAME"
+                    className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
+                  />
+                  <div className="mono-label text-fog/30 mt-1 text-right">
+                    {name.length}/20
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* NUMBER */}
-              <div>
-                <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
-                  NUMBER
-                </label>
-                <input
-                  id="number-input"
-                  type="text"
-                  inputMode="numeric"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                  placeholder="0–999"
-                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
-                />
-              </div>
+              {canCustomizeNumber && (
+                <div>
+                  <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
+                    NUMBER
+                  </label>
+                  <input
+                    id="number-input"
+                    type="text"
+                    inputMode="numeric"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                    placeholder="0–999"
+                    className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
+                  />
+                </div>
+              )}
             </>
           )}
 

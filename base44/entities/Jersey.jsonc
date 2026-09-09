@@ -67,6 +67,16 @@
       "default": true,
       "title": "Enable Identity Lab"
     },
+    "enable_name": {
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Name Customization"
+    },
+    "enable_number": {
+      "type": "boolean",
+      "default": true,
+      "title": "Enable Number Customization"
+    },
     "static_display": {
       "type": "boolean",
       "default": false,
@@ -119,15 +129,15 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 50
+          "default": 12
         },
         "vert_pos": {
           "type": "number",
-          "default": 50
+          "default": 99
         },
         "font_size": {
           "type": "number",
-          "default": 42
+          "default": 8
         }
       },
       "default": {}
@@ -165,15 +175,15 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 50
+          "default": 12
         },
         "vert_pos": {
           "type": "number",
-          "default": 50
+          "default": 23
         },
         "font_size": {
           "type": "number",
-          "default": 76
+          "default": 35
         }
       },
       "default": {}

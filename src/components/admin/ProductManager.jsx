@@ -9,16 +9,19 @@ import ImagesEditor from '@/components/admin/ImagesEditor';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 50, vert_pos: 50, font_size: 42,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8,
 };
 const DEFAULT_NUMBER_STYLE = {
-  ...DEFAULT_NAME_STYLE, font_size: 76,
+  color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35,
 };
 
 const EMPTY_FORM = {
   name: '', team: '', category: 'Jersey', fitting: 'Regular', price: '',
   description: '', images: [],
   enable_customization: false,
+  enable_name: true,
+  enable_number: true,
   name_style: { ...DEFAULT_NAME_STYLE },
   number_style: { ...DEFAULT_NUMBER_STYLE },
   custom_font_url: '', custom_font_name: '',
@@ -214,6 +217,20 @@ export default function ProductManager({ onSaved }) {
             />
             {form.images.length === 0 && (
               <p className="mono-label text-fog/30">Upload at least 1 image to enable Identity Lab.</p>
+            )}
+            {form.enable_customization && (
+              <>
+                <Toggle
+                  checked={form.enable_name}
+                  onChange={(v) => setField('enable_name', v)}
+                  label="ENABLE NAME CUSTOMIZATION"
+                />
+                <Toggle
+                  checked={form.enable_number}
+                  onChange={(v) => setField('enable_number', v)}
+                  label="ENABLE NUMBER CUSTOMIZATION"
+                />
+              </>
             )}
           </Section>
 
