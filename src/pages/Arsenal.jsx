@@ -18,21 +18,19 @@ export default function Arsenal() {
   }, [currency]);
 
   useEffect(() => {
-    base44.entities.Jersey.list('-created_date', 100)
-      .then((data) => {
-        const sorted = (data || []).sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999));
-        setJerseys(sorted);
+    setLoading(true);
+    base44.functions.invoke('get-arsenal-jerseys', { accessCode })
+      .then((res) => {
+        setJerseys(res.data?.jerseys || []);
       })
       .catch(() => setJerseys([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [accessCode]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const now = new Date();
     return jerseys.filter((j) => {
-      // Privacy: hide private jerseys unless access code matches
-      if (j.is_private && j.private_access_code !== accessCode) return false;
       // Scheduling: hide if not yet available or expired
       if (j.available_from && new Date(j.available_from) > now) return false;
       if (j.available_until && new Date(j.available_until) < now) return false;
@@ -40,7 +38,7 @@ export default function Arsenal() {
       if (q && !(j.name || '').toLowerCase().includes(q) && !(j.team || '').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [jerseys, query, accessCode]);
+  }, [jerseys, query]);
 
   return (
     <div className="bg-void min-h-screen">
