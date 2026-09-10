@@ -69,8 +69,8 @@ export default function IdentityLab() {
   }
 
   const canCustomize = !!jersey.enable_customization;
-  const canCustomizeName = canCustomize && !!jersey.enable_name;
-  const canCustomizeNumber = canCustomize && !!jersey.enable_number;
+  const canCustomizeName = canCustomize && jersey.enable_name !== false;
+  const canCustomizeNumber = canCustomize && jersey.enable_number !== false;
   const colors = getColors(jersey);
   const combos = getCombos(jersey);
   const currentColor = colors[Math.min(selectedColor, colors.length - 1)];
