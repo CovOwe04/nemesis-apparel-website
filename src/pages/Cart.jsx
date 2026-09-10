@@ -369,7 +369,7 @@ export default function Cart() {
                   {COUNTRIES.find((c) => c.code === shippingAddress.country)?.name || 'Auto-detected'}
                 </div>
               </div>
-              <p className="mono-label text-fog/30 text-[0.6rem]">Country auto-detected from postal code</p>
+              <p className="mono-label text-fog/30 text-[0.6rem] hidden">Country auto-detected from postal code</p>
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
