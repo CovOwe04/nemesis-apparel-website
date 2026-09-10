@@ -2,6 +2,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { getShipRegion, SHIPPING_RATES } from '../../shared/shipping.ts';
 
+function getClientIp(req) {
+  return req.headers.get('CF-Connecting-IP')
+    || (req.headers.get('X-Forwarded-For') || '').split(',')[0].trim()
+    || req.headers.get('X-Real-IP')
+    || 'unknown';
+}
+
 export default async function(req) {
   try {
     const body = await req.json();
@@ -14,20 +21,38 @@ export default async function(req) {
       return Response.json({ error: 'Name and email are required' }, { status: 400 });
     }
 
-    const base44 = createClientFromRequest(req);
+    // Validate item quantities are positive integers
+    for (const item of items) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) {
+        return Response.json({ error: 'Invalid item quantity' }, { status: 400 });
+      }
+    }
 
-    // Rate limit: max 3 pending orders per email in 10 minutes
-    const recentOrders = await base44.asServiceRole.entities.Order.filter(
-      { customer_email: customerEmail, status: 'pending' },
+    const base44 = createClientFromRequest(req);
+    const clientIp = getClientIp(req);
+    const tenMinAgo = Date.now() - 10 * 60 * 1000;
+
+    // Rate limit by IP: max 5 pending orders per IP in 10 minutes
+    const recentByIp = await base44.asServiceRole.entities.Order.filter(
+      { ip_address: clientIp, status: 'pending' },
       '-created_date',
       10
     );
-    const tenMinAgo = Date.now() - 10 * 60 * 1000;
-    const recentCount = (recentOrders || []).filter(
+    const ipCount = (recentByIp || []).filter(
       (o) => new Date(o.created_date).getTime() > tenMinAgo
     ).length;
-    if (recentCount >= 3) {
+    if (ipCount >= 5) {
       return Response.json({ error: 'Too many checkout attempts. Please try again in a few minutes.' }, { status: 429 });
+    }
+
+    // Global cap: prevent unlimited pending order accumulation
+    const allPending = await base44.asServiceRole.entities.Order.filter(
+      { status: 'pending' },
+      '-created_date',
+      100
+    );
+    if ((allPending || []).length >= 50) {
+      return Response.json({ error: 'Order processing is at capacity. Please try again shortly.' }, { status: 429 });
     }
 
     // Server-side price verification: look up real prices from Jersey entities
@@ -82,6 +107,7 @@ export default async function(req) {
       item_count: itemCount,
       has_custom_names: hasCustom,
       admin_notes: `Ship to: ${addrStr}\nShipping: $${shippingUsd} (${region})\nHST: $${hstUsd}`,
+      ip_address: clientIp,
     });
 
     const stripeKey = secrets.get('STRIPE_SECRET_KEY');
