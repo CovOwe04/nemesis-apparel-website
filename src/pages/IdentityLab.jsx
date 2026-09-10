@@ -42,6 +42,8 @@ export default function IdentityLab() {
   const [added, setAdded] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [nameOn, setNameOn] = useState(true);
+  const [numberOn, setNumberOn] = useState(true);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -81,8 +83,8 @@ export default function IdentityLab() {
   };
 
   const selectCombo = (combo) => {
-    if (canCustomizeName) setName(combo.name || '');
-    if (canCustomizeNumber) setNumber(combo.number || '');
+    if (canCustomizeName && nameOn) setName(combo.name || '');
+    if (canCustomizeNumber && numberOn) setNumber(combo.number || '');
   };
 
   const handleAdd = () => {
@@ -94,8 +96,8 @@ export default function IdentityLab() {
       front_image: selectedImage,
       back_image: selectedImage,
       static_display: jersey.static_display,
-      customName: canCustomizeName ? name.toUpperCase() : '',
-      customNumber: canCustomizeNumber ? number : '',
+      customName: canCustomizeName && nameOn ? name.toUpperCase() : '',
+      customNumber: canCustomizeNumber && numberOn ? number : '',
       font: canCustomize ? fontId : '',
       size: canCustomize ? size : 0,
       curve: canCustomize ? curve : 0,
@@ -128,23 +130,23 @@ export default function IdentityLab() {
               {jersey.static_display ? (
                 <StaticNameOverlay
                   image={selectedImage}
-                  customName={canCustomizeName ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber ? number : ''}
+                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
+                  customNumber={canCustomizeNumber && numberOn ? number : ''}
                   letterSpacing={letterSpacing}
-                  showPlaceholder={canCustomize}
+                  showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
                   className="w-full h-full"
                 />
               ) : (
                 <IdentityNameOverlay
                   back_image={selectedImage}
-                  customName={canCustomizeName ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber ? number : ''}
+                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
+                  customNumber={canCustomizeNumber && numberOn ? number : ''}
                   fontId={fontId}
                   size={size}
                   curve={curve}
                   height={height}
                   letterSpacing={letterSpacing}
-                  showPlaceholder={canCustomize}
+                  showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
                   className="w-full h-full"
                 />
               )}
@@ -231,7 +233,7 @@ export default function IdentityLab() {
           </div>
 
           {/* NAME & NUMBER COMBO PRESETS */}
-          {canCustomize && combos.length > 0 && (canCustomizeName || canCustomizeNumber) && (
+          {canCustomize && combos.length > 0 && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn)) && (
             <div>
               <div className="mono-label text-fog/50 mb-2">PRESET COMBOS</div>
               <div className="flex flex-wrap gap-2">
@@ -258,8 +260,42 @@ export default function IdentityLab() {
             </div>
           ) : (
             <>
+              {/* NAME & NUMBER TOGGLES */}
+              {(canCustomizeName || canCustomizeNumber) && (
+                <div className="flex flex-wrap gap-3">
+                  {canCustomizeName && (
+                    <button
+                      type="button"
+                      onClick={() => setNameOn((v) => !v)}
+                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-[6px] transition-colors ${
+                        nameOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
+                      }`}
+                    >
+                      <span className="mono-label text-[0.65rem]">NAME</span>
+                      <span className={`relative w-9 h-5 rounded-[4px] transition-colors ${nameOn ? 'bg-void' : 'bg-steel'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${nameOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
+                      </span>
+                    </button>
+                  )}
+                  {canCustomizeNumber && (
+                    <button
+                      type="button"
+                      onClick={() => setNumberOn((v) => !v)}
+                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-[6px] transition-colors ${
+                        numberOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
+                      }`}
+                    >
+                      <span className="mono-label text-[0.65rem]">NUMBER</span>
+                      <span className={`relative w-9 h-5 rounded-[4px] transition-colors ${numberOn ? 'bg-void' : 'bg-steel'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${numberOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* NAME */}
-              {canCustomizeName && (
+              {canCustomizeName && nameOn && (
                 <div>
                   <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
                     NAME
@@ -279,7 +315,7 @@ export default function IdentityLab() {
               )}
 
               {/* NUMBER */}
-              {canCustomizeNumber && (
+              {canCustomizeNumber && numberOn && (
                 <div>
                   <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
                     NUMBER
@@ -297,7 +333,7 @@ export default function IdentityLab() {
               )}
 
               {/* LETTER SPACING */}
-              {(canCustomizeName || canCustomizeNumber) && (
+              {((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn)) && (
                 <div>
                   <label className="mono-label text-fog/50 block mb-2">LETTER SPACING</label>
                   <div className="grid grid-cols-5 gap-1">
