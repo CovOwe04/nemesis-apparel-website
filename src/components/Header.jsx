@@ -35,7 +35,7 @@ export default function Header() {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Arsenal', path: '/arsenal' },
-    { label: 'Design', path: '/design-lab' },
+    // { label: 'Design', path: '/design-lab' }, // hidden — route still active
   ];
 
   const isActive = (path) =>
