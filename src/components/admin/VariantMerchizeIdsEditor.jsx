@@ -26,6 +26,7 @@ function generateVariants(colors, combos) {
 export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [expandedIdx, setExpandedIdx] = useState(null);
 
   const allVariants = generateVariants(colors, combos);
 
@@ -40,6 +41,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       merchize_product_id: existing?.merchize_product_id || '',
       manually_set: existing?.manually_set || false,
       variant_ids: existing?.variant_ids || {},
+      skus: existing?.skus || {},
     };
   });
 
@@ -70,7 +72,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       const results = res.data?.results || [];
       const updated = syncedIds.map((v) => {
         const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);
-        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, manually_set: false, variant_ids: r.variant_ids || {} };
+        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
         return v;
       });
       onChange(updated);
@@ -113,18 +115,35 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             const vmi = syncedIds[i];
             const label = [v.color_name, v.combo_name, v.combo_number].filter(Boolean).join(' · ');
             return (
-              <div key={i} className="flex items-center gap-2">
-                <span className="mono-label text-fog/40 text-[0.6rem] w-32 shrink-0 truncate">{label}</span>
-                <input
-                  type="text"
-                  value={vmi.merchize_product_id || ''}
-                  onChange={(e) => updateField(i, e.target.value)}
-                  placeholder="Auto-filled on generate"
-                  className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
-                />
-                {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic shrink-0">MANUAL</span>}
-                {vmi.variant_ids && Object.keys(vmi.variant_ids).length > 0 && (
-                  <span className="mono-label text-[0.55rem] text-fog/30 shrink-0">{Object.keys(vmi.variant_ids).length} SZ</span>
+              <div key={i}>
+                <div className="flex items-center gap-2">
+                  <span className="mono-label text-fog/40 text-[0.6rem] w-32 shrink-0 truncate">{label}</span>
+                  <input
+                    type="text"
+                    value={vmi.merchize_product_id || ''}
+                    onChange={(e) => updateField(i, e.target.value)}
+                    placeholder="Auto-filled on generate"
+                    className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
+                  />
+                  {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic shrink-0">MANUAL</span>}
+                  {vmi.skus && Object.keys(vmi.skus).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedIdx(expandedIdx === i ? null : i)}
+                      className="mono-label text-[0.55rem] text-fog/40 hover:text-kinetic shrink-0 transition-colors"
+                    >
+                      {Object.keys(vmi.skus).length} SZ {expandedIdx === i ? '▲' : '▼'}
+                    </button>
+                  )}
+                </div>
+                {expandedIdx === i && vmi.skus && Object.keys(vmi.skus).length > 0 && (
+                  <div className="pl-32 mt-1 mb-2 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {Object.entries(vmi.skus).map(([size, sku]) => (
+                      <span key={size} className="mono-label text-[0.55rem] text-fog/40">
+                        {size}: <span className="text-fog/70">{sku}</span>
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             );

@@ -47,6 +47,14 @@ export default async function(req) {
       const colorObj = (jersey.colors || []).find((c) => c.name === color_name);
       const colorHex = colorObj?.hex || '#000000';
 
+      const productImages = [];
+      if (colorObj?.images?.length > 0) {
+        productImages.push(...colorObj.images.map((img) => img.url).filter(Boolean));
+      } else {
+        if (jersey.front_image) productImages.push(jersey.front_image);
+        if (jersey.back_image && jersey.back_image !== jersey.front_image) productImages.push(jersey.back_image);
+      }
+
       const attributes = [
         {
           is_preselected: true,
@@ -79,6 +87,7 @@ export default async function(req) {
       const payload = {
         title: variantLabel,
         description: jersey.description || '',
+        images: productImages,
         attributes,
         variants: productVariants,
         is_collection_hidden: false,

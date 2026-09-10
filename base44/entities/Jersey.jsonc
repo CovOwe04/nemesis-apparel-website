@@ -360,6 +360,33 @@
               }
             },
             "default": {}
+          },
+          "skus": {
+            "type": "object",
+            "properties": {
+              "XS": {
+                "type": "string"
+              },
+              "S": {
+                "type": "string"
+              },
+              "M": {
+                "type": "string"
+              },
+              "L": {
+                "type": "string"
+              },
+              "XL": {
+                "type": "string"
+              },
+              "2XL": {
+                "type": "string"
+              },
+              "3XL": {
+                "type": "string"
+              }
+            },
+            "default": {}
           }
         }
       },
