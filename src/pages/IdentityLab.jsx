@@ -199,6 +199,24 @@ export default function IdentityLab() {
             </div>
           )}
 
+          {/* PRESETS */}
+          {canCustomize && combos.length > 0 && (
+            <div>
+              <div className="mono-label text-fog/50 mb-2">PRESETS</div>
+              <div className="flex flex-wrap gap-2">
+                {combos.map((combo, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectCombo(combo)}
+                    className="mono-label px-3 py-2 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
+                  >
+                    {combo.name || combo.number || `COMBO ${i + 1}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* IMAGE THUMBNAILS (if multiple images in current color) */}
           {currentImages.length > 1 && (
             <div>
@@ -237,24 +255,6 @@ export default function IdentityLab() {
             </div>
           </div>
 
-          {/* NAME & NUMBER COMBO PRESETS */}
-          {canCustomize && combos.length > 0 && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn)) && (
-            <div>
-              <div className="mono-label text-fog/50 mb-2">PRESET COMBOS</div>
-              <div className="flex flex-wrap gap-2">
-                {combos.map((combo, i) => (
-                  <button
-                    key={i}
-                    onClick={() => selectCombo(combo)}
-                    className="mono-label px-3 py-2 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
-                  >
-                    {combo.name || combo.number || `COMBO ${i + 1}`}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {!canCustomize ? (
             <div className="border border-steel rounded-[6px] p-5">
               <p className="mono-label text-kinetic mb-2">LAB LOCKED</p>
@@ -265,14 +265,26 @@ export default function IdentityLab() {
             </div>
           ) : (
             <>
-              {/* NAME & NUMBER TOGGLES */}
-              {(canCustomizeName || canCustomizeNumber) && (
-                <div className="flex flex-wrap gap-3">
-                  {canCustomizeName && (
+              {/* NAME */}
+              {canCustomizeName && (
+                <div>
+                  <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
+                    NAME
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="name-input"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value.slice(0, 20))}
+                      placeholder="ENTER NAME"
+                      disabled={!nameOn}
+                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
+                    />
                     <button
                       type="button"
                       onClick={() => setNameOn((v) => !v)}
-                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-[6px] transition-colors ${
+                      className={`flex items-center gap-2 px-4 py-3 border rounded-[6px] transition-colors shrink-0 ${
                         nameOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
@@ -281,12 +293,34 @@ export default function IdentityLab() {
                         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${nameOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
                       </span>
                     </button>
-                  )}
-                  {canCustomizeNumber && (
+                  </div>
+                  <div className="mono-label text-fog/30 mt-1 text-right">
+                    {name.length}/20
+                  </div>
+                </div>
+              )}
+
+              {/* NUMBER */}
+              {canCustomizeNumber && (
+                <div>
+                  <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
+                    NUMBER
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="number-input"
+                      type="text"
+                      inputMode="numeric"
+                      value={number}
+                      onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                      placeholder="0–999"
+                      disabled={!numberOn}
+                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!numberOn ? 'opacity-40' : ''}`}
+                    />
                     <button
                       type="button"
                       onClick={() => setNumberOn((v) => !v)}
-                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-[6px] transition-colors ${
+                      className={`flex items-center gap-2 px-4 py-3 border rounded-[6px] transition-colors shrink-0 ${
                         numberOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
@@ -295,45 +329,7 @@ export default function IdentityLab() {
                         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${numberOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
                       </span>
                     </button>
-                  )}
-                </div>
-              )}
-
-              {/* NAME */}
-              {canCustomizeName && nameOn && (
-                <div>
-                  <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
-                    NAME
-                  </label>
-                  <input
-                    id="name-input"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value.slice(0, 20))}
-                    placeholder="ENTER NAME"
-                    className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
-                  />
-                  <div className="mono-label text-fog/30 mt-1 text-right">
-                    {name.length}/20
                   </div>
-                </div>
-              )}
-
-              {/* NUMBER */}
-              {canCustomizeNumber && numberOn && (
-                <div>
-                  <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
-                    NUMBER
-                  </label>
-                  <input
-                    id="number-input"
-                    type="text"
-                    inputMode="numeric"
-                    value={number}
-                    onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                    placeholder="0–999"
-                    className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
-                  />
                 </div>
               )}
 
