@@ -44,12 +44,12 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
 
   return (
     <div className="group flex flex-col">
-      <Link
-        to={`/lab/${jersey.id}`}
-        className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
-        style={{ boxShadow: '0 0 0 0 rgba(255,31,61,0)' }}
-      >
-        <div className="absolute -inset-2 rounded-[16px] bg-kinetic opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-60 pointer-events-none" />
+      <div className="relative">
+        <div className="absolute -inset-3 rounded-[16px] bg-kinetic opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-50 pointer-events-none" />
+        <Link
+          to={`/lab/${jersey.id}`}
+          className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
+        >
         <Image
           src={front}
           alt={`${jersey.name} front`}
@@ -70,7 +70,8 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
         <div className="absolute top-3 right-3 bg-kinetic text-void font-heading text-sm px-2 py-1 rounded-[6px]">
           {formatPrice(jersey.price, currency)}
         </div>
-      </Link>
+        </Link>
+      </div>
       <div className="flex items-end justify-between gap-3 pt-3">
         <div className="min-w-0 flex-1">
           <h3 className="font-heading text-base text-fog leading-tight truncate">
