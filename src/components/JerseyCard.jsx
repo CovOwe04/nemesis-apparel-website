@@ -47,7 +47,9 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
       <Link
         to={`/lab/${jersey.id}`}
         className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
+        style={{ boxShadow: '0 0 0 0 rgba(255,31,61,0)' }}
       >
+        <div className="absolute -inset-2 rounded-[16px] bg-kinetic opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-60 pointer-events-none" />
         <Image
           src={front}
           alt={`${jersey.name} front`}
