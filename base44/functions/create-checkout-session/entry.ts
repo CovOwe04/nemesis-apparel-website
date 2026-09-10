@@ -14,6 +14,12 @@ export default async function(req) {
       return Response.json({ error: 'Name and email are required' }, { status: 400 });
     }
 
+    // Verify shared secret to prevent anonymous callers from creating orders
+    const expectedSecret = secrets.get('CHECKOUT_SHARED_SECRET');
+    if (!expectedSecret || body.checkoutSecret !== expectedSecret) {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     const base44 = createClientFromRequest(req);
 
     // Server-side price verification: look up real prices from Jersey entities
