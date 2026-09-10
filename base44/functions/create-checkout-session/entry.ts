@@ -15,18 +15,43 @@ export default async function(req) {
     }
 
     const base44 = createClientFromRequest(req);
+
+    // Server-side price verification: look up real prices from Jersey entities
+    // to prevent client-side price manipulation
+    const allJerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
+    const jerseyMap = new Map(allJerseys.map((j) => [j.id, j]));
+
+    const verifiedItems = [];
+    for (const item of items) {
+      if (item.isCustomDesign) {
+        return Response.json({ error: 'Custom design items are not available for purchase' }, { status: 400 });
+      }
+      const jersey = jerseyMap.get(item.jerseyId);
+      if (!jersey) {
+        return Response.json({ error: `Invalid or unavailable item: ${item.name || 'unknown'}` }, { status: 400 });
+      }
+      verifiedItems.push({
+        ...item,
+        price: jersey.price,
+        name: jersey.name,
+        team: jersey.team || '',
+        front_image: jersey.front_image || item.front_image,
+        back_image: jersey.back_image || item.back_image,
+      });
+    }
+
     const region = getShipRegion(shippingAddress?.country);
-    const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
+    const jerseyCount = verifiedItems.reduce((s, i) => s + i.quantity, 0);
     const shippingUsd = SHIPPING_RATES[region] * jerseyCount;
     const country = (shippingAddress?.country || '').toUpperCase();
     const currency = country === 'CA' ? 'cad' : 'usd';
     const CAD_RATE = 1.36;
     const toMinor = (usd) => currency === 'cad' ? Math.round(usd * 100 * CAD_RATE) : Math.round(usd * 100);
-    const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const subtotalUsd = verifiedItems.reduce((s, i) => s + i.price * i.quantity, 0);
     const hstUsd = country === 'CA' ? Math.round(subtotalUsd * 0.13 * 100) / 100 : 0;
     const totalUsd = subtotalUsd + shippingUsd + hstUsd;
-    const itemCount = items.reduce((s, i) => s + i.quantity, 0);
-    const hasCustom = items.some((i) => i.customName || i.isCustomDesign);
+    const itemCount = verifiedItems.reduce((s, i) => s + i.quantity, 0);
+    const hasCustom = verifiedItems.some((i) => i.customName || i.isCustomDesign);
 
     const addrLines = [shippingAddress?.line1, shippingAddress?.line2].filter(Boolean).join(', ');
     const addrStr = [addrLines, shippingAddress?.city, shippingAddress?.state, shippingAddress?.postalCode, shippingAddress?.country]
@@ -35,7 +60,7 @@ export default async function(req) {
     // Persist the cart as a pending order so we don't exceed Stripe's 500-char
     // metadata limit. The webhook retrieves it by id.
     const order = await base44.asServiceRole.entities.Order.create({
-      items_json: JSON.stringify(items),
+      items_json: JSON.stringify(verifiedItems),
       customer_name: customerName,
       customer_email: customerEmail,
       status: 'pending',
@@ -48,7 +73,7 @@ export default async function(req) {
     const stripeKey = secrets.get('STRIPE_SECRET_KEY');
     const origin = req.headers.get('origin') || 'https://nemesis-apparel.base44.app';
 
-    const lineItems = items.map((item) => ({
+    const lineItems = verifiedItems.map((item) => ({
       quantity: item.quantity,
       price_data: {
         currency,

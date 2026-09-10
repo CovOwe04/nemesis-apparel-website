@@ -3,6 +3,14 @@ import { secrets } from 'base44:runtime';
 export default async function(req) {
   try {
     const body = await req.json().catch(() => ({}));
+
+    // Admin-only: verify passcode to prevent anonymous access
+    const adminPasscode = (body.adminPasscode || '').trim();
+    const expectedPasscode = secrets.get('ADMIN_PASSCODE');
+    if (!expectedPasscode || adminPasscode !== expectedPasscode) {
+      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
     const search = (body.search || '').trim();
     const page = Number(body.page) || 1;
 

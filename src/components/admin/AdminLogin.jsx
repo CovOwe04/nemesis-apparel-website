@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
 
-const PASSCODE = 'nemesis2026';
+export const PASSCODE = 'nemesis2026';
 const AUTH_KEY = 'nemesis-admin-auth';
 
 export function useAdminAuth() {

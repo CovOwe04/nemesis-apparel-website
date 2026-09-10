@@ -5,6 +5,10 @@ import Stripe from 'npm:stripe@17.7.0';
 const CAD_RATE = 1.36;
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
 
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function fmtMoney(usd, currency) {
   const sym = currency === 'cad' ? 'CA$' : '$';
   const val = currency === 'cad' ? Math.round(usd * CAD_RATE) : usd;
@@ -18,26 +22,26 @@ function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, s
 
   const rows = cartItems.map((item) => {
     const line = fmtMoney(item.price * item.quantity, currency);
-    let desc = `Size ${item.shirtSize || 'M'}`;
-    if (item.customName) desc += ` &middot; Name: ${item.customName}`;
-    if (item.customNumber) desc += ` &middot; #${item.customNumber}`;
+    let desc = `Size ${esc(item.shirtSize || 'M')}`;
+    if (item.customName) desc += ` &middot; Name: ${esc(item.customName)}`;
+    if (item.customNumber) desc += ` &middot; #${esc(item.customNumber)}`;
     if (item.isCustomDesign) {
       const d = item.designSpec || {};
-      desc = `Custom Design &middot; ${[d.pattern, d.material, d.primary].filter(Boolean).join(' / ')}`;
+      desc = `Custom Design &middot; ${[d.pattern, d.material, d.primary].filter(Boolean).map(esc).join(' / ')}`;
     }
     return `
       <tr>
         <td style="padding:14px 0;border-bottom:1px solid #2D2D2D;vertical-align:top;">
-          <div style="font-family:'Space Grotesk',Arial,sans-serif;font-weight:700;color:#FFFFFF;font-size:15px;text-transform:uppercase;letter-spacing:0.04em;">${item.name || 'Jersey'}</div>
-          <div style="font-family:'Inter',Arial,sans-serif;color:#9A9A9A;font-size:12px;margin-top:4px;">${item.team || ''} ${item.team ? '· ' : ''}${desc}</div>
+          <div style="font-family:'Space Grotesk',Arial,sans-serif;font-weight:700;color:#FFFFFF;font-size:15px;text-transform:uppercase;letter-spacing:0.04em;">${esc(item.name || 'Jersey')}</div>
+          <div style="font-family:'Inter',Arial,sans-serif;color:#9A9A9A;font-size:12px;margin-top:4px;">${esc(item.team || '')} ${item.team ? '· ' : ''}${desc}</div>
         </td>
         <td align="center" style="padding:14px 0;border-bottom:1px solid #2D2D2D;color:#F5F5F7;font-family:'Space Grotesk',Arial,sans-serif;font-size:14px;vertical-align:top;">${item.quantity}</td>
         <td align="right" style="padding:14px 0;border-bottom:1px solid #2D2D2D;color:#FF1F3D;font-family:'Space Grotesk',Arial,sans-serif;font-weight:700;font-size:14px;vertical-align:top;white-space:nowrap;">${line}</td>
       </tr>`;
   }).join('');
 
-  const addrLines = [shippingAddress.line1, shippingAddress.line2].filter(Boolean).join(', ');
-  const addrBlock = [addrLines, shippingAddress.city, shippingAddress.state, shippingAddress.postalCode, shippingAddress.country]
+  const addrLines = [shippingAddress.line1, shippingAddress.line2].filter(Boolean).map(esc).join(', ');
+  const addrBlock = [addrLines, esc(shippingAddress.city), esc(shippingAddress.state), esc(shippingAddress.postalCode), esc(shippingAddress.country)]
     .filter(Boolean).join('<br>');
 
   return `<!doctype html>
@@ -53,7 +57,7 @@ function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, s
         </td></tr>
         <!-- Body -->
         <tr><td style="padding:32px 40px 8px;">
-          <p style="font-family:'Inter',Arial,sans-serif;color:#F5F5F7;font-size:15px;line-height:1.6;margin:0 0 6px;">Hey ${customerName},</p>
+          <p style="font-family:'Inter',Arial,sans-serif;color:#F5F5F7;font-size:15px;line-height:1.6;margin:0 0 6px;">Hey ${esc(customerName)},</p>
           <p style="font-family:'Inter',Arial,sans-serif;color:#9A9A9A;font-size:14px;line-height:1.6;margin:0 0 28px;">Thanks for the order. Your gear is heading into production now — you'll get a tracking update from our fulfillment partner once it ships. Below is your online receipt for your records.</p>
 
           <!-- Meta -->
@@ -102,7 +106,7 @@ function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, s
           <!-- Shipping -->
           <div style="margin-top:32px;padding:20px;background-color:#000000;border:1px solid #2D2D2D;border-radius:6px;">
             <div style="font-family:'Space Grotesk',Arial,sans-serif;font-size:11px;letter-spacing:0.15em;color:#FF1F3D;text-transform:uppercase;margin-bottom:10px;">Shipping To</div>
-            <div style="font-family:'Inter',Arial,sans-serif;color:#F5F5F7;font-size:13px;line-height:1.6;">${customerName}<br>${addrBlock}</div>
+            <div style="font-family:'Inter',Arial,sans-serif;color:#F5F5F7;font-size:13px;line-height:1.6;">${esc(customerName)}<br>${addrBlock}</div>
           </div>
         </td></tr>
         <!-- Footer -->

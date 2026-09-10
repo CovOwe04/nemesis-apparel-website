@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { PASSCODE } from '@/components/admin/AdminLogin';
 import { Search, X, Loader2, Package, Check } from 'lucide-react';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
@@ -24,6 +25,7 @@ export default function MerchizeCatalogPicker({ onSelect, onClose }) {
       const res = await base44.functions.invoke('get-merchize-catalog', {
         search: searchTerm,
         page: pageNum,
+        adminPasscode: PASSCODE,
       });
       if (res.data?.products) {
         if (pageNum === 1) setProducts(res.data.products);
