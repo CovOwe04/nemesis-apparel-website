@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
@@ -14,6 +14,19 @@ const FONT_LABELS = {
 
 const VERT_LABELS = { 10: 'HIGH', 25: 'NORMAL', 50: 'LOW' };
 
+const CAD_RATE = 1.36;
+
+const SHIPPING_RATES = {
+  USA: 0,
+  Canada: 5,
+  World: 8,
+};
+
+function formatPrice(priceUsd, currency) {
+  const value = currency === 'CAD' ? Math.round(priceUsd * CAD_RATE) : priceUsd;
+  return currency === 'CAD' ? `CA$${value}` : `$${value}`;
+}
+
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, clearCart } = useCart();
   const [ordered, setOrdered] = useState(false);
@@ -21,6 +34,18 @@ export default function Cart() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [shipRegion, setShipRegion] = useState('USA');
+  const [currency, setCurrency] = useState(
+    () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('nemesis-currency', currency);
+  }, [currency]);
+
+  const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
+  const shippingUsd = SHIPPING_RATES[shipRegion] * jerseyCount;
+  const grandTotalUsd = total + shippingUsd;
 
   if (ordered) {
     return (
@@ -73,7 +98,7 @@ export default function Cart() {
         customer_name: customerName.trim(),
         customer_email: customerEmail.trim(),
         status: 'pending',
-        total: total,
+        total: grandTotalUsd,
         item_count: items.reduce((s, i) => s + i.quantity, 0),
         has_custom_names: hasCustom,
       });
@@ -194,7 +219,7 @@ export default function Cart() {
                       <Plus size={14} />
                     </button>
                   </div>
-                  <div className="font-heading text-fog">${(item.price * item.quantity).toFixed(0)}</div>
+                  <div className="font-heading text-fog">{formatPrice(item.price * item.quantity, currency)}</div>
                 </div>
               </div>
             </div>
@@ -204,19 +229,66 @@ export default function Cart() {
         {/* Summary */}
         <div className="lg:col-span-4">
           <div className="border border-steel rounded-[6px] p-6 lg:sticky lg:top-24">
-            <h2 className="font-heading text-xl uppercase text-fog mb-5">Summary</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-heading text-xl uppercase text-fog">Summary</h2>
+              <div className="flex items-center gap-1 bg-steel/40 border border-steel rounded-[6px] p-1">
+                <button
+                  onClick={() => setCurrency('USD')}
+                  className={`mono-label px-2.5 py-1 rounded-[4px] transition-colors ${currency === 'USD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+                >
+                  USD
+                </button>
+                <button
+                  onClick={() => setCurrency('CAD')}
+                  className={`mono-label px-2.5 py-1 rounded-[4px] transition-colors ${currency === 'CAD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+                >
+                  CAD
+                </button>
+              </div>
+            </div>
             <div className="flex items-center justify-between text-fog/70 mb-3">
               <span className="mono-label">SUBTOTAL</span>
-              <span className="font-heading">${total.toFixed(0)}</span>
+              <span className="font-heading">{formatPrice(total, currency)}</span>
             </div>
+
+            {/* Shipping region selector */}
+            <div className="mb-3">
+              <div className="mono-label text-fog/50 mb-1.5">SHIPPING REGION</div>
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { key: 'USA', label: 'USA' },
+                  { key: 'Canada', label: 'CANADA' },
+                  { key: 'World', label: 'WORLDWIDE' },
+                ].map((r) => (
+                  <button
+                    key={r.key}
+                    onClick={() => setShipRegion(r.key)}
+                    className={`mono-label px-1 py-1.5 border rounded-[4px] text-[0.6rem] transition-colors ${
+                      shipRegion === r.key
+                        ? 'bg-kinetic text-void border-kinetic'
+                        : 'border-steel text-fog/60 hover:text-fog'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between text-fog/50 mb-4">
               <span className="mono-label">SHIPPING</span>
-              <span className="mono-label text-kinetic">CALCULATED AT NEXT STEP</span>
+              <span className="font-heading">
+                {shippingUsd === 0 ? (
+                  <span className="text-kinetic">FREE</span>
+                ) : (
+                  formatPrice(shippingUsd, currency)
+                )}
+              </span>
             </div>
             <div className="h-px bg-steel mb-4" />
             <div className="flex items-center justify-between mb-6">
               <span className="font-heading text-fog">TOTAL</span>
-              <span className="font-heading text-2xl text-kinetic">${total.toFixed(0)}</span>
+              <span className="font-heading text-2xl text-kinetic">{formatPrice(grandTotalUsd, currency)}</span>
             </div>
 
             {/* Customer info for order submission */}
