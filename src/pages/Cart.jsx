@@ -15,7 +15,6 @@ const FONT_LABELS = {
 const VERT_LABELS = { 10: 'HIGH', 25: 'NORMAL', 50: 'LOW' };
 
 const CAD_RATE = 1.36;
-const CHECKOUT_SHARED_SECRET = 'n3m-ckout-7f4a2c8e-1d9b-5a3f-6c0e-7d2b4a8f1c3e';
 
 const SHIPPING_RATES = {
   USA: 0,
@@ -157,8 +156,7 @@ export default function Cart() {
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         shippingAddress,
-        currency,
-        checkoutSecret: CHECKOUT_SHARED_SECRET
+        currency
       });
       if (res.data?.url) {
         window.location.href = res.data.url;

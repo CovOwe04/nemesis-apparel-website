@@ -14,13 +14,21 @@ export default async function(req) {
       return Response.json({ error: 'Name and email are required' }, { status: 400 });
     }
 
-    // Verify shared secret to prevent anonymous callers from creating orders
-    const expectedSecret = secrets.get('CHECKOUT_SHARED_SECRET');
-    if (!expectedSecret || body.checkoutSecret !== expectedSecret) {
-      return Response.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
     const base44 = createClientFromRequest(req);
+
+    // Rate limit: max 3 pending orders per email in 10 minutes
+    const recentOrders = await base44.asServiceRole.entities.Order.filter(
+      { customer_email: customerEmail, status: 'pending' },
+      '-created_date',
+      10
+    );
+    const tenMinAgo = Date.now() - 10 * 60 * 1000;
+    const recentCount = (recentOrders || []).filter(
+      (o) => new Date(o.created_date).getTime() > tenMinAgo
+    ).length;
+    if (recentCount >= 3) {
+      return Response.json({ error: 'Too many checkout attempts. Please try again in a few minutes.' }, { status: 429 });
+    }
 
     // Server-side price verification: look up real prices from Jersey entities
     // to prevent client-side price manipulation
