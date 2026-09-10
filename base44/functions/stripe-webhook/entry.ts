@@ -159,18 +159,32 @@ export default async function(req) {
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
       });
 
-      // Send the customer a branded receipt email
+      // Send the customer a branded receipt email via Resend
       try {
         const currency = (session.currency || 'usd').toLowerCase();
-        console.log(`ATTEMPTING receipt email to: ${customerEmail}`);
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: customerEmail,
-          subject: `Nemesis Apparel — Order Confirmation #${orderId.slice(-8).toUpperCase()}`,
-          html: buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, currency }),
+        const resendApiKey = secrets.get('RESEND_API_KEY');
+        const fromEmail = secrets.get('RESEND_FROM_EMAIL') || 'Nemesis Apparel <onboarding@resend.dev>';
+        console.log(`ATTEMPTING receipt email to: ${customerEmail} via Resend`);
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: customerEmail,
+            subject: `Nemesis Apparel — Order Confirmation #${orderId.slice(-8).toUpperCase()}`,
+            html: buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, currency }),
+          }),
         });
-        console.log(`Receipt email SENT to ${customerEmail}`);
+        const resendData = await resendRes.json();
+        if (!resendRes.ok) {
+          throw new Error(`Resend ${resendRes.status}: ${resendData.message || JSON.stringify(resendData)}`);
+        }
+        console.log(`Receipt email SENT via Resend to ${customerEmail} (id: ${resendData.id})`);
       } catch (emailErr) {
-        console.error('Receipt email FAILED:', emailErr.message || JSON.stringify(emailErr));
+        console.error('Receipt email FAILED:', emailErr.message || emailErr);
       }
 
       // Forward to Merchize for supplier fulfillment
