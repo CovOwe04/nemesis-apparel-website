@@ -26,7 +26,8 @@ export default function TextWarpPreview({
         numberStyle={numberStyle}
         customFontUrl={customFontUrl}
         customFontName={customFontName}
-        showPlaceholder={false}
+        showNamePlaceholder={false}
+        showNumberPlaceholder={false}
         className={`w-full overflow-hidden rounded-[6px] ${aspectCls}`}
       />
     );
@@ -40,7 +41,8 @@ export default function TextWarpPreview({
       numberStyle={numberStyle}
       customFontUrl={customFontUrl}
       customFontName={customFontName}
-      showPlaceholder={false}
+      showNamePlaceholder={false}
+      showNumberPlaceholder={false}
       className={`w-full overflow-hidden rounded-[6px] ${aspectCls}`}
     />
   );

@@ -36,7 +36,8 @@ export default function IdentityNameOverlay({
   customFontUrl = '',
   customFontName = '',
   letterSpacing = 0,
-  showPlaceholder = false,
+  showNamePlaceholder = false,
+  showNumberPlaceholder = false,
   className = '',
 }) {
   const uid = useId();
@@ -55,8 +56,8 @@ export default function IdentityNameOverlay({
   }, [customFontUrl, customFontName]);
 
   const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
-  const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
-  const displayNumber = customNumber || (showPlaceholder ? '00' : '');
+  const displayName = (customName || '').toUpperCase() || (showNamePlaceholder ? 'YOUR NAME' : '');
+  const displayNumber = customNumber || (showNumberPlaceholder ? '00' : '');
   const ls = letterSpacing ? letterSpacing / 10 : 0;
 
   // Positioning — same formulas as admin TextWarpPreview for WYSIWYG

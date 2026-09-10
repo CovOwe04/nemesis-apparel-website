@@ -135,7 +135,8 @@ export default function IdentityLab() {
                   customFontUrl={jersey.custom_font_url || ''}
                   customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
-                  showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
+                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
+                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
                   className="w-full h-full"
                 />
               ) : (
@@ -149,7 +150,8 @@ export default function IdentityLab() {
                   customFontUrl={jersey.custom_font_url || ''}
                   customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
-                  showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
+                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
+                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
                   className="w-full h-full"
                 />
               )}

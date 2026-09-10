@@ -19,7 +19,8 @@ export default function StaticNameOverlay({
   customFontUrl = '',
   customFontName = '',
   letterSpacing = 0,
-  showPlaceholder = false,
+  showNamePlaceholder = false,
+  showNumberPlaceholder = false,
   className = '',
 }) {
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
@@ -36,8 +37,8 @@ export default function StaticNameOverlay({
   }, [customFontUrl, customFontName]);
 
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
-  const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
-  const displayNumber = customNumber || (showPlaceholder ? '00' : '');
+  const displayName = (customName || '').toUpperCase() || (showNamePlaceholder ? 'YOUR NAME' : '');
+  const displayNumber = customNumber || (showNumberPlaceholder ? '00' : '');
 
   // Map admin SVG coordinates to percentages (WYSIWYG with admin preview)
   // Name: baselineY = 112.5 + (vert_pos - 50) in 400h → posY = (62.5 + vert_pos) / 4
