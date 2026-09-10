@@ -162,14 +162,15 @@ export default async function(req) {
       // Send the customer a branded receipt email
       try {
         const currency = (session.currency || 'usd').toLowerCase();
+        console.log(`ATTEMPTING receipt email to: ${customerEmail}`);
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: customerEmail,
           subject: `Nemesis Apparel — Order Confirmation #${orderId.slice(-8).toUpperCase()}`,
           html: buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, currency }),
         });
-        console.log(`Receipt email sent to ${customerEmail}`);
+        console.log(`Receipt email SENT to ${customerEmail}`);
       } catch (emailErr) {
-        console.error('Receipt email failed:', emailErr.message || emailErr);
+        console.error('Receipt email FAILED:', emailErr.message || JSON.stringify(emailErr));
       }
 
       // Forward to Merchize for supplier fulfillment
