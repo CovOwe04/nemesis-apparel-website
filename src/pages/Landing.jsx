@@ -88,7 +88,7 @@ export default function Landing() {
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 to="/arsenal"
-                className="btn-solid group gap-3 px-7 py-4 font-heading uppercase">
+                className="group inline-flex items-center justify-center gap-3 px-7 py-4 font-heading uppercase rounded-[6px] transition-colors bg-black text-white hover:bg-[#FF1F3D] hover:text-white active:bg-[#B3001E]">
                 
                 Enter the Arsenal
                 <ArrowRight
