@@ -1,0 +1,96 @@
+{
+  "name": "PromoCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "Promo Code"
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "title": "Description"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "flat",
+        "percentage"
+      ],
+      "title": "Discount Type"
+    },
+    "discount_value": {
+      "type": "number",
+      "title": "Discount Value"
+    },
+    "jersey_id": {
+      "type": "string",
+      "title": "Jersey ID (per-item)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "title": "Active"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Start Date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "End Date"
+    },
+    "min_order_value": {
+      "type": "number",
+      "default": 0,
+      "title": "Minimum Order Value"
+    },
+    "max_redemptions": {
+      "type": "number",
+      "default": 0,
+      "title": "Max Redemptions (0 = unlimited)"
+    },
+    "max_discount_value": {
+      "type": "number",
+      "default": 0,
+      "title": "Max Discount Value (0 = no cap)"
+    },
+    "times_used": {
+      "type": "number",
+      "default": 0,
+      "title": "Times Used"
+    }
+  },
+  "required": [
+    "code",
+    "discount_type",
+    "discount_value",
+    "jersey_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

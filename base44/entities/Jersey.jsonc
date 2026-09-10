@@ -308,6 +308,36 @@
       },
       "default": {},
       "title": "Merchize Variant SKUs (by size)"
+    },
+    "variant_merchize_ids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "color_name": {
+            "type": "string",
+            "default": ""
+          },
+          "combo_name": {
+            "type": "string",
+            "default": ""
+          },
+          "combo_number": {
+            "type": "string",
+            "default": ""
+          },
+          "merchize_product_id": {
+            "type": "string",
+            "default": ""
+          },
+          "manually_set": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "default": [],
+      "title": "Per-Variant Merchize Product IDs"
     }
   },
   "required": [
