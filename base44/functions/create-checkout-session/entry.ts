@@ -71,7 +71,9 @@ export default async function(req) {
     });
 
     const stripeKey = secrets.get('STRIPE_SECRET_KEY');
-    const origin = req.headers.get('origin') || 'https://nemesis-apparel.base44.app';
+    const ALLOWED_ORIGINS = ['https://nemesis-apparel.base44.app'];
+    const rawOrigin = req.headers.get('origin') || '';
+    const origin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://nemesis-apparel.base44.app';
 
     const lineItems = verifiedItems.map((item) => ({
       quantity: item.quantity,

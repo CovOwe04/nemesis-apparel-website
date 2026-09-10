@@ -1,16 +1,21 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 
 export default async function(req) {
   try {
-    const body = await req.json().catch(() => ({}));
-
-    // Admin-only: verify passcode to prevent anonymous access
-    const adminPasscode = (body.adminPasscode || '').trim();
-    const expectedPasscode = secrets.get('ADMIN_PASSCODE');
-    if (!expectedPasscode || adminPasscode !== expectedPasscode) {
+    // Admin-only: verify caller is an authenticated admin user
+    const base44 = createClientFromRequest(req);
+    let user;
+    try {
+      user = await base44.auth.me();
+    } catch {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (user.role !== 'admin') {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    const body = await req.json().catch(() => ({}));
     const search = (body.search || '').trim();
     const page = Number(body.page) || 1;
 
