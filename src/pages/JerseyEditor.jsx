@@ -7,6 +7,7 @@ import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
 import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
+import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -78,6 +79,7 @@ export default function JerseyEditor() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!jerseyId);
   const [designerTab, setDesignerTab] = useState('name');
+  const [showMerchizePicker, setShowMerchizePicker] = useState(false);
 
   useEffect(() => {
     if (!jerseyId) return;
@@ -323,8 +325,14 @@ export default function JerseyEditor() {
           <Section title="MERCHIZE FULFILLMENT">
             <div>
               <label className={labelCls}>MERCHIZE PRODUCT ID</label>
-              <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
-              placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
+              <div className="flex gap-2">
+                <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
+                placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
+                <button type="button" onClick={() => setShowMerchizePicker(true)}
+                className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
+                  Browse
+                </button>
+              </div>
             </div>
             <div>
               <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
@@ -340,6 +348,16 @@ export default function JerseyEditor() {
               </div>
             </div>
           </Section>
+
+          {showMerchizePicker && (
+            <MerchizeCatalogPicker
+              onSelect={({ merchize_product_id, merchize_variants }) => {
+                setField('merchize_product_id', merchize_product_id);
+                setField('merchize_variants', merchize_variants);
+              }}
+              onClose={() => setShowMerchizePicker(false)}
+            />
+          )}
 
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving}
