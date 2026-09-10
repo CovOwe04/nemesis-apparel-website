@@ -44,11 +44,11 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
 
   return (
     <div className="group flex flex-col">
-      <div className="relative">
+      <div className="relative transition-transform duration-300 group-hover:scale-[1.03]">
         <div className="absolute -inset-1 rounded-[13px] bg-kinetic opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-90 pointer-events-none" />
         <Link
           to={`/lab/${jersey.id}`}
-          className={`relative block overflow-hidden rounded-[12px] transition-transform duration-300 group-hover:scale-[1.03] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
+          className={`relative block overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}
         >
         <Image
           src={front}
