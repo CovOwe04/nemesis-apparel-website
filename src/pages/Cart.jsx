@@ -50,7 +50,7 @@ function getShipRegion(country) {
 // shipping region manually. US = 5-digit zip, CA = A1A 1A1, else World.
 function detectCountryCode(postalCode) {
   const pc = (postalCode || '').trim().toUpperCase();
-  if (!pc) return 'OTHER';
+  if (!pc) return 'CA';
   if (/^\d{5}(-\d{4})?$/.test(pc)) return 'US';
   if (/^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVWXYZ]\s?\d[ABCEGHJKLMNPRSTVWXYZ]\d$/.test(pc)) return 'CA';
   return 'OTHER';
@@ -74,7 +74,7 @@ export default function Cart() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [shippingAddress, setShippingAddress] = useState({
-    line1: '', line2: '', city: '', state: '', postalCode: '', country: 'OTHER'
+    line1: '', line2: '', city: '', state: '', postalCode: '', country: 'CA'
   });
 
   useEffect(() => {
