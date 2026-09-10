@@ -23,6 +23,14 @@ function getCombos(jersey) {
   return [];
 }
 
+const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+
+function getAvailableSizes(jersey) {
+  const skus = jersey?.merchize_variants;
+  if (!skus || Object.keys(skus).length === 0) return ALL_SIZES;
+  return ALL_SIZES.filter((s) => skus[s]);
+}
+
 export default function IdentityLab() {
   const { jerseyId } = useParams();
   const navigate = useNavigate();
@@ -74,6 +82,14 @@ export default function IdentityLab() {
     });
   }, [jersey, editId, items]);
 
+  useEffect(() => {
+    if (!jersey) return;
+    const available = getAvailableSizes(jersey);
+    if (available.length > 0 && !available.includes(shirtSize)) {
+      setShirtSize(available[0]);
+    }
+  }, [jersey]);
+
   if (loading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center bg-void">
@@ -95,6 +111,7 @@ export default function IdentityLab() {
   const canCustomizeNumber = canCustomize && jersey.enable_number !== false;
   const colors = getColors(jersey);
   const combos = getCombos(jersey);
+  const availableSizes = getAvailableSizes(jersey);
   const currentColor = colors[Math.min(selectedColor, colors.length - 1)];
   const currentImages = currentColor?.images || [];
   const selectedImage = currentImages[Math.min(selectedImageIdx, currentImages.length - 1)]?.url || jersey.front_image;
@@ -281,7 +298,7 @@ export default function IdentityLab() {
           <div>
             <div className="mono-label text-fog/50 mb-1.5">SHIRT SIZE</div>
             <div className="grid grid-cols-4 gap-2">
-              {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((s) => (
+              {availableSizes.map((s) => (
                 <button
                   key={s}
                   onClick={() => setShirtSize(s)}

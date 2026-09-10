@@ -101,7 +101,7 @@ export default async function(req) {
         if (!createRes.ok || !createData.success || !createData.data?._id) {
           results.push({
             color_name, combo_name, combo_number,
-            merchize_product_id: '', variant_ids: {},
+            merchize_product_id: '', variant_ids: {}, skus: {},
             success: false,
             error: createData.msg || createData.error || `HTTP ${createRes.status}`,
           });
@@ -112,6 +112,7 @@ export default async function(req) {
 
         // Fetch all variants for this product to get per-size variant IDs
         let variantIds = {};
+        let skus = {};
         try {
           const variantsRes = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
             method: 'GET',
@@ -125,7 +126,9 @@ export default async function(req) {
             for (const v of variantsData.data) {
               const sizeOption = v.options?.find((o) => o.attribute?.value_type === 'size');
               if (sizeOption) {
-                variantIds[sizeOption.name.toUpperCase()] = v._id;
+                const sizeKey = sizeOption.name.toUpperCase();
+                variantIds[sizeKey] = v._id;
+                skus[sizeKey] = v.sku || '';
               }
             }
           }
@@ -137,12 +140,13 @@ export default async function(req) {
           color_name, combo_name, combo_number,
           merchize_product_id: productId,
           variant_ids: variantIds,
+          skus,
           success: true,
         });
       } catch (err) {
         results.push({
           color_name, combo_name, combo_number,
-          merchize_product_id: '', variant_ids: {},
+          merchize_product_id: '', variant_ids: {}, skus: {},
           success: false,
           error: err.message,
         });

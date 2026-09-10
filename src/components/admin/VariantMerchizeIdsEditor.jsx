@@ -23,7 +23,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -74,6 +74,13 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         return v;
       });
       onChange(updated);
+      const firstSuccess = results.find((r) => r.success);
+      if (firstSuccess && onPrimaryGenerated) {
+        onPrimaryGenerated({
+          merchize_product_id: firstSuccess.merchize_product_id,
+          merchize_variants: firstSuccess.skus || {},
+        });
+      }
       const failed = results.filter((r) => !r.success);
       if (failed.length > 0) setError(`${failed.length} failed: ${failed[0].error}`);
     } catch (err) {
