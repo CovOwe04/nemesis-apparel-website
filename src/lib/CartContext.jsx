@@ -57,6 +57,12 @@ export function CartProvider({ children }) {
     );
   }, []);
 
+  const editItem = useCallback((lineId, item) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === lineId ? { ...item, id: lineId, quantity: item.quantity || 1 } : i))
+    );
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
   const count = items.reduce((s, i) => s + i.quantity, 0);
@@ -64,7 +70,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, count, total }}
+      value={{ items, addItem, removeItem, updateQuantity, editItem, clearCart, count, total }}
     >
       {children}
     </CartContext.Provider>

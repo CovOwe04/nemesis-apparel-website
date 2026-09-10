@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
@@ -26,7 +26,9 @@ function getCombos(jersey) {
 export default function IdentityLab() {
   const { jerseyId } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const { addItem, items, editItem } = useCart();
 
   const [jersey, setJersey] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,29 @@ export default function IdentityLab() {
       .catch(() => setJersey(null))
       .finally(() => setLoading(false));
   }, [jerseyId]);
+
+  const populatedEdit = useRef(false);
+  useEffect(() => {
+    if (!jersey || !editId || populatedEdit.current) return;
+    const cartLine = items.find((i) => i.id === editId);
+    if (!cartLine) return;
+    populatedEdit.current = true;
+    setName(cartLine.customName || '');
+    setNumber(cartLine.customNumber || '');
+    setFontId(cartLine.fontId || 'block');
+    setLetterSpacing(cartLine.letterSpacing || 0);
+    setQty(cartLine.quantity || 1);
+    setShirtSize(cartLine.shirtSize || 'M');
+    const editColors = getColors(jersey);
+    editColors.forEach((c, ci) => {
+      (c.images || []).forEach((img, ii) => {
+        if (img.url === cartLine.front_image) {
+          setSelectedColor(ci);
+          setSelectedImageIdx(ii);
+        }
+      });
+    });
+  }, [jersey, editId, items]);
 
   if (loading) {
     return (
@@ -85,7 +110,7 @@ export default function IdentityLab() {
   };
 
   const handleAdd = () => {
-    addItem({
+    const payload = {
       jerseyId: jersey.id,
       name: jersey.name,
       team: jersey.team,
@@ -103,7 +128,12 @@ export default function IdentityLab() {
       letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
-    });
+    };
+    if (editId && items.some((i) => i.id === editId)) {
+      editItem(editId, payload);
+    } else {
+      addItem(payload);
+    }
     setAdded(true);
     setTimeout(() => navigate('/cart'), 700);
   };
@@ -402,10 +432,10 @@ export default function IdentityLab() {
             >
               {added ? (
                 <>
-                  <Check size={18} /> Added — heading to cart
+                  <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>
               ) : (
-                <>Add to cart — ${jersey.price}</>
+                <>{editId ? 'Update cart' : 'Add to cart'} — ${jersey.price}</>
               )}
             </button>
           </div>

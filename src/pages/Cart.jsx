@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
-import { Plus, Minus, Trash2, ShoppingBag, ArrowRight, Check } from 'lucide-react';
+import { Plus, Minus, Trash2, Pencil, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 
 const FONT_LABELS = {
   block: 'BLOCK',
@@ -231,13 +231,23 @@ export default function Cart() {
                     <h2 className="font-heading text-lg uppercase text-fog truncate">{item.name}</h2>
                     <p className="mono-label text-fog/40 mt-1">{item.team} · SIZE {item.shirtSize || 'M'}</p>
                   </div>
-                  <button
-                  onClick={() => removeItem(item.id)}
-                  className="text-fog/40 hover:text-kinetic transition-colors p-1"
-                  aria-label={`Remove ${item.name}`}>
-                  
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {!item.isCustomDesign && (
+                      <Link
+                        to={`/lab/${item.jerseyId}?edit=${item.id}`}
+                        className="text-fog/40 hover:text-kinetic transition-colors p-1"
+                        aria-label={`Edit ${item.name}`}>
+                        <Pencil size={16} />
+                      </Link>
+                    )}
+                    <button
+                    onClick={() => removeItem(item.id)}
+                    className="text-fog/40 hover:text-kinetic transition-colors p-1"
+                    aria-label={`Remove ${item.name}`}>
+                    
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
 
                 {item.isCustomDesign ?
