@@ -355,7 +355,7 @@ export default function Cart() {
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
-            <p className="mono-label text-fog/30 mb-4 hidden">Shipping is calculated from your address. Custom name orders are reviewed before production.</p>
+            
 
             <button
               onClick={checkout}
