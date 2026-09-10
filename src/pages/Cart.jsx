@@ -73,6 +73,7 @@ export default function Cart() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [shippingAddress, setShippingAddress] = useState({
     line1: '', line2: '', city: '', state: '', postalCode: '', country: 'CA'
   });
@@ -156,7 +157,8 @@ export default function Cart() {
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         shippingAddress,
-        currency
+        currency,
+        promoCode: promoCode.trim()
       });
       if (res.data?.url) {
         window.location.href = res.data.url;
@@ -371,6 +373,18 @@ export default function Cart() {
                 </div>
               </div>
               
+            </div>
+
+            {/* Promo code */}
+            <div className="mb-4">
+              <label className="mono-label text-fog/50 block mb-1.5">PROMO CODE</label>
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Enter code"
+                className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-2.5 text-sm uppercase placeholder:text-black/40 focus:border-kinetic outline-none"
+              />
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}

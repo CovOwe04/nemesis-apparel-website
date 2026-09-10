@@ -169,6 +169,21 @@ export default async function(req) {
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
       });
 
+      // Increment promo code usage
+      const promoCodeId = session.metadata?.promo_code_id;
+      if (promoCodeId) {
+        try {
+          const promo = await base44.asServiceRole.entities.PromoCode.get(promoCodeId);
+          if (promo) {
+            await base44.asServiceRole.entities.PromoCode.update(promoCodeId, {
+              times_used: (promo.times_used || 0) + 1,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to increment promo code usage:', err.message);
+        }
+      }
+
       // Send the customer a branded receipt email via Resend
       try {
         const currency = (session.currency || 'usd').toLowerCase();

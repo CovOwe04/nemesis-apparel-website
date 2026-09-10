@@ -79,6 +79,51 @@ export default async function(req) {
       });
     }
 
+    // Promo code validation
+    let promoDiscountUsd = 0;
+    let promoCodeId = '';
+    if (body.promoCode) {
+      const promos = await base44.asServiceRole.entities.PromoCode.filter(
+        { code: body.promoCode.toUpperCase().trim() },
+        '-created_date',
+        10
+      );
+      const promo = (promos || [])[0];
+      if (!promo) {
+        return Response.json({ error: 'Invalid promo code' }, { status: 400 });
+      }
+      if (!promo.active) {
+        return Response.json({ error: 'This promo code is no longer active' }, { status: 400 });
+      }
+      const now = new Date();
+      if (promo.start_date && new Date(promo.start_date) > now) {
+        return Response.json({ error: 'This promo code is not yet active' }, { status: 400 });
+      }
+      if (promo.end_date && new Date(promo.end_date) < now) {
+        return Response.json({ error: 'This promo code has expired' }, { status: 400 });
+      }
+      if (promo.max_redemptions > 0 && (promo.times_used || 0) >= promo.max_redemptions) {
+        return Response.json({ error: 'This promo code has reached its redemption limit' }, { status: 400 });
+      }
+      const matchingItems = verifiedItems.filter((i) => i.jerseyId === promo.jersey_id);
+      if (matchingItems.length === 0) {
+        return Response.json({ error: 'This promo code does not apply to items in your cart' }, { status: 400 });
+      }
+      const matchingSubtotal = matchingItems.reduce((s, i) => s + i.price * i.quantity, 0);
+      if (promo.min_order_value > 0 && matchingSubtotal < promo.min_order_value) {
+        return Response.json({ error: `Minimum order value of $${promo.min_order_value} required for this code` }, { status: 400 });
+      }
+      if (promo.discount_type === 'percentage') {
+        promoDiscountUsd = Math.round(matchingSubtotal * (promo.discount_value / 100) * 100) / 100;
+      } else {
+        promoDiscountUsd = Math.min(promo.discount_value, matchingSubtotal);
+      }
+      if (promo.max_discount_value > 0 && promoDiscountUsd > promo.max_discount_value) {
+        promoDiscountUsd = promo.max_discount_value;
+      }
+      promoCodeId = promo.id;
+    }
+
     const region = getShipRegion(shippingAddress?.country);
     const jerseyCount = verifiedItems.reduce((s, i) => s + i.quantity, 0);
     const shippingUsd = SHIPPING_RATES[region] * jerseyCount;
@@ -149,6 +194,17 @@ export default async function(req) {
       });
     }
 
+    if (promoDiscountUsd > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency,
+          unit_amount: -toMinor(promoDiscountUsd),
+          product_data: { name: 'Promo Code Discount' },
+        },
+      });
+    }
+
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('success_url', `${origin}/cart?status=success`);
@@ -169,6 +225,8 @@ export default async function(req) {
     params.append('metadata[shipping_address]', JSON.stringify(shippingAddress || {}));
     params.append('metadata[shipping_cost_usd]', String(shippingUsd));
     params.append('metadata[hst_usd]', String(hstUsd));
+    params.append('metadata[promo_code_id]', promoCodeId);
+    params.append('metadata[promo_discount_usd]', String(promoDiscountUsd));
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

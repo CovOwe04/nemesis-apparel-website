@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ShieldCheck, Package, ClipboardList } from 'lucide-react';
+import { ShieldCheck, Package, ClipboardList, Tag } from 'lucide-react';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
 import ProductManager from '@/components/admin/ProductManager';
 import OrderManager from '@/components/admin/OrderManager';
+import PromoCodeManager from '@/components/admin/PromoCodeManager';
 
 export default function NexusControl() {
   const { authed, login, logout } = useAdminAuth();
@@ -38,12 +39,16 @@ export default function NexusControl() {
             className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors ${tab === 'orders' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
             <ClipboardList size={16} /> ORDERS
           </button>
+          <button onClick={() => setTab('promos')}
+            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors ${tab === 'promos' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
+            <Tag size={16} /> PROMOS
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8">
-        {tab === 'products' ? <ProductManager /> : <OrderManager />}
+        {tab === 'products' ? <ProductManager /> : tab === 'orders' ? <OrderManager /> : <PromoCodeManager />}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import FontUploader from '@/components/admin/FontUploader';
 import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
+import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -30,7 +31,7 @@ const EMPTY_FORM = {
   static_display: false,
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
-  merchize_product_id: '', merchize_variants: {}
+  merchize_product_id: '', merchize_variants: {}, variant_merchize_ids: []
 };
 
 function Toggle({ checked, onChange, label, disabled = false }) {
@@ -144,7 +145,37 @@ export default function JerseyEditor() {
       if (jerseyId) {
         await base44.entities.Jersey.update(jerseyId, payload);
       } else {
-        await base44.entities.Jersey.create(payload);
+        const created = await base44.entities.Jersey.create(payload);
+        // Auto-generate Merchize products for new jersey with variants
+        const colors = form.colors.length > 0 ? form.colors : [{ name: 'Default' }];
+        const combos = form.name_number_combos || [];
+        const variants = [];
+        if (combos.length > 0) {
+          for (const color of colors) {
+            for (const combo of combos) {
+              variants.push({ color_name: color.name || 'Default', combo_name: combo.name || '', combo_number: combo.number || '' });
+            }
+          }
+        } else {
+          for (const color of colors) {
+            variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
+          }
+        }
+        if (variants.length > 0) {
+          try {
+            const res = await base44.functions.invoke('create-merchize-products', { jerseyId: created.id, variants });
+            const results = res.data?.results || [];
+            const variantIds = results.filter((r) => r.success).map((r) => ({
+              color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
+              merchize_product_id: r.merchize_product_id, manually_set: false,
+            }));
+            if (variantIds.length > 0) {
+              await base44.entities.Jersey.update(created.id, { variant_merchize_ids: variantIds });
+            }
+          } catch (err) {
+            console.error('Auto-generate Merchize products failed:', err);
+          }
+        }
       }
       navigate('/nexus-control');
     } catch (err) {
@@ -356,6 +387,13 @@ export default function JerseyEditor() {
                 ))}
               </div>
             </div>
+            <VariantMerchizeIdsEditor
+              colors={form.colors}
+              combos={form.name_number_combos}
+              variantMerchizeIds={form.variant_merchize_ids}
+              onChange={(ids) => setField('variant_merchize_ids', ids)}
+              jerseyId={jerseyId}
+            />
           </Section>
 
           {showMerchizePicker && (
