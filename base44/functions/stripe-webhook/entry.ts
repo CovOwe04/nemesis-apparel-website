@@ -35,7 +35,7 @@ export default async function(req) {
         .filter(Boolean)
         .join(', ');
 
-      await base44.asServiceRole.entities.Order.create({
+      const orderRecord = await base44.asServiceRole.entities.Order.create({
         items_json: JSON.stringify(cartItems),
         customer_name: customerName,
         customer_email: customerEmail,
@@ -46,8 +46,88 @@ export default async function(req) {
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
       });
 
-      // TODO: Forward to Shopify for commerce handling
-      // TODO: Forward to Merchize for supplier fulfillment
+      // Forward to Merchize for supplier fulfillment
+      try {
+        const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
+        if (jerseyIds.length > 0) {
+          const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
+          const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
+
+          const merchizeItems = [];
+          for (const item of cartItems) {
+            if (item.isCustomDesign) continue;
+            const jersey = jerseyMap.get(item.jerseyId);
+            if (!jersey?.merchize_product_id) continue;
+
+            const variantSkus = jersey.merchize_variants || {};
+            const size = item.shirtSize || 'M';
+            const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
+            if (!merchizeSku) continue;
+
+            merchizeItems.push({
+              product_id: jersey.merchize_product_id,
+              sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+              merchize_sku: merchizeSku,
+              quantity: item.quantity,
+              price: item.price,
+              currency: 'USD',
+              image: jersey.front_image || item.front_image || '',
+              design_front: jersey.front_image || '',
+              design_back: jersey.back_image || item.back_image || '',
+            });
+          }
+
+          if (merchizeItems.length > 0) {
+            const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
+            const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
+            const merchizeKey = secrets.get('MERCHIZE_API_KEY');
+
+            const merchizeRes = await fetch(`${baseUrl}/order/external/orders/catalog`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${merchizeToken}`,
+                'x-api-key': merchizeKey,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                order_id: orderRecord.id,
+                identifier: 'nemesis-apparel.base44.app',
+                shipping_info: {
+                  full_name: customerName,
+                  address_1: shippingAddress.line1 || '',
+                  address_2: shippingAddress.line2 || '',
+                  city: shippingAddress.city || '',
+                  state: shippingAddress.state || '',
+                  postcode: shippingAddress.postalCode || '',
+                  country: shippingAddress.country || 'US',
+                  email: customerEmail,
+                  phone: '',
+                },
+                items: merchizeItems,
+              }),
+            });
+
+            const merchizeData = await merchizeRes.json();
+            if (merchizeData.success && merchizeData.data?._id) {
+              await base44.asServiceRole.entities.Order.update(orderRecord.id, {
+                merchize_order_id: merchizeData.data._id,
+                status: 'fulfilled',
+                admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+              });
+              console.log(`Merchize order created: ${merchizeData.data._id}`);
+            } else {
+              console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
+              await base44.asServiceRole.entities.Order.update(orderRecord.id, {
+                admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+              });
+            }
+          } else {
+            console.log('No items with Merchize product mapping — skipping fulfillment');
+          }
+        }
+      } catch (merchizeErr) {
+        console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
+      }
 
       console.log(`Order created for ${customerEmail}, total $${totalUsd}`);
     }

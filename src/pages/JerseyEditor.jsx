@@ -28,7 +28,8 @@ const EMPTY_FORM = {
   custom_font_url: '', custom_font_name: '',
   static_display: false,
   is_private: false, private_access_code: '',
-  available_from: '', available_until: ''
+  available_from: '', available_until: '',
+  merchize_product_id: '', merchize_variants: {}
 };
 
 function Toggle({ checked, onChange, label, disabled = false }) {
@@ -315,6 +316,27 @@ export default function JerseyEditor() {
               </div>
               <div><label className={labelCls}>AVAILABLE UNTIL</label>
                 <input type="datetime-local" value={form.available_until ? form.available_until.slice(0, 16) : ''} onChange={(e) => setField('available_until', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="MERCHIZE FULFILLMENT">
+            <div>
+              <label className={labelCls}>MERCHIZE PRODUCT ID</label>
+              <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
+              placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'].map((size) => (
+                  <div key={size}>
+                    <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
+                    <input value={form.merchize_variants?.[size] || ''}
+                      onChange={(e) => setField('merchize_variants', { ...(form.merchize_variants || {}), [size]: e.target.value })}
+                      placeholder="SKU" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-2 text-xs focus:border-kinetic outline-none" />
+                  </div>
+                ))}
               </div>
             </div>
           </Section>

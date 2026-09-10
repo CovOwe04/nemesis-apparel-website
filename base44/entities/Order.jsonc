@@ -43,6 +43,11 @@
       "type": "string",
       "default": "",
       "title": "Admin Notes"
+    },
+    "merchize_order_id": {
+      "type": "string",
+      "default": "",
+      "title": "Merchize Fulfillment Order ID"
     }
   },
   "required": [
