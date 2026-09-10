@@ -22,6 +22,30 @@ const SHIPPING_RATES = {
   World: 8,
 };
 
+const COUNTRIES = [
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'OTHER', name: 'Other / International' },
+];
+
+function getShipRegion(country) {
+  const c = (country || '').toUpperCase().trim();
+  if (c === 'US' || c === 'USA') return 'USA';
+  if (c === 'CA' || c === 'CANADA') return 'Canada';
+  return 'World';
+}
+
 function formatPrice(priceUsd, currency) {
   const value = currency === 'CAD' ? Math.round(priceUsd * CAD_RATE) : priceUsd;
   return currency === 'CAD' ? `CA$${value}` : `$${value}`;
@@ -29,22 +53,37 @@ function formatPrice(priceUsd, currency) {
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, total, clearCart } = useCart();
-  const [ordered, setOrdered] = useState(false);
+  const [ordered, setOrdered] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('status') === 'success';
+    }
+    return false;
+  });
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const [shipRegion, setShipRegion] = useState('USA');
   const [currency, setCurrency] = useState(
     () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
   );
+  const [shippingAddress, setShippingAddress] = useState({
+    line1: '', line2: '', city: '', state: '', postalCode: '', country: 'US',
+  });
 
   useEffect(() => {
     localStorage.setItem('nemesis-currency', currency);
   }, [currency]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('status') === 'success') {
+      clearCart();
+      window.history.replaceState({}, '', '/cart');
+    }
+  }, [clearCart]);
+
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
-  const shippingUsd = SHIPPING_RATES[shipRegion] * jerseyCount;
+  const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
   const grandTotalUsd = total + shippingUsd;
 
   if (ordered) {
@@ -55,7 +94,7 @@ export default function Cart() {
         </div>
         <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog">Order received</h1>
         <p className="mt-3 text-fog/60 max-w-md">
-          Your jersey is locked in. A Nemesis rep will confirm production and shipping details
+          Payment confirmed — your jerseys are locked in. You'll receive a confirmation email
           shortly. Go again — the rally never stops.
         </p>
         <Link
@@ -86,26 +125,33 @@ export default function Cart() {
 
   const checkout = async () => {
     if (!customerName.trim() || !customerEmail.trim()) {
-      setFormError('Name and email are required to place your order.');
+      setFormError('Name and email are required.');
+      return;
+    }
+    if (!shippingAddress.line1.trim() || !shippingAddress.city.trim() || !shippingAddress.postalCode.trim()) {
+      setFormError('Shipping address is required to calculate shipping and fulfill your order.');
+      return;
+    }
+    if (window.self !== window.top) {
+      alert('Checkout works only from the published app. Please open the app in a new tab to complete your purchase.');
       return;
     }
     setFormError('');
     setSubmitting(true);
     try {
-      const hasCustom = items.some((i) => i.customName || i.isCustomDesign);
-      await base44.entities.Order.create({
-        items_json: JSON.stringify(items),
-        customer_name: customerName.trim(),
-        customer_email: customerEmail.trim(),
-        status: 'pending',
-        total: grandTotalUsd,
-        item_count: items.reduce((s, i) => s + i.quantity, 0),
-        has_custom_names: hasCustom,
+      const res = await base44.functions.invoke('create-checkout-session', {
+        items,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        shippingAddress,
       });
-      clearCart();
-      setOrdered(true);
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        setFormError(res.data?.error || 'Could not start checkout. Please try again.');
+      }
     } catch (err) {
-      alert('Order submission failed: ' + (err?.message || 'unknown error'));
+      setFormError(err?.response?.data?.error || err?.message || 'Checkout failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -251,30 +297,6 @@ export default function Cart() {
               <span className="font-heading">{formatPrice(total, currency)}</span>
             </div>
 
-            {/* Shipping region selector */}
-            <div className="mb-3">
-              <div className="mono-label text-fog/50 mb-1.5">SHIPPING REGION</div>
-              <div className="grid grid-cols-3 gap-1">
-                {[
-                  { key: 'USA', label: 'USA' },
-                  { key: 'Canada', label: 'CANADA' },
-                  { key: 'World', label: 'WORLDWIDE' },
-                ].map((r) => (
-                  <button
-                    key={r.key}
-                    onClick={() => setShipRegion(r.key)}
-                    className={`mono-label px-1 py-1.5 border rounded-[4px] text-[0.6rem] transition-colors ${
-                      shipRegion === r.key
-                        ? 'bg-kinetic text-void border-kinetic'
-                        : 'border-steel text-fog/60 hover:text-fog'
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="flex items-center justify-between text-fog/50 mb-4">
               <span className="mono-label">SHIPPING</span>
               <span className="font-heading">
@@ -314,15 +336,33 @@ export default function Cart() {
                 />
               </div>
             </div>
+
+            {/* Shipping address */}
+            <div className="space-y-2 mb-4">
+              <div className="mono-label text-fog/50">SHIPPING ADDRESS</div>
+              <input type="text" value={shippingAddress.line1} onChange={(e) => setShippingAddress((a) => ({ ...a, line1: e.target.value }))} placeholder="Street address" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+              <input type="text" value={shippingAddress.line2} onChange={(e) => setShippingAddress((a) => ({ ...a, line2: e.target.value }))} placeholder="Apt, suite (optional)" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" value={shippingAddress.city} onChange={(e) => setShippingAddress((a) => ({ ...a, city: e.target.value }))} placeholder="City" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+                <input type="text" value={shippingAddress.state} onChange={(e) => setShippingAddress((a) => ({ ...a, state: e.target.value }))} placeholder="State / Province" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" value={shippingAddress.postalCode} onChange={(e) => setShippingAddress((a) => ({ ...a, postalCode: e.target.value }))} placeholder="Postal code" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+                <select value={shippingAddress.country} onChange={(e) => setShippingAddress((a) => ({ ...a, country: e.target.value }))} className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm focus:border-kinetic outline-none">
+                  {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
-            <p className="mono-label text-fog/30 mb-4">Custom name orders are reviewed by our team before production.</p>
+            <p className="mono-label text-fog/30 mb-4">Shipping is calculated from your address. Custom name orders are reviewed before production.</p>
 
             <button
               onClick={checkout}
               disabled={submitting}
               className="btn-solid w-full gap-2 px-6 py-4 font-heading uppercase disabled:opacity-60"
             >
-              {submitting ? 'Submitting…' : 'Place order'} <ArrowRight size={18} />
+              {submitting ? 'Starting checkout…' : 'Checkout'} <ArrowRight size={18} />
             </button>
             <Link
               to="/arsenal"
