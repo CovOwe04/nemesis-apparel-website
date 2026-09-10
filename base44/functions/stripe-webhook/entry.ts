@@ -11,9 +11,9 @@ function fmtMoney(usd, currency) {
   return `${sym}${val.toLocaleString('en-US')}`;
 }
 
-function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, currency }) {
+function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, hstUsd, currency }) {
   const subtotalUsd = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totalUsd = subtotalUsd + shippingCostUsd;
+  const totalUsd = subtotalUsd + shippingCostUsd + hstUsd;
   const orderDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const rows = cartItems.map((item) => {
@@ -88,6 +88,11 @@ function buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, s
               <td style="font-family:'Inter',Arial,sans-serif;color:#9A9A9A;font-size:13px;padding:4px 0;">Shipping</td>
               <td align="right" style="font-family:'Space Grotesk',Arial,sans-serif;color:${shippingCostUsd === 0 ? '#FF1F3D' : '#F5F5F7'};font-size:13px;padding:4px 0;">${shippingCostUsd === 0 ? 'FREE' : fmtMoney(shippingCostUsd, currency)}</td>
             </tr>
+            ${hstUsd > 0 ? `
+            <tr>
+              <td style="font-family:'Inter',Arial,sans-serif;color:#9A9A9A;font-size:13px;padding:4px 0;">HST (13%)</td>
+              <td align="right" style="font-family:'Space Grotesk',Arial,sans-serif;color:#F5F5F7;font-size:13px;padding:4px 0;">${fmtMoney(hstUsd, currency)}</td>
+            </tr>` : ''}
             <tr>
               <td style="font-family:'Space Grotesk',Arial,sans-serif;color:#FFFFFF;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding-top:14px;border-top:1px solid #2D2D2D;">Total</td>
               <td align="right" style="font-family:'Space Grotesk',Arial,sans-serif;color:#FF1F3D;font-size:20px;font-weight:700;padding-top:14px;border-top:1px solid #2D2D2D;">${fmtMoney(totalUsd, currency)}</td>
@@ -133,6 +138,7 @@ export default async function(req) {
       const orderId = session.metadata?.order_id;
       const shippingAddress = JSON.parse(session.metadata?.shipping_address || '{}');
       const shippingCostUsd = Number(session.metadata?.shipping_cost_usd || 0);
+      const hstUsd = Number(session.metadata?.hst_usd || 0);
       const totalUsd = session.amount_total / 100;
 
       if (!orderId) {
@@ -175,7 +181,7 @@ export default async function(req) {
             from: fromEmail,
             to: customerEmail,
             subject: `Nemesis Apparel — Order Confirmation #${orderId.slice(-8).toUpperCase()}`,
-            html: buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, currency }),
+            html: buildReceiptHtml({ customerName, orderId, cartItems, shippingAddress, shippingCostUsd, hstUsd, currency }),
           }),
         });
         const resendData = await resendRes.json();

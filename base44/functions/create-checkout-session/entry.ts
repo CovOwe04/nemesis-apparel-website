@@ -23,7 +23,8 @@ export default async function(req) {
     const CAD_RATE = 1.36;
     const toMinor = (usd) => currency === 'cad' ? Math.round(usd * 100 * CAD_RATE) : Math.round(usd * 100);
     const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0);
-    const totalUsd = subtotalUsd + shippingUsd;
+    const hstUsd = country === 'CA' ? Math.round(subtotalUsd * 0.13 * 100) / 100 : 0;
+    const totalUsd = subtotalUsd + shippingUsd + hstUsd;
     const itemCount = items.reduce((s, i) => s + i.quantity, 0);
     const hasCustom = items.some((i) => i.customName || i.isCustomDesign);
 
@@ -41,7 +42,7 @@ export default async function(req) {
       total: totalUsd,
       item_count: itemCount,
       has_custom_names: hasCustom,
-      admin_notes: `Ship to: ${addrStr}\nShipping: $${shippingUsd} (${region})`,
+      admin_notes: `Ship to: ${addrStr}\nShipping: $${shippingUsd} (${region})\nHST: $${hstUsd}`,
     });
 
     const stripeKey = secrets.get('STRIPE_SECRET_KEY');
@@ -70,6 +71,17 @@ export default async function(req) {
       });
     }
 
+    if (hstUsd > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency,
+          unit_amount: toMinor(hstUsd),
+          product_data: { name: 'HST (13%)' },
+        },
+      });
+    }
+
     const params = new URLSearchParams();
     params.append('mode', 'payment');
     params.append('success_url', `${origin}/cart?status=success`);
@@ -89,6 +101,7 @@ export default async function(req) {
     params.append('metadata[order_id]', order.id);
     params.append('metadata[shipping_address]', JSON.stringify(shippingAddress || {}));
     params.append('metadata[shipping_cost_usd]', String(shippingUsd));
+    params.append('metadata[hst_usd]', String(hstUsd));
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

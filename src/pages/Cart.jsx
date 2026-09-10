@@ -95,7 +95,8 @@ export default function Cart() {
   const currency = shippingAddress.country === 'CA' ? 'CAD' : 'USD';
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
   const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
-  const grandTotalUsd = total + shippingUsd;
+  const hstUsd = shippingAddress.country === 'CA' ? total * 0.13 : 0;
+  const grandTotalUsd = total + shippingUsd + hstUsd;
 
   if (ordered) {
     return (
@@ -318,6 +319,12 @@ export default function Cart() {
                 }
               </span>
             </div>
+            {hstUsd > 0 && (
+              <div className="flex items-center justify-between text-fog/50 mb-4">
+                <span className="mono-label">HST (13%)</span>
+                <span className="font-heading">{formatPrice(hstUsd, currency)}</span>
+              </div>
+            )}
             <div className="h-px bg-steel mb-4" />
             <div className="flex items-center justify-between mb-6">
               <span className="font-heading text-fog">TOTAL</span>
