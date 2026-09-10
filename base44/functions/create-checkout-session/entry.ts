@@ -18,6 +18,10 @@ export default async function(req) {
     const region = getShipRegion(shippingAddress?.country);
     const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
     const shippingUsd = SHIPPING_RATES[region] * jerseyCount;
+    const country = (shippingAddress?.country || '').toUpperCase();
+    const currency = country === 'CA' ? 'cad' : 'usd';
+    const CAD_RATE = 1.36;
+    const toMinor = (usd) => currency === 'cad' ? Math.round(usd * 100 * CAD_RATE) : Math.round(usd * 100);
     const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0);
     const totalUsd = subtotalUsd + shippingUsd;
     const itemCount = items.reduce((s, i) => s + i.quantity, 0);
@@ -46,8 +50,8 @@ export default async function(req) {
     const lineItems = items.map((item) => ({
       quantity: item.quantity,
       price_data: {
-        currency: 'usd',
-        unit_amount: Math.round(item.price * 100),
+        currency,
+        unit_amount: toMinor(item.price),
         product_data: {
           name: `${item.name}${item.team ? ' — ' + item.team : ''}`,
           description: `Size ${item.shirtSize || 'M'}${item.customName ? ' · Name: ' + item.customName : ''}${item.customNumber ? ' · #' + item.customNumber : ''}`,
@@ -59,8 +63,8 @@ export default async function(req) {
       lineItems.push({
         quantity: 1,
         price_data: {
-          currency: 'usd',
-          unit_amount: Math.round(shippingUsd * 100),
+          currency,
+          unit_amount: toMinor(shippingUsd),
           product_data: { name: 'Shipping' },
         },
       });

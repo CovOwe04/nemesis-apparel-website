@@ -73,16 +73,9 @@ export default function Cart() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const [currency, setCurrency] = useState(
-    () => typeof window !== 'undefined' && localStorage.getItem('nemesis-currency') || 'USD'
-  );
   const [shippingAddress, setShippingAddress] = useState({
     line1: '', line2: '', city: '', state: '', postalCode: '', country: 'OTHER'
   });
-
-  useEffect(() => {
-    localStorage.setItem('nemesis-currency', currency);
-  }, [currency]);
 
   useEffect(() => {
     const detected = detectCountryCode(shippingAddress.postalCode);
@@ -99,6 +92,7 @@ export default function Cart() {
     }
   }, [clearCart]);
 
+  const currency = shippingAddress.country === 'CA' ? 'CAD' : 'USD';
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
   const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
   const grandTotalUsd = total + shippingUsd;
@@ -160,7 +154,8 @@ export default function Cart() {
         items,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
-        shippingAddress
+        shippingAddress,
+        currency
       });
       if (res.data?.url) {
         window.location.href = res.data.url;
@@ -294,20 +289,9 @@ export default function Cart() {
           <div className="border border-steel rounded-[6px] p-6 lg:sticky lg:top-24">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-heading text-xl uppercase text-fog">Summary</h2>
-              <div className="flex items-center gap-1 bg-steel/40 border border-steel rounded-[6px] p-1">
-                <button
-                  onClick={() => setCurrency('USD')}
-                  className={`mono-label px-2.5 py-1 rounded-[4px] transition-colors ${currency === 'USD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}>
-                  
-                  USD
-                </button>
-                <button
-                  onClick={() => setCurrency('CAD')}
-                  className={`mono-label px-2.5 py-1 rounded-[4px] transition-colors ${currency === 'CAD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}>
-                  
-                  CAD
-                </button>
-              </div>
+              <span className="mono-label text-fog/50 border border-steel rounded-[4px] px-2.5 py-1">
+                {currency}
+              </span>
             </div>
             <div className="flex items-center justify-between text-fog/70 mb-3">
               <span className="mono-label">SUBTOTAL</span>
