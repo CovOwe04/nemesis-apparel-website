@@ -136,7 +136,8 @@ export default function JerseyEditor() {
       const front_image = firstColorImages[0]?.url || '';
       const back_image = firstColorImages[1]?.url || firstColorImages[0]?.url || '';
       const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
-      const payload = { ...form, front_image, back_image, images, price: Number(form.price) };
+      const firstColorWithImages = form.colors.find((c) => c.images?.length > 0);
+      const payload = { ...form, front_image, back_image, images, price: Number(form.price), static_display: (firstColorWithImages?.images?.length || 0) <= 1 };
       if (jerseyId) {
         await base44.entities.Jersey.update(jerseyId, payload);
       } else {
@@ -231,10 +232,6 @@ export default function JerseyEditor() {
                 checked={form.enable_number}
                 onChange={(v) => setField('enable_number', v)}
                 label="ENABLE NUMBER CUSTOMIZATION" />
-                <Toggle
-                checked={form.static_display}
-                onChange={(v) => setField('static_display', v)}
-                label="STATIC DISPLAY (NO FLIP)" />
               </>
             }
           </Section>
@@ -252,7 +249,7 @@ export default function JerseyEditor() {
                   customFontName={form.custom_font_name}
                   enableName={form.enable_name}
                   enableNumber={form.enable_number}
-                  staticDisplay={form.static_display} />
+                  staticDisplay={(form.colors.find((c) => c.images?.length > 0)?.images?.length || 0) <= 1} />
                 
                 </div>
                 <div className="p-4 space-y-2">
