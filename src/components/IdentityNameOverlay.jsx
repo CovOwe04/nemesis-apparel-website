@@ -56,7 +56,7 @@ export default function IdentityNameOverlay({
 
   const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
-  const displayNumber = customNumber || '';
+  const displayNumber = customNumber || (showPlaceholder ? '00' : '');
   const ls = letterSpacing ? letterSpacing / 10 : 0;
 
   // Positioning — same formulas as admin TextWarpPreview for WYSIWYG

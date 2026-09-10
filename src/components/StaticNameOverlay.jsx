@@ -37,7 +37,7 @@ export default function StaticNameOverlay({
 
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
-  const displayNumber = customNumber || '';
+  const displayNumber = customNumber || (showPlaceholder ? '00' : '');
 
   // Map admin SVG coordinates to percentages (WYSIWYG with admin preview)
   // Name: baselineY = 112.5 + (vert_pos - 50) in 400h → posY = (62.5 + vert_pos) / 4
