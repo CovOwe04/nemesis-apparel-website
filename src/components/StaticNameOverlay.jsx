@@ -88,7 +88,6 @@ export default function StaticNameOverlay({
             lineHeight: 1.1,
             color: nus.color,
             textShadow: makeShadow(nus),
-            letterSpacing: `${ls}em`,
             whiteSpace: 'nowrap',
           }}>
             {displayNumber}

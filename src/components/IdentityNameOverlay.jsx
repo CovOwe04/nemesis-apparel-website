@@ -132,8 +132,7 @@ export default function IdentityNameOverlay({
                 stroke={nus.outline ? nus.outline_color : 'none'}
                 strokeWidth={nus.outline ? nus.outline_thickness : 0}
                 paintOrder="stroke fill"
-                letterSpacing={ls}
-              >
+                >
                 <textPath href={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
                   {displayNumber}
                 </textPath>

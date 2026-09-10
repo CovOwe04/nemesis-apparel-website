@@ -164,7 +164,6 @@ export default function Landing() {
 
       {/* CTA BAND */}
       <section className="bg-void">
-        <SectionDivider variant="top" />
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-14 flex flex-col items-center justify-center gap-6 text-center">
           <h2 className="font-heading text-2xl sm:text-4xl uppercase text-fog leading-tight">
             Look like a threat. <br className="sm:hidden" />Play like one.

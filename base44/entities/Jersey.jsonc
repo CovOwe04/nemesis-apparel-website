@@ -31,6 +31,18 @@
       ],
       "default": "Regular"
     },
+    "net_terms": {
+      "type": "string",
+      "enum": [
+        "",
+        "net_15",
+        "net_30",
+        "net_60",
+        "net_90"
+      ],
+      "default": "",
+      "title": "Net Payment Terms"
+    },
     "price": {
       "type": "number",
       "title": "Price (USD)"

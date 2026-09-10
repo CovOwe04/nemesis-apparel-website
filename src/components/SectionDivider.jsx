@@ -7,7 +7,7 @@ export default function SectionDivider({ variant = 'top' }) {
   const url = variant === 'top' ? TOP_URL : BOTTOM_URL;
   return (
     <div className="bg-void w-full leading-[0]">
-      <img src={url} alt="" className="w-full h-auto block" />
+      <img src={url} alt="" className="w-full h-8 object-cover object-center block" />
     </div>
   );
 }
