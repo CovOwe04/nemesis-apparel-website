@@ -169,12 +169,14 @@ export default function Landing() {
           <h2 className="font-heading text-2xl sm:text-4xl uppercase text-fog leading-tight">
             Look like a threat. <br className="sm:hidden" />Play like one.
           </h2>
+          {/* Hidden — Design lab temporarily disabled
           <Link
             to="/design-lab"
             className="btn-solid gap-3 px-7 py-4 font-heading uppercase">
             
             Build your jersey <ArrowRight size={18} />
           </Link>
+          */}
         </div>
         <SectionDivider variant="bottom" />
       </section>
