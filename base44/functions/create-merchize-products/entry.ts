@@ -27,12 +27,12 @@ export default async function(req) {
     const { jerseyId, variants } = body;
 
     if (!jerseyId || !variants || !Array.isArray(variants) || variants.length === 0) {
-      return Response.json({ error: 'jerseyId and variants array required' }, { status: 400 });
+      return Response.json({ error: 'jerseyId and variants array required' });
     }
 
     const jersey = await base44.asServiceRole.entities.Jersey.get(jerseyId);
     if (!jersey) {
-      return Response.json({ error: 'Jersey not found' }, { status: 404 });
+      return Response.json({ error: 'Jersey not found' });
     }
 
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
@@ -42,7 +42,7 @@ export default async function(req) {
     const fallbackSkus = jersey.merchize_variants || {};
 
     if (!baseProductId) {
-      return Response.json({ error: 'No Merchize catalog product selected. Please choose a base product in the Merchize Fulfillment section before generating.' }, { status: 400 });
+      return Response.json({ error: 'No Merchize catalog product selected. Please choose a base product in the Merchize Fulfillment section before generating.' });
     }
 
     const results = [];
