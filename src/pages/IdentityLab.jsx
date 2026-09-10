@@ -112,7 +112,7 @@ export default function IdentityLab() {
     <div className="bg-void min-h-screen">
       {/* Top bar */}
       <div className="border-b border-steel">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-5 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 py-3 flex items-center justify-between">
           <Link to="/arsenal" className="mono-label text-fog/60 hover:text-kinetic inline-flex items-center gap-2 transition-colors">
             <ArrowLeft size={14} /> ARSENAL
           </Link>
@@ -120,7 +120,7 @@ export default function IdentityLab() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 grid gap-10 lg:grid-cols-2 lg:gap-14">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4 grid gap-6 lg:grid-cols-2 lg:gap-10">
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
@@ -163,23 +163,23 @@ export default function IdentityLab() {
         </div>
 
         {/* CONTROLS */}
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-4">
           <div>
-            <div className="mono-label text-fog/40 mb-1">{jersey.team}</div>
-            <h1 className="font-heading text-3xl sm:text-4xl uppercase text-fog leading-tight">
+            <div className="mono-label text-fog/40 mb-0">{jersey.team}</div>
+            <h1 className="font-heading text-2xl sm:text-3xl uppercase text-fog leading-tight">
               {jersey.name}
             </h1>
             {jersey.description && (
-              <p className="mt-3 text-fog/60 leading-relaxed">{jersey.description}</p>
+              <p className="mt-1 text-fog/60 leading-snug text-sm">{jersey.description}</p>
             )}
           </div>
 
           <div className="h-px velocity-line opacity-60" />
 
           {canCustomize && (
-            <div className="border border-steel rounded-[6px] p-4 bg-steel/20">
-              <p className="mono-label text-kinetic mb-2">IDENTITY LAB ADVISORY</p>
-              <p className="text-fog/60 text-sm leading-relaxed">
+            <div className="border border-steel rounded-[6px] p-3 bg-steel/20">
+              <p className="mono-label text-kinetic mb-1">IDENTITY LAB ADVISORY</p>
+              <p className="text-fog/60 text-xs leading-snug">
                 Use the lab to print your own name on the back of your jersey. Names are applied
                 exactly as entered, please ensure spelling is correct before submitting.
               </p>
@@ -189,13 +189,13 @@ export default function IdentityLab() {
           {/* COLOR SELECTION */}
           {colors.length > 1 && (
             <div>
-              <div className="mono-label text-fog/50 mb-2">COLOR</div>
+              <div className="mono-label text-fog/50 mb-1.5">COLOR</div>
               <div className="flex flex-wrap gap-2">
                 {colors.map((c, i) => (
                   <button
                     key={i}
                     onClick={() => selectColor(i)}
-                    className={`flex items-center gap-2 px-3 py-2 border rounded-[6px] transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-1.5 border rounded-[6px] transition-colors ${
                       selectedColor === i ? 'border-kinetic bg-kinetic/10' : 'border-steel hover:border-fog/30'
                     }`}
                   >
@@ -212,13 +212,13 @@ export default function IdentityLab() {
           {/* PRESETS */}
           {canCustomize && combos.length > 0 && (
             <div>
-              <div className="mono-label text-fog/50 mb-2">PRESETS</div>
+              <div className="mono-label text-fog/50 mb-1.5">PRESETS</div>
               <div className="flex flex-wrap gap-2">
                 {combos.map((combo, i) => (
                   <button
                     key={i}
                     onClick={() => selectCombo(combo)}
-                    className="mono-label px-3 py-2 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
+                    className="mono-label px-3 py-1.5 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
                   >
                     {combo.name || combo.number || `COMBO ${i + 1}`}
                   </button>
@@ -230,7 +230,7 @@ export default function IdentityLab() {
           {/* IMAGE THUMBNAILS (if multiple images in current color) */}
           {currentImages.length > 1 && (
             <div>
-              <div className="mono-label text-fog/50 mb-2">VIEW</div>
+              <div className="mono-label text-fog/50 mb-1.5">VIEW</div>
               <div className="flex flex-wrap gap-2">
                 {currentImages.map((img, i) => (
                   <button
@@ -249,13 +249,13 @@ export default function IdentityLab() {
 
           {/* SHIRT SIZE */}
           <div>
-            <div className="mono-label text-fog/50 mb-2">SHIRT SIZE</div>
+            <div className="mono-label text-fog/50 mb-1.5">SHIRT SIZE</div>
             <div className="grid grid-cols-4 gap-2">
               {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((s) => (
                 <button
                   key={s}
                   onClick={() => setShirtSize(s)}
-                  className={`btn-solid py-3 font-heading text-sm ${
+                  className={`btn-solid py-2 font-heading text-sm ${
                     shirtSize === s ? 'bg-kinetic text-white' : ''
                   }`}
                 >
@@ -266,8 +266,8 @@ export default function IdentityLab() {
           </div>
 
           {!canCustomize ? (
-            <div className="border border-steel rounded-[6px] p-5">
-              <p className="mono-label text-kinetic mb-2">LAB LOCKED</p>
+            <div className="border border-steel rounded-[6px] p-3">
+              <p className="mono-label text-kinetic mb-1">LAB LOCKED</p>
               <p className="text-fog/60 text-sm">
                 This kit ships as-is without name customization. Add it to your cart plain,
                 or pick a 'Lab-enabled' kit from the arsenal to add your name.
@@ -278,7 +278,7 @@ export default function IdentityLab() {
               {/* NAME */}
               {canCustomizeName && (
                 <div>
-                  <label htmlFor="name-input" className="mono-label text-fog/50 block mb-2">
+                  <label htmlFor="name-input" className="mono-label text-fog/50 block mb-1.5">
                     NAME
                   </label>
                   <div className="flex items-center gap-3">
@@ -289,12 +289,12 @@ export default function IdentityLab() {
                       onChange={(e) => setName(e.target.value.slice(0, 20))}
                       placeholder="ENTER NAME"
                       disabled={!nameOn}
-                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
+                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-2 font-display text-base uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
                     />
                     <button
                       type="button"
                       onClick={() => setNameOn((v) => !v)}
-                      className={`flex items-center gap-2 px-4 py-3 border rounded-[6px] transition-colors shrink-0 ${
+                      className={`flex items-center gap-2 px-4 py-2 border rounded-[6px] transition-colors shrink-0 ${
                         nameOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
@@ -304,7 +304,7 @@ export default function IdentityLab() {
                       </span>
                     </button>
                   </div>
-                  <div className="mono-label text-fog/30 mt-1 text-right">
+                  <div className="mono-label text-fog/30 mt-0.5 text-right">
                     {name.length}/20
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export default function IdentityLab() {
               {/* NUMBER */}
               {canCustomizeNumber && (
                 <div>
-                  <label htmlFor="number-input" className="mono-label text-fog/50 block mb-2">
+                  <label htmlFor="number-input" className="mono-label text-fog/50 block mb-1.5">
                     NUMBER
                   </label>
                   <div className="flex items-center gap-3">
@@ -325,12 +325,12 @@ export default function IdentityLab() {
                       onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
                       placeholder="0–999"
                       disabled={!numberOn}
-                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 font-display text-lg tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!numberOn ? 'opacity-40' : ''}`}
+                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-2 font-display text-base tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!numberOn ? 'opacity-40' : ''}`}
                     />
                     <button
                       type="button"
                       onClick={() => setNumberOn((v) => !v)}
-                      className={`flex items-center gap-2 px-4 py-3 border rounded-[6px] transition-colors shrink-0 ${
+                      className={`flex items-center gap-2 px-4 py-2 border rounded-[6px] transition-colors shrink-0 ${
                         numberOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
@@ -346,7 +346,7 @@ export default function IdentityLab() {
               {/* LETTER SPACING */}
               {((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn)) && (
                 <div>
-                  <label className="mono-label text-fog/50 block mb-2">LETTER SPACING</label>
+                  <label className="mono-label text-fog/50 block mb-1.5">LETTER SPACING</label>
                   <div className="grid grid-cols-5 gap-1">
                     {[
                       { label: 'Least', value: -50 },
@@ -359,7 +359,7 @@ export default function IdentityLab() {
                         key={opt.value}
                         type="button"
                         onClick={() => setLetterSpacing(opt.value)}
-                        className={`mono-label px-2 py-2 border rounded-[4px] text-[0.65rem] transition-colors ${
+                        className={`mono-label px-2 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${
                           letterSpacing === opt.value
                             ? 'bg-kinetic text-void border-kinetic'
                             : 'border-steel text-fog/60 hover:text-fog'
@@ -379,15 +379,15 @@ export default function IdentityLab() {
             <div className="flex items-center border border-steel rounded-[6px]">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="p-3 text-fog hover:text-kinetic transition-colors rounded-[6px]"
+                className="p-2 text-fog hover:text-kinetic transition-colors rounded-[6px]"
                 aria-label="Decrease quantity"
               >
                 <Minus size={16} />
               </button>
-              <span className="w-10 text-center font-heading text-fog">{qty}</span>
+              <span className="w-8 text-center font-heading text-fog">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="p-3 text-fog hover:text-kinetic transition-colors rounded-[6px]"
+                className="p-2 text-fog hover:text-kinetic transition-colors rounded-[6px]"
                 aria-label="Increase quantity"
               >
                 <Plus size={16} />
@@ -396,7 +396,7 @@ export default function IdentityLab() {
             <button
               onClick={handleAdd}
               disabled={added}
-              className="btn-solid flex-1 gap-2 px-6 py-4 font-heading uppercase disabled:opacity-70"
+              className="btn-solid flex-1 gap-2 px-6 py-3 font-heading uppercase disabled:opacity-70"
             >
               {added ? (
                 <>
