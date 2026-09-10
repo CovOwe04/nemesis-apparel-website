@@ -21,28 +21,32 @@ export default async function(req) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const cartItems = JSON.parse(session.metadata?.cart_items || '[]');
+      const orderId = session.metadata?.order_id;
       const shippingAddress = JSON.parse(session.metadata?.shipping_address || '{}');
-      const customerName = session.metadata?.customer_name || '';
-      const customerEmail = session.customer_email || session.customer_details?.email || '';
       const shippingCostUsd = Number(session.metadata?.shipping_cost_usd || 0);
       const totalUsd = session.amount_total / 100;
-      const itemCount = cartItems.reduce((s, i) => s + i.quantity, 0);
-      const hasCustom = cartItems.some((i) => i.customName || i.isCustomDesign);
+
+      if (!orderId) {
+        console.error('No order_id in session metadata — legacy session, skipping');
+        return Response.json({ received: true });
+      }
+
+      const order = await base44.asServiceRole.entities.Order.get(orderId);
+      if (!order) {
+        console.error('Order not found:', orderId);
+        return Response.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      const cartItems = JSON.parse(order.items_json || '[]');
+      const customerName = order.customer_name || '';
+      const customerEmail = session.customer_email || session.customer_details?.email || order.customer_email || '';
 
       const addrLines = [shippingAddress.line1, shippingAddress.line2].filter(Boolean).join(', ');
       const addrStr = [addrLines, shippingAddress.city, shippingAddress.state, shippingAddress.postalCode, shippingAddress.country]
-        .filter(Boolean)
-        .join(', ');
+        .filter(Boolean).join(', ');
 
-      const orderRecord = await base44.asServiceRole.entities.Order.create({
-        items_json: JSON.stringify(cartItems),
-        customer_name: customerName,
-        customer_email: customerEmail,
+      await base44.asServiceRole.entities.Order.update(orderId, {
         status: 'approved',
-        total: totalUsd,
-        item_count: itemCount,
-        has_custom_names: hasCustom,
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
       });
 
@@ -90,7 +94,7 @@ export default async function(req) {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                order_id: orderRecord.id,
+                order_id: orderId,
                 identifier: 'nemesis-apparel.base44.app',
                 shipping_info: {
                   full_name: customerName,
@@ -109,7 +113,7 @@ export default async function(req) {
 
             const merchizeData = await merchizeRes.json();
             if (merchizeData.success && merchizeData.data?._id) {
-              await base44.asServiceRole.entities.Order.update(orderRecord.id, {
+              await base44.asServiceRole.entities.Order.update(orderId, {
                 merchize_order_id: merchizeData.data._id,
                 status: 'fulfilled',
                 admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
@@ -117,7 +121,7 @@ export default async function(req) {
               console.log(`Merchize order created: ${merchizeData.data._id}`);
             } else {
               console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
-              await base44.asServiceRole.entities.Order.update(orderRecord.id, {
+              await base44.asServiceRole.entities.Order.update(orderId, {
                 admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
               });
             }
@@ -129,7 +133,7 @@ export default async function(req) {
         console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
       }
 
-      console.log(`Order created for ${customerEmail}, total $${totalUsd}`);
+      console.log(`Order ${orderId} approved for ${customerEmail}, total $${totalUsd}`);
     }
 
     return Response.json({ received: true });

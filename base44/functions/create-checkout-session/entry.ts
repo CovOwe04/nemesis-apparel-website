@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { getShipRegion, SHIPPING_RATES } from '../../shared/shipping.ts';
 
@@ -13,9 +14,31 @@ export default async function(req) {
       return Response.json({ error: 'Name and email are required' }, { status: 400 });
     }
 
+    const base44 = createClientFromRequest(req);
     const region = getShipRegion(shippingAddress?.country);
     const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
     const shippingUsd = SHIPPING_RATES[region] * jerseyCount;
+    const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const totalUsd = subtotalUsd + shippingUsd;
+    const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+    const hasCustom = items.some((i) => i.customName || i.isCustomDesign);
+
+    const addrLines = [shippingAddress?.line1, shippingAddress?.line2].filter(Boolean).join(', ');
+    const addrStr = [addrLines, shippingAddress?.city, shippingAddress?.state, shippingAddress?.postalCode, shippingAddress?.country]
+      .filter(Boolean).join(', ');
+
+    // Persist the cart as a pending order so we don't exceed Stripe's 500-char
+    // metadata limit. The webhook retrieves it by id.
+    const order = await base44.asServiceRole.entities.Order.create({
+      items_json: JSON.stringify(items),
+      customer_name: customerName,
+      customer_email: customerEmail,
+      status: 'pending',
+      total: totalUsd,
+      item_count: itemCount,
+      has_custom_names: hasCustom,
+      admin_notes: `Ship to: ${addrStr}\nShipping: $${shippingUsd} (${region})`,
+    });
 
     const stripeKey = secrets.get('STRIPE_SECRET_KEY');
     const origin = req.headers.get('origin') || 'https://nemesis-apparel.base44.app';
@@ -59,10 +82,8 @@ export default async function(req) {
       }
     });
     params.append('metadata[base44_app_id]', secrets.get('BASE44_APP_ID') || '');
-    params.append('metadata[customer_name]', customerName);
-    params.append('metadata[cart_items]', JSON.stringify(items));
+    params.append('metadata[order_id]', order.id);
     params.append('metadata[shipping_address]', JSON.stringify(shippingAddress || {}));
-    params.append('metadata[shipping_region]', region);
     params.append('metadata[shipping_cost_usd]', String(shippingUsd));
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
