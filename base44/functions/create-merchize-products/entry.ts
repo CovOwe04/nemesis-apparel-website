@@ -1,6 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 
+const SIZES = [
+  { name: 'S', value: 's' },
+  { name: 'M', value: 'm' },
+  { name: 'L', value: 'l' },
+  { name: 'XL', value: 'xl' },
+  { name: '2XL', value: '2xl' },
+  { name: '3XL', value: '3xl' },
+];
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -28,40 +37,61 @@ export default async function(req) {
 
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
-    const apiKey = secrets.get('MERCHIZE_API_KEY');
 
     const results = [];
     for (const variant of variants) {
       const { color_name, combo_name, combo_number } = variant;
       const parts = [jersey.name, color_name, combo_name, combo_number].filter(Boolean);
       const variantLabel = parts.join(' - ');
-      const skuBase = `NEMESIS-${jersey.name}-${color_name}-${combo_name}${combo_number}`
-        .toUpperCase()
-        .replace(/[^A-Z0-9-]/g, '')
-        .replace(/-+/g, '-');
 
       const colorObj = (jersey.colors || []).find((c) => c.name === color_name);
-      const designImage = colorObj?.images?.[0]?.url || jersey.front_image || '';
-      const backImage = colorObj?.images?.[1]?.url || jersey.back_image || designImage;
+      const colorHex = colorObj?.hex || '#000000';
+
+      const attributes = [
+        {
+          is_preselected: true,
+          position: 1,
+          type: 'color',
+          name: 'Color',
+          values: [{ name: color_name || 'Default', value: colorHex }],
+        },
+        {
+          is_preselected: false,
+          position: 2,
+          type: 'size',
+          name: 'Size',
+          values: SIZES,
+        },
+      ];
+
+      const productVariants = SIZES.map((size, i) => ({
+        is_default: i === 0,
+        sku: '',
+        sku_seller: '',
+        retail_price: jersey.price,
+        currency: 'USD',
+        options: [
+          { name: color_name || 'Default', value: colorHex },
+          { name: size.name, value: size.value },
+        ],
+      }));
 
       const payload = {
         title: variantLabel,
-        sku: skuBase,
         description: jersey.description || '',
-        design_images: {
-          front: designImage,
-          back: backImage,
-        },
-        print_preview: designImage,
-        printing_method: 'dtg',
+        attributes,
+        variants: productVariants,
+        is_collection_hidden: false,
+        is_shop_hidden: false,
+        is_stealthy: false,
+        is_featured: false,
       };
 
       try {
-        const res = await fetch(`${baseUrl}/product/catalog`, {
+        const res = await fetch(`${baseUrl}/product/products/dropship/create`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'x-api-key': apiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
