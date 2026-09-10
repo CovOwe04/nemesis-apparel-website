@@ -38,6 +38,13 @@ export default async function(req) {
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
 
+    const baseProductId = jersey.merchize_product_id || '';
+    const fallbackSkus = jersey.merchize_variants || {};
+
+    if (!baseProductId) {
+      return Response.json({ error: 'No Merchize catalog product selected. Please choose a base product in the Merchize Fulfillment section before generating.' }, { status: 400 });
+    }
+
     const results = [];
     for (const variant of variants) {
       const { color_name, combo_name, combo_number } = variant;
@@ -74,7 +81,7 @@ export default async function(req) {
 
       const productVariants = SIZES.map((size, i) => ({
         is_default: i === 0,
-        sku: '',
+        sku: fallbackSkus[size.name] || '',
         sku_seller: '',
         retail_price: jersey.price,
         currency: 'USD',
@@ -88,6 +95,7 @@ export default async function(req) {
         title: variantLabel,
         description: jersey.description || '',
         images: productImages,
+        base_product_id: baseProductId,
         attributes,
         variants: productVariants,
         is_collection_hidden: false,

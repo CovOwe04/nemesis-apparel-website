@@ -69,6 +69,10 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         jerseyId,
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
       });
+      if (res.data?.error) {
+        setError(res.data.error);
+        return;
+      }
       const results = res.data?.results || [];
       const updated = syncedIds.map((v) => {
         const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);

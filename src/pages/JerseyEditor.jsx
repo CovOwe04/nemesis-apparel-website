@@ -164,15 +164,19 @@ export default function JerseyEditor() {
         if (variants.length > 0) {
           try {
             const res = await base44.functions.invoke('create-merchize-products', { jerseyId: created.id, variants });
-            const results = res.data?.results || [];
-            const variantIds = results.filter((r) => r.success).map((r) => ({
-              color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
-              merchize_product_id: r.merchize_product_id, manually_set: false,
-              variant_ids: r.variant_ids || {},
-              skus: r.skus || {},
-            }));
-            if (variantIds.length > 0) {
-              await base44.entities.Jersey.update(created.id, { variant_merchize_ids: variantIds });
+            if (res.data?.error) {
+              console.error('Auto-generate Merchize products skipped:', res.data.error);
+            } else {
+              const results = res.data?.results || [];
+              const variantIds = results.filter((r) => r.success).map((r) => ({
+                color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
+                merchize_product_id: r.merchize_product_id, manually_set: false,
+                variant_ids: r.variant_ids || {},
+                skus: r.skus || {},
+              }));
+              if (variantIds.length > 0) {
+                await base44.entities.Jersey.update(created.id, { variant_merchize_ids: variantIds });
+              }
             }
           } catch (err) {
             console.error('Auto-generate Merchize products failed:', err);
