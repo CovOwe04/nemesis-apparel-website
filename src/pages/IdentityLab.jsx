@@ -282,15 +282,20 @@ export default function IdentityLab() {
                     NAME
                   </label>
                   <div className="flex items-center gap-3">
-                    <input
-                      id="name-input"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value.slice(0, 20))}
-                      placeholder="ENTER NAME"
-                      disabled={!nameOn}
-                      className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-2 font-display text-base uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
-                    />
+                    <div className="relative flex-1">
+                      <input
+                        id="name-input"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value.slice(0, 20))}
+                        placeholder="ENTER NAME"
+                        disabled={!nameOn}
+                        className={`w-full bg-white text-black border border-steel rounded-[6px] px-4 py-2 pr-12 font-display text-base uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 mono-label text-black/40 text-[0.6rem] pointer-events-none">
+                        {name.length}/20
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setNameOn((v) => !v)}
@@ -303,9 +308,6 @@ export default function IdentityLab() {
                         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${nameOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
                       </span>
                     </button>
-                  </div>
-                  <div className="mono-label text-fog/30 mt-0.5 text-right">
-                    {name.length}/20
                   </div>
                 </div>
               )}
