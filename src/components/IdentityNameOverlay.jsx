@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 
 export const FONTS = [
@@ -9,102 +9,135 @@ export const FONTS = [
   { id: 'clean', label: 'CLEAN', family: "'Inter', sans-serif" },
 ];
 
-// Renders a jersey back image with the custom name overlaid exactly as it
-// appears in the Identity Lab, so the cart thumbnail matches the live preview.
-// useId keeps SVG path ids unique across multiple instances on the page.
+const DEFAULT_NAME_STYLE = {
+  color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8
+};
+const DEFAULT_NUMBER_STYLE = {
+  color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
+  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
+};
+
+function buildPath(y, archPct, flagPct) {
+  const archOffset = 22 * archPct;
+  const flagLeft = -14 * flagPct;
+  const flagMid = 6 * flagPct;
+  const flagRight = 20 * flagPct;
+  return `M 75 ${y + flagLeft} Q 150 ${y - archOffset + flagMid} 225 ${y + 18 + flagRight}`;
+}
+
 export default function IdentityNameOverlay({
   back_image,
   customName,
   customNumber = '',
   fontId = 'block',
-  size = 40,
-  curve = 0,
-  height = 25,
-  letterSpacing = 1.5,
+  nameStyle = {},
+  numberStyle = {},
+  customFontUrl = '',
+  customFontName = '',
+  letterSpacing = 0,
   showPlaceholder = false,
   className = '',
 }) {
   const uid = useId();
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
-  const baseSize = 4 + (size / 100) * 40;
-  const curveAmount = (curve / 100) * 45;
-  const baselineY = 100 + (height / 100) * 50;
-  const ARC_WIDTH = 150;
+  const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
+  const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
+
+  useEffect(() => {
+    if (!customFontUrl || !customFontName) return;
+    const id = `fontface-${customFontName.replace(/\s+/g, '-')}`;
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}') format('truetype'); }`;
+    document.head.appendChild(style);
+  }, [customFontUrl, customFontName]);
+
+  const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
   const displayName = (customName || '').toUpperCase() || (showPlaceholder ? 'YOUR NAME' : '');
   const displayNumber = customNumber || '';
+  const ls = letterSpacing ? letterSpacing / 10 : 0;
+
+  // Positioning — same formulas as admin TextWarpPreview for WYSIWYG
+  const nameArchPct = ns.arch / 100;
+  const nameFlagPct = ns.flag / 100;
+  const nameBaselineY = 112.5 + (ns.vert_pos - 50);
+  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} 150 ${nameBaselineY})` : undefined;
+
+  const numArchPct = nus.arch / 100;
+  const numFlagPct = nus.flag / 100;
+  const numBaselineY = 250 + (nus.vert_pos - 50) * 2;
+  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} 150 ${numBaselineY})` : undefined;
+
+  // Text wrapping for long names
+  const ARC_WIDTH = 150;
   const charFactor = 0.7;
   const words = displayName.split(' ').filter(Boolean);
   const longestWord = Math.max(...words.map((w) => w.length), 1);
-  const fitForLongest =
-    (ARC_WIDTH - Math.max(0, longestWord - 1) * letterSpacing) / (longestWord * charFactor);
-  const fontSize = Math.min(baseSize, fitForLongest);
-  const lineHeight = fontSize * 1.15;
-  const textWidth = (t) =>
-    t.length * fontSize * charFactor + Math.max(0, t.length - 1) * letterSpacing;
+  const fitForLongest = (ARC_WIDTH - Math.max(0, longestWord - 1) * ls) / (longestWord * charFactor);
+  const actualNameFontSize = Math.min(ns.font_size, fitForLongest);
+  const lineHeight = actualNameFontSize * 1.15;
+  const textWidth = (t) => t.length * actualNameFontSize * charFactor + Math.max(0, t.length - 1) * ls;
   const lines = [];
   let cur = '';
   for (const w of words) {
     const trial = cur ? `${cur} ${w}` : w;
     if (textWidth(trial) <= ARC_WIDTH) cur = trial;
-    else {
-      if (cur) lines.push(cur);
-      cur = w;
-    }
+    else { if (cur) lines.push(cur); cur = w; }
   }
   if (cur) lines.push(cur);
 
   const numLines = Math.max(lines.length, 1);
-  const startBase = baselineY - ((numLines - 1) / 2) * lineHeight;
-  const linePath = (i) => {
-    const y = startBase + i * lineHeight;
-    return `M 75 ${y + curveAmount / 2} Q 150 ${y - curveAmount} 225 ${y + curveAmount / 2}`;
-  };
+  const startBase = nameBaselineY - ((numLines - 1) / 2) * lineHeight;
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <Image src={back_image} alt="jersey back" fittingType="fill" className="w-full h-full" />
       {displayName && (
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 300 400"
-          preserveAspectRatio="xMidYMid meet"
-        >
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
           <defs>
             {lines.map((line, i) => (
-              <path key={i} id={`${uid}-arc-${i}`} d={linePath(i)} fill="none" />
+              <path key={i} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" />
             ))}
+            {displayNumber && (
+              <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" />
+            )}
           </defs>
-          <text
-            fontFamily={font.family}
-            fontSize={fontSize}
-            fill="#F5F5F7"
-            stroke="#0A0A0A"
-            strokeWidth="1.4"
-            paintOrder="stroke fill"
-            letterSpacing={letterSpacing / 10}
-            style={{ textTransform: 'uppercase' }}
-          >
-            {lines.map((line, i) => (
-              <textPath key={i} href={`#${uid}-arc-${i}`} startOffset="50%" textAnchor="middle">
-                {line}
-              </textPath>
-            ))}
-          </text>
-          {displayNumber && (
+          <g transform={nameRotation}>
             <text
-              fontFamily={font.family}
-              fontSize={fontSize * 2}
-              fill="#F5F5F7"
-              stroke="#0A0A0A"
-              strokeWidth="1.6"
+              fontFamily={fontFam}
+              fontSize={actualNameFontSize}
+              fill={ns.color}
+              stroke={ns.outline ? ns.outline_color : 'none'}
+              strokeWidth={ns.outline ? ns.outline_thickness : 0}
               paintOrder="stroke fill"
-              letterSpacing={letterSpacing / 10}
-              x="150"
-              y="260"
-              textAnchor="middle"
+              letterSpacing={ls}
+              style={{ textTransform: 'uppercase' }}
             >
-              {displayNumber}
+              {lines.map((line, i) => (
+                <textPath key={i} href={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
+                  {line}
+                </textPath>
+              ))}
             </text>
+          </g>
+          {displayNumber && (
+            <g transform={numRotation}>
+              <text
+                fontFamily={fontFam}
+                fontSize={nus.font_size}
+                fill={nus.color}
+                stroke={nus.outline ? nus.outline_color : 'none'}
+                strokeWidth={nus.outline ? nus.outline_thickness : 0}
+                paintOrder="stroke fill"
+                letterSpacing={ls}
+              >
+                <textPath href={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
+                  {displayNumber}
+                </textPath>
+              </text>
+            </g>
           )}
         </svg>
       )}

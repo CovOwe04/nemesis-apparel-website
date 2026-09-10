@@ -33,9 +33,6 @@ export default function IdentityLab() {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
   const [fontId, setFontId] = useState('block');
-  const [size, setSize] = useState(40);
-  const [curve, setCurve] = useState(0);
-  const [height, setHeight] = useState(25);
   const [letterSpacing, setLetterSpacing] = useState(0);
   const [qty, setQty] = useState(1);
   const [shirtSize, setShirtSize] = useState('M');
@@ -98,10 +95,11 @@ export default function IdentityLab() {
       static_display: jersey.static_display,
       customName: canCustomizeName && nameOn ? name.toUpperCase() : '',
       customNumber: canCustomizeNumber && numberOn ? number : '',
-      font: canCustomize ? fontId : '',
-      size: canCustomize ? size : 0,
-      curve: canCustomize ? curve : 0,
-      height: canCustomize ? height : 0,
+      fontId: canCustomize ? fontId : '',
+      nameStyle: canCustomize ? (jersey.name_style || null) : null,
+      numberStyle: canCustomize ? (jersey.number_style || null) : null,
+      customFontUrl: canCustomize ? (jersey.custom_font_url || '') : '',
+      customFontName: canCustomize ? (jersey.custom_font_name || '') : '',
       letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
@@ -132,6 +130,10 @@ export default function IdentityLab() {
                   image={selectedImage}
                   customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber && numberOn ? number : ''}
+                  nameStyle={jersey.name_style || {}}
+                  numberStyle={jersey.number_style || {}}
+                  customFontUrl={jersey.custom_font_url || ''}
+                  customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
                   showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
                   className="w-full h-full"
@@ -142,9 +144,10 @@ export default function IdentityLab() {
                   customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber && numberOn ? number : ''}
                   fontId={fontId}
-                  size={size}
-                  curve={curve}
-                  height={height}
+                  nameStyle={jersey.name_style || {}}
+                  numberStyle={jersey.number_style || {}}
+                  customFontUrl={jersey.custom_font_url || ''}
+                  customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
                   showPlaceholder={canCustomize && ((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn))}
                   className="w-full h-full"

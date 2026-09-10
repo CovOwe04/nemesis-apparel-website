@@ -13,7 +13,7 @@ export default function NameNumberCombosEditor({ combos, onChange }) {
     onChange(combos.filter((_, i) => i !== index));
   };
 
-  const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
+  const inputCls = "bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
 
   return (
     <div className="space-y-3">
@@ -24,21 +24,21 @@ export default function NameNumberCombosEditor({ combos, onChange }) {
             value={combo.name || ''}
             onChange={(e) => updateCombo(i, 'name', e.target.value)}
             placeholder="Name (e.g. JOHN)"
-            className={inputCls}
+            className={`${inputCls} flex-1 min-w-0 w-full`}
           />
           <input
             type="text"
             inputMode="numeric"
             value={combo.number || ''}
             onChange={(e) => updateCombo(i, 'number', e.target.value.replace(/\D/g, '').slice(0, 3))}
-            placeholder="Number (e.g. 23)"
-            className={`${inputCls} w-28 shrink-0`}
+            placeholder="Number"
+            className={`${inputCls} w-24 shrink-0`}
           />
           <button
             type="button"
             onClick={() => removeCombo(i)}
             className="text-fog/40 hover:text-kinetic transition-colors shrink-0"
-            aria-label="Remove combo"
+            aria-label="Remove preset"
           >
             <Trash2 size={16} />
           </button>
@@ -50,7 +50,7 @@ export default function NameNumberCombosEditor({ combos, onChange }) {
         className="inline-flex items-center gap-2 border border-steel rounded-[6px] px-4 py-2 hover:border-kinetic transition-colors"
       >
         <Plus size={16} className="text-fog/60" />
-        <span className="mono-label text-fog/60">ADD COMBO</span>
+        <span className="mono-label text-fog/60">ADD PRESET</span>
       </button>
     </div>
   );

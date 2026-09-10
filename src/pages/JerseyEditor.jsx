@@ -26,6 +26,7 @@ const EMPTY_FORM = {
   name_style: { ...DEFAULT_NAME_STYLE },
   number_style: { ...DEFAULT_NUMBER_STYLE },
   custom_font_url: '', custom_font_name: '',
+  static_display: false,
   is_private: false, private_access_code: '',
   available_from: '', available_until: ''
 };
@@ -201,7 +202,7 @@ export default function JerseyEditor() {
             <ColorsEditor colors={form.colors} onChange={(c) => setField('colors', c)} />
           </Section>
 
-          <Section title="NAME & NUMBER COMBOS">
+          <Section title="NAME & NUMBER PRESETS">
             
             <NameNumberCombosEditor combos={form.name_number_combos} onChange={(c) => setField('name_number_combos', c)} />
           </Section>
@@ -230,7 +231,10 @@ export default function JerseyEditor() {
                 checked={form.enable_number}
                 onChange={(v) => setField('enable_number', v)}
                 label="ENABLE NUMBER CUSTOMIZATION" />
-              
+                <Toggle
+                checked={form.static_display}
+                onChange={(v) => setField('static_display', v)}
+                label="STATIC DISPLAY (NO FLIP)" />
               </>
             }
           </Section>
@@ -247,7 +251,8 @@ export default function JerseyEditor() {
                   customFontUrl={form.custom_font_url}
                   customFontName={form.custom_font_name}
                   enableName={form.enable_name}
-                  enableNumber={form.enable_number} />
+                  enableNumber={form.enable_number}
+                  staticDisplay={form.static_display} />
                 
                 </div>
                 <div className="p-4 space-y-2">

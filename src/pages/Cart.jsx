@@ -117,6 +117,11 @@ export default function Cart() {
                     image={item.front_image}
                     customName={item.customName}
                     customNumber={item.customNumber}
+                    nameStyle={item.nameStyle || {}}
+                    numberStyle={item.numberStyle || {}}
+                    customFontUrl={item.customFontUrl || ''}
+                    customFontName={item.customFontName || ''}
+                    letterSpacing={item.letterSpacing || 0}
                     className="w-24 h-32 sm:w-28 sm:h-36 rounded-[12px] overflow-hidden"
                   />
                 </Link>
@@ -126,10 +131,12 @@ export default function Cart() {
                     back_image={item.back_image}
                     customName={item.customName}
                     customNumber={item.customNumber}
-                    fontId={item.font}
-                    size={item.size}
-                    curve={item.curve}
-                    height={item.height}
+                    fontId={item.fontId || item.font || 'block'}
+                    nameStyle={item.nameStyle || {}}
+                    numberStyle={item.numberStyle || {}}
+                    customFontUrl={item.customFontUrl || ''}
+                    customFontName={item.customFontName || ''}
+                    letterSpacing={item.letterSpacing || 0}
                     className="w-24 h-32 sm:w-28 sm:h-36 bg-steel rounded-[12px] overflow-hidden"
                   />
                 </Link>
@@ -163,10 +170,7 @@ export default function Cart() {
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 mono-label text-fog/50">
                     <span>NAME: <span className="text-fog">{item.customName}</span></span>
                     {item.customNumber && <span>NUMBER: <span className="text-fog">{item.customNumber}</span></span>}
-                    <span>FONT: <span className="text-fog">{FONT_LABELS[item.font] || item.font}</span></span>
-                    <span>SIZE: <span className="text-fog">{item.size}%</span></span>
-                    <span>ARCH: <span className="text-fog">{item.curve}%</span></span>
-                    <span>VERT: <span className="text-fog">{VERT_LABELS[item.height] || 'NORMAL'}</span></span>
+                    <span>FONT: <span className="text-fog">{FONT_LABELS[item.fontId || item.font] || (item.fontId || item.font || 'BLOCK')}</span></span>
                   </div>
                 ) : (
                   <p className="mt-2 mono-label text-fog/40">PLAIN — NO CUSTOMIZATION</p>
