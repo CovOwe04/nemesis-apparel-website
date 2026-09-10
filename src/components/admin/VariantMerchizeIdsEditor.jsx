@@ -39,6 +39,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       combo_number: v.combo_number,
       merchize_product_id: existing?.merchize_product_id || '',
       manually_set: existing?.manually_set || false,
+      variant_ids: existing?.variant_ids || {},
     };
   });
 
@@ -69,7 +70,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       const results = res.data?.results || [];
       const updated = syncedIds.map((v) => {
         const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);
-        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, manually_set: false };
+        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, manually_set: false, variant_ids: r.variant_ids || {} };
         return v;
       });
       onChange(updated);
@@ -115,6 +116,9 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                   className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
                 />
                 {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic shrink-0">MANUAL</span>}
+                {vmi.variant_ids && Object.keys(vmi.variant_ids).length > 0 && (
+                  <span className="mono-label text-[0.55rem] text-fog/30 shrink-0">{Object.keys(vmi.variant_ids).length} SZ</span>
+                )}
               </div>
             );
           })}

@@ -88,7 +88,7 @@ export default async function(req) {
       };
 
       try {
-        const res = await fetch(`${baseUrl}/product/products/dropship/create`, {
+        const createRes = await fetch(`${baseUrl}/product/products/dropship/create`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -97,31 +97,52 @@ export default async function(req) {
           body: JSON.stringify(payload),
         });
 
-        const data = await res.json();
-        if (res.ok && data.success && data.data?._id) {
+        const createData = await createRes.json();
+        if (!createRes.ok || !createData.success || !createData.data?._id) {
           results.push({
-            color_name,
-            combo_name,
-            combo_number,
-            merchize_product_id: data.data._id,
-            success: true,
-          });
-        } else {
-          results.push({
-            color_name,
-            combo_name,
-            combo_number,
-            merchize_product_id: '',
+            color_name, combo_name, combo_number,
+            merchize_product_id: '', variant_ids: {},
             success: false,
-            error: data.msg || data.error || `HTTP ${res.status}`,
+            error: createData.msg || createData.error || `HTTP ${createRes.status}`,
           });
+          continue;
         }
+
+        const productId = createData.data._id;
+
+        // Fetch all variants for this product to get per-size variant IDs
+        let variantIds = {};
+        try {
+          const variantsRes = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          const variantsData = await variantsRes.json();
+          if (variantsData.success && Array.isArray(variantsData.data)) {
+            for (const v of variantsData.data) {
+              const sizeOption = v.options?.find((o) => o.attribute?.value_type === 'size');
+              if (sizeOption) {
+                variantIds[sizeOption.name.toUpperCase()] = v._id;
+              }
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch variants for product ${productId}:`, err.message);
+        }
+
+        results.push({
+          color_name, combo_name, combo_number,
+          merchize_product_id: productId,
+          variant_ids: variantIds,
+          success: true,
+        });
       } catch (err) {
         results.push({
-          color_name,
-          combo_name,
-          combo_number,
-          merchize_product_id: '',
+          color_name, combo_name, combo_number,
+          merchize_product_id: '', variant_ids: {},
           success: false,
           error: err.message,
         });
