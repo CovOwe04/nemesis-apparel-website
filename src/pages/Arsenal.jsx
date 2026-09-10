@@ -7,7 +7,6 @@ export default function Arsenal() {
   const [jerseys, setJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All');
   const [accessCode, setAccessCode] = useState('');
   const [codeInput, setCodeInput] = useState('');
   const [currency, setCurrency] = useState(
@@ -32,8 +31,6 @@ export default function Arsenal() {
     const q = query.trim().toLowerCase();
     const now = new Date();
     return jerseys.filter((j) => {
-      // Category filter
-      if (category !== 'All' && (j.category || 'Jersey') !== category) return false;
       // Privacy: hide private jerseys unless access code matches
       if (j.is_private && j.private_access_code !== accessCode) return false;
       // Scheduling: hide if not yet available or expired
@@ -43,7 +40,7 @@ export default function Arsenal() {
       if (q && !(j.name || '').toLowerCase().includes(q) && !(j.team || '').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [jerseys, query, category, accessCode]);
+  }, [jerseys, query, accessCode]);
 
   return (
     <div className="bg-void min-h-screen">
@@ -92,19 +89,8 @@ export default function Arsenal() {
           </div>
         </div>
 
-        {/* Category filter + club access code */}
+        {/* Club access code */}
         <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 flex-wrap">
-            {['All', 'Jersey', 'Long Sleeve', 'Hoodie', 'Bag', 'Hat'].map((c) => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`mono-label px-3 py-2 border rounded-[6px] transition-colors ${category === c ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}
-              >
-                {c.toUpperCase()}
-              </button>
-            ))}
-          </div>
           <div className="flex items-center gap-2 ml-auto">
             <input
               type="text"
