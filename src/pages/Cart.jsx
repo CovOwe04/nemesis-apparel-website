@@ -46,6 +46,16 @@ function getShipRegion(country) {
   return 'World';
 }
 
+// Auto-detect country from postal code format so users can't pick a cheaper
+// shipping region manually. US = 5-digit zip, CA = A1A 1A1, else World.
+function detectCountryCode(postalCode) {
+  const pc = (postalCode || '').trim().toUpperCase();
+  if (!pc) return 'OTHER';
+  if (/^\d{5}(-\d{4})?$/.test(pc)) return 'US';
+  if (/^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVWXYZ]\s?\d[ABCEGHJKLMNPRSTVWXYZ]\d$/.test(pc)) return 'CA';
+  return 'OTHER';
+}
+
 function formatPrice(priceUsd, currency) {
   const value = currency === 'CAD' ? Math.round(priceUsd * CAD_RATE) : priceUsd;
   return currency === 'CAD' ? `CA$${value}` : `$${value}`;
@@ -67,12 +77,19 @@ export default function Cart() {
     () => typeof window !== 'undefined' && localStorage.getItem('nemesis-currency') || 'USD'
   );
   const [shippingAddress, setShippingAddress] = useState({
-    line1: '', line2: '', city: '', state: '', postalCode: '', country: 'US'
+    line1: '', line2: '', city: '', state: '', postalCode: '', country: 'OTHER'
   });
 
   useEffect(() => {
     localStorage.setItem('nemesis-currency', currency);
   }, [currency]);
+
+  useEffect(() => {
+    const detected = detectCountryCode(shippingAddress.postalCode);
+    if (detected !== shippingAddress.country) {
+      setShippingAddress((a) => ({ ...a, country: detected }));
+    }
+  }, [shippingAddress.postalCode]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -348,10 +365,11 @@ export default function Cart() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <input type="text" value={shippingAddress.postalCode} onChange={(e) => setShippingAddress((a) => ({ ...a, postalCode: e.target.value }))} placeholder="Postal code" className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
-                <select value={shippingAddress.country} onChange={(e) => setShippingAddress((a) => ({ ...a, country: e.target.value }))} className="w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm focus:border-kinetic outline-none">
-                  {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
-                </select>
+                <div className="w-full bg-white/60 text-black/70 border border-steel rounded-[6px] px-3 py-2 text-sm flex items-center">
+                  {COUNTRIES.find((c) => c.code === shippingAddress.country)?.name || 'Auto-detected'}
+                </div>
               </div>
+              <p className="mono-label text-fog/30 text-[0.6rem]">Country auto-detected from postal code</p>
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
