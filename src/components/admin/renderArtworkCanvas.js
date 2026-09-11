@@ -56,7 +56,7 @@ async function fetchCustomFontBase64(url, name) {
   }
 }
 
-export async function renderArtworkToBlob(container, artworkUrl, renderW, renderH, customFontUrl, customFontName, fontFam) {
+export async function renderArtworkToBlob(container, artworkUrl, renderW, renderH, customFontUrl, customFontName, fontFam, objectFit = 'fill') {
   const scale = 2;
   const canvas = document.createElement('canvas');
   canvas.width = renderW * scale;
@@ -73,7 +73,27 @@ export async function renderArtworkToBlob(container, artworkUrl, renderW, render
     artworkImg.onerror = () => resolve();
     setTimeout(resolve, 5000);
   });
-  ctx.drawImage(artworkImg, 0, 0, renderW, renderH);
+
+  if (objectFit === 'cover' && artworkImg.naturalWidth && artworkImg.naturalHeight) {
+    // Crop source to match destination aspect ratio (replicates CSS object-fit: cover)
+    const imgRatio = artworkImg.naturalWidth / artworkImg.naturalHeight;
+    const canvasRatio = renderW / renderH;
+    let sx, sy, sw, sh;
+    if (imgRatio > canvasRatio) {
+      sh = artworkImg.naturalHeight;
+      sw = sh * canvasRatio;
+      sx = (artworkImg.naturalWidth - sw) / 2;
+      sy = 0;
+    } else {
+      sw = artworkImg.naturalWidth;
+      sh = sw / canvasRatio;
+      sx = 0;
+      sy = (artworkImg.naturalHeight - sh) / 2;
+    }
+    ctx.drawImage(artworkImg, sx, sy, sw, sh, 0, 0, renderW, renderH);
+  } else {
+    ctx.drawImage(artworkImg, 0, 0, renderW, renderH);
+  }
 
   // 2. Get SVG from container
   const svg = container.querySelector('svg');

@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
 
@@ -92,8 +91,11 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setError('');
     try {
       // Step 1: Render display images for variants with name/number combos
+      // Uses native SVG-to-canvas (not html2canvas) so textPath, fonts, and stroke
+      // effects render identically to the designer preview.
       const renderedImages = {};
       const needsRender = missing.filter((v) => v.combo_name || v.combo_number);
+      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
       for (let i = 0; i < needsRender.length; i++) {
         const v = needsRender[i];
         setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
@@ -103,30 +105,20 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const isStatic = images.length <= 1;
         const imageUrl = isStatic ? images[0].url : images[images.length - 1].url;
 
-        // Preload image to ensure html2canvas captures it
-        const preloadImg = new Image();
-        preloadImg.crossOrigin = 'anonymous';
-        preloadImg.src = imageUrl;
-        await new Promise((resolve) => {
-          preloadImg.onload = resolve;
-          preloadImg.onerror = resolve;
-          setTimeout(resolve, 3000);
-        });
+        // Render dimensions match SVG viewBox aspect ratio for perfect overlay alignment
+        // IdentityNameOverlay viewBox is 300×400 (3:4); StaticNameOverlay is 400×400 (1:1)
+        const renderW = isStatic ? 1200 : 900;
+        const renderH = isStatic ? 1200 : 1200;
 
         // Trigger render
-        setCurrentRender({ imageUrl, customName: v.combo_name, customNumber: v.combo_number, staticDisplay: isStatic });
+        setCurrentRender({ imageUrl, customName: v.combo_name, customNumber: v.combo_number, staticDisplay: isStatic, renderWidth: renderW, renderHeight: renderH });
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await new Promise((resolve) => setTimeout(resolve, 250));
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // Capture
+        // Capture using native SVG-to-canvas for proper font/textPath rendering
         if (renderRef.current) {
           try {
-            const canvas = await html2canvas(renderRef.current, {
-              useCORS: true,
-              backgroundColor: null,
-              scale: 2,
-            });
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            const blob = await renderArtworkToBlob(renderRef.current, imageUrl, renderW, renderH, customFontUrl, customFontName, displayFontFam, 'cover');
             if (blob) {
               const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
               const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
@@ -135,12 +127,12 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             }
           } catch (err) {
             console.error('Render capture failed:', err);
-        }
+          }
         }
       }
       setCurrentRender(null);
 
-      // Step 1b: Render name/number onto front artwork via html2canvas
+      // Step 1b: Render name/number onto front artwork via native SVG-to-canvas
       const renderedArtwork = {};
       for (let i = 0; i < needsRender.length; i++) {
         const v = needsRender[i];
