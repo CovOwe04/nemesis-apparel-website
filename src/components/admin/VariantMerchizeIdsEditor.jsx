@@ -1,8 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
-import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
+import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -17,11 +16,9 @@ function sortSizes(entries) {
 function generateVariants(colors, combos) {
   const variants = [];
   const colorList = colors.length > 0 ? colors : [{ name: 'Default' }];
-  // Always include base (no name/number) variants for each color
   for (const color of colorList) {
     variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
   }
-  // Add combo variants (skip empty combos to avoid duplicates with base)
   for (const color of colorList) {
     for (const combo of combos) {
       if (!combo.name && !combo.number) continue;
@@ -39,10 +36,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [currentRender, setCurrentRender] = useState(null);
   const [renderProgress, setRenderProgress] = useState('');
   const [expanded, setExpanded] = useState(null);
-  const renderRef = useRef(null);
 
   const allVariants = generateVariants(colors, combos);
 
@@ -90,12 +85,13 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setGenerating(true);
     setError('');
     try {
-      // Step 1: Render display images for variants with name/number combos
-      // Uses native SVG-to-canvas (not html2canvas) so textPath, fonts, and stroke
-      // effects render identically to the designer preview.
+      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
+
+      // Step 1: Render display images for variants with name/number combos.
+      // Uses direct Canvas 2D rendering (not html2canvas / SVG-to-image) so
+      // text, arch/flag curves, outlines, and fonts match the designer exactly.
       const renderedImages = {};
       const needsRender = missing.filter((v) => v.combo_name || v.combo_number);
-      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
       for (let i = 0; i < needsRender.length; i++) {
         const v = needsRender[i];
         setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
@@ -110,29 +106,36 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const renderW = isStatic ? 1200 : 900;
         const renderH = isStatic ? 1200 : 1200;
 
-        // Trigger render
-        setCurrentRender({ imageUrl, customName: v.combo_name, customNumber: v.combo_number, staticDisplay: isStatic, renderWidth: renderW, renderHeight: renderH });
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        // Capture using native SVG-to-canvas for proper font/textPath rendering
-        if (renderRef.current) {
-          try {
-            const blob = await renderArtworkToBlob(renderRef.current, imageUrl, renderW, renderH, customFontUrl, customFontName, displayFontFam, 'cover');
-            if (blob) {
-              const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-              const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
-              renderedImages[key] = file_url;
-            }
-          } catch (err) {
-            console.error('Render capture failed:', err);
+        try {
+          const blob = await renderOverlayToBlob({
+            imageUrl,
+            imageFit: 'cover',
+            customName: v.combo_name,
+            customNumber: v.combo_number,
+            nameStyle,
+            numberStyle,
+            fontFam: displayFontFam,
+            customFontUrl,
+            customFontName,
+            enableName,
+            enableNumber,
+            staticDisplay: isStatic,
+            isArtwork: false,
+            renderW,
+            renderH,
+          });
+          if (blob) {
+            const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
+            renderedImages[key] = file_url;
           }
+        } catch (err) {
+          console.error('Display render failed:', err);
         }
       }
-      setCurrentRender(null);
 
-      // Step 1b: Render name/number onto front artwork via native SVG-to-canvas
+      // Step 1b: Render name/number onto front artwork via direct Canvas 2D
       const renderedArtwork = {};
       for (let i = 0; i < needsRender.length; i++) {
         const v = needsRender[i];
@@ -157,38 +160,40 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const renderW = Math.round(naturalW * sz);
         const renderH = Math.round(naturalH * sz);
 
-        // Trigger render with artwork image
         const isStaticArtwork = (colorObj?.images?.length || 0) <= 1;
-        setCurrentRender({
-          imageUrl: artworkFront,
-          customName: v.combo_name,
-          customNumber: v.combo_number,
-          staticDisplay: isStaticArtwork,
-          isArtwork: true,
-          renderWidth: renderW,
-          renderHeight: renderH,
-        });
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        const artworkFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
 
-        // Capture using native SVG-to-canvas for proper font/textPath rendering
-        if (renderRef.current) {
-          try {
-            const artworkFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
-            const blob = await renderArtworkToBlob(renderRef.current, artworkFront, renderW, renderH, customFontUrl, customFontName, artworkFontFam);
-            if (blob) {
-              const file = new File([blob], `artwork-front-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-              const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
-              renderedArtwork[key] = file_url;
-            }
-          } catch (err) {
-            console.error('Artwork render capture failed:', err);
-            setError(`Artwork capture failed for ${v.color_name}: ${err.message}`);
+        try {
+          const blob = await renderOverlayToBlob({
+            imageUrl: artworkFront,
+            imageFit: 'contain',
+            customName: v.combo_name,
+            customNumber: v.combo_number,
+            nameStyle,
+            numberStyle,
+            fontFam: artworkFontFam,
+            customFontUrl,
+            customFontName,
+            enableName,
+            enableNumber,
+            staticDisplay: isStaticArtwork,
+            isArtwork: true,
+            artworkPosition,
+            aspectRatio: naturalW / naturalH,
+            renderW,
+            renderH,
+          });
+          if (blob) {
+            const file = new File([blob], `artwork-front-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
+            renderedArtwork[key] = file_url;
           }
+        } catch (err) {
+          console.error('Artwork render failed:', err);
+          setError(`Artwork render failed for ${v.color_name}: ${err.message}`);
         }
       }
-      setCurrentRender(null);
       setRenderProgress('');
 
       // Step 2: Call create-merchize-products with rendered images and artwork
@@ -226,7 +231,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       setError(err?.message || 'Generation failed');
     } finally {
       setGenerating(false);
-      setCurrentRender(null);
       setRenderProgress('');
     }
   };
@@ -306,33 +310,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
               </div>
             );
           })}
-        </div>
-      )}
-      {/* Hidden render container for combo display images */}
-      {currentRender && (
-        <div ref={renderRef} style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          width: `${currentRender.renderWidth || 600}px`,
-          height: `${currentRender.renderHeight || (currentRender.staticDisplay ? 600 : 800)}px`,
-          pointerEvents: 'none',
-        }}>
-          <ComboImageRenderer
-            imageUrl={currentRender.imageUrl}
-            customName={currentRender.customName}
-            customNumber={currentRender.customNumber}
-            nameStyle={nameStyle}
-            numberStyle={numberStyle}
-            customFontUrl={customFontUrl}
-            customFontName={customFontName}
-            staticDisplay={currentRender.staticDisplay}
-            isArtwork={currentRender.isArtwork}
-            aspectRatio={currentRender.renderWidth && currentRender.renderHeight ? currentRender.renderWidth / currentRender.renderHeight : 1}
-            enableName={enableName}
-            enableNumber={enableNumber}
-            artworkPosition={artworkPosition}
-          />
         </div>
       )}
       {showConfirm && (

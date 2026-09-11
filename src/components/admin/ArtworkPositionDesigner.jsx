@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Upload } from 'lucide-react';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
-import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
+import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 
 const PIECES = [
   { key: 'artwork_front', label: 'FRONT' },
@@ -34,8 +34,6 @@ export default function ArtworkPositionDesigner({
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadError, setUploadError] = useState('');
-  const renderRef = useRef(null);
-  const [currentRender, setCurrentRender] = useState(null);
   const [selectedComboIdx, setSelectedComboIdx] = useState(0);
 
   const validCombos = (combos || []).filter((c) => c.name || c.number);
@@ -106,22 +104,35 @@ export default function ArtworkPositionDesigner({
 
         const renderName = comboName || PREVIEW_NAME;
         const renderNumber = comboNumber || PREVIEW_NUMBER;
-        setCurrentRender({ url, renderW, renderH, aspectRatio: naturalW / naturalH, customName: renderName, customNumber: renderNumber });
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         let renderedUrl = '';
-        if (renderRef.current) {
-          try {
-            const blob = await renderArtworkToBlob(renderRef.current, url, renderW, renderH, customFontUrl, customFontName, fontFam);
-            if (blob) {
-              const file = new File([blob], `artwork-${pieceKey}-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-              renderedUrl = file_url;
-            }
-          } catch (err) {
-            console.error('Render capture failed:', err);
+        try {
+          const blob = await renderOverlayToBlob({
+            imageUrl: url,
+            imageFit: 'contain',
+            customName: renderName,
+            customNumber: renderNumber,
+            nameStyle,
+            numberStyle,
+            fontFam,
+            customFontUrl,
+            customFontName,
+            enableName,
+            enableNumber,
+            staticDisplay,
+            isArtwork: true,
+            artworkPosition,
+            aspectRatio: naturalW / naturalH,
+            renderW,
+            renderH,
+          });
+          if (blob) {
+            const file = new File([blob], `artwork-${pieceKey}-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
+            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            renderedUrl = file_url;
           }
+        } catch (err) {
+          console.error('Render failed:', err);
         }
 
         if (renderedUrl) {
@@ -139,13 +150,11 @@ export default function ArtworkPositionDesigner({
         }
       }
 
-      setCurrentRender(null);
       setUploadStatus('Upload complete!');
     } catch (err) {
       setUploadError(err?.message || 'Upload failed');
     } finally {
       setUploading(false);
-      setCurrentRender(null);
     }
   };
 
@@ -228,33 +237,6 @@ export default function ArtworkPositionDesigner({
         {uploadError && <p className="mono-label text-kinetic text-[0.65rem]">{uploadError}</p>}
         {!jerseyId && <p className="mono-label text-fog/30 text-[0.65rem]">Save the jersey first to enable upload.</p>}
       </div>
-
-      {currentRender && (
-        <div ref={renderRef} style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          width: `${currentRender.renderW}px`,
-          height: `${currentRender.renderH}px`,
-          pointerEvents: 'none',
-        }}>
-          <ArtworkNameOverlay
-            artworkUrl={currentRender.url}
-            customName={enableName ? (currentRender.customName || PREVIEW_NAME) : ''}
-            customNumber={enableNumber ? (currentRender.customNumber || PREVIEW_NUMBER) : ''}
-            nameStyle={nameStyle}
-            numberStyle={numberStyle}
-            customFontUrl={customFontUrl}
-            customFontName={customFontName}
-            aspectRatio={currentRender.aspectRatio}
-            enableName={enableName}
-            enableNumber={enableNumber}
-            horizOffset={horizOffset}
-            vertOffset={vertOffset}
-            staticDisplay={staticDisplay}
-          />
-        </div>
-      )}
     </div>
   );
 }
