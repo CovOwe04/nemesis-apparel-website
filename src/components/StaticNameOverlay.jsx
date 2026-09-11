@@ -14,12 +14,14 @@ const DEFAULT_NUMBER_STYLE = {
 // IdentityNameOverlay uses 300x400; we scale font/stroke by 4/3 to match visually.
 const FONT_SCALE = 4 / 3;
 
+// Adobe-style warp (400x400 viewBox):
+//  ARCH (Arc):  quadratic bezier, control point lifted above baseline → upward bow
+//  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
+//  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(y, archPct, flagPct) {
-  const archOffset = 22 * archPct;
-  const flagLeft = -14 * flagPct;
-  const flagMid = 6 * flagPct;
-  const flagRight = 20 * flagPct;
-  return `M 100 ${y + flagLeft} Q 200 ${y - archOffset + flagMid} 300 ${y + 18 + flagRight}`;
+  const archHeight = 40 * archPct;
+  const flagHeight = 30 * flagPct;
+  return `M 100 ${y - flagHeight} Q 200 ${y - archHeight} 300 ${y + flagHeight}`;
 }
 
 export default function StaticNameOverlay({

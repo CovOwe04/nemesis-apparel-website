@@ -18,12 +18,14 @@ const DEFAULT_NUMBER_STYLE = {
   arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
 };
 
+// Adobe-style warp:
+//  ARCH (Arc):  quadratic bezier, control point lifted above baseline → upward bow
+//  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
+//  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(y, archPct, flagPct) {
-  const archOffset = 22 * archPct;
-  const flagLeft = -14 * flagPct;
-  const flagMid = 6 * flagPct;
-  const flagRight = 20 * flagPct;
-  return `M 75 ${y + flagLeft} Q 150 ${y - archOffset + flagMid} 225 ${y + 18 + flagRight}`;
+  const archHeight = 40 * archPct;
+  const flagHeight = 30 * flagPct;
+  return `M 75 ${y - flagHeight} Q 150 ${y - archHeight} 225 ${y + flagHeight}`;
 }
 
 export default function IdentityNameOverlay({

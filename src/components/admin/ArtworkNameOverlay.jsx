@@ -20,13 +20,15 @@ const DEFAULT_NUMBER_STYLE = {
 const DEFAULT_HORIZ_OFFSET = 55;
 const DEFAULT_VERT_OFFSET = -5;
 
+// Adobe-style warp:
+//  ARCH (Arc):  quadratic bezier, control point lifted above baseline → upward bow
+//  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
+//  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(cx, y, archPct, flagPct) {
-  const archOffset = 22 * archPct;
-  const flagLeft = -14 * flagPct;
-  const flagMid = 6 * flagPct;
-  const flagRight = 20 * flagPct;
+  const archHeight = 40 * archPct;
+  const flagHeight = 30 * flagPct;
   const halfW = 75;
-  return `M ${cx - halfW} ${y + flagLeft} Q ${cx} ${y - archOffset + flagMid} ${cx + halfW} ${y + 18 + flagRight}`;
+  return `M ${cx - halfW} ${y - flagHeight} Q ${cx} ${y - archHeight} ${cx + halfW} ${y + flagHeight}`;
 }
 
 export default function ArtworkNameOverlay({
