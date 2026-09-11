@@ -45,7 +45,7 @@ export default function ArtworkNameOverlay({
   horizOffset = DEFAULT_HORIZ_OFFSET,
   vertOffset = DEFAULT_VERT_OFFSET,
 }) {
-  const uid = useId();
+  const uid = useId().replace(/:/g, '');
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
@@ -111,15 +111,10 @@ export default function ArtworkNameOverlay({
       <img src={artworkUrl} alt="artwork" crossOrigin="anonymous" className="w-full h-full object-contain" />
       {displayName && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${vbWidth} ${vbHeight}`} preserveAspectRatio="xMidYMid meet">
-          <defs>
-            {lines.map((line, i) => (
-              <path key={i} id={`${uid}-arc-${i}`} d={buildPath(cx, startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" />
-            ))}
-            {displayNumber && (
-              <path id={`${uid}-num`} d={buildPath(cx, numBaselineY, numArchPct, numFlagPct)} fill="none" />
-            )}
-          </defs>
           <g transform={nameRotation}>
+            {lines.map((line, i) => (
+              <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(cx, startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
+            ))}
             <text
               fontFamily={fontFam}
               fontSize={actualNameFontSize}
@@ -131,7 +126,7 @@ export default function ArtworkNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={i} href={`#${uid}-arc-${i}`} startOffset={`${nameHorizPos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} startOffset={`${nameHorizPos}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
@@ -139,6 +134,7 @@ export default function ArtworkNameOverlay({
           </g>
           {displayNumber && (
             <g transform={numRotation}>
+              <path id={`${uid}-num`} d={buildPath(cx, numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
                 fontSize={nus.font_size}

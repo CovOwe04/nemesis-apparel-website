@@ -41,7 +41,7 @@ export default function IdentityNameOverlay({
   className = '',
   plainImage = false,
 }) {
-  const uid = useId();
+  const uid = useId().replace(/:/g, '');
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
@@ -102,15 +102,10 @@ export default function IdentityNameOverlay({
       )}
       {displayName && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            {lines.map((line, i) => (
-              <path key={i} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" />
-            ))}
-            {displayNumber && (
-              <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" />
-            )}
-          </defs>
           <g transform={nameRotation}>
+            {lines.map((line, i) => (
+              <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
+            ))}
             <text
               fontFamily={fontFam}
               fontSize={actualNameFontSize}
@@ -122,7 +117,7 @@ export default function IdentityNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={i} href={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
@@ -130,6 +125,7 @@ export default function IdentityNameOverlay({
           </g>
           {displayNumber && (
             <g transform={numRotation}>
+              <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
                 fontSize={nus.font_size}
