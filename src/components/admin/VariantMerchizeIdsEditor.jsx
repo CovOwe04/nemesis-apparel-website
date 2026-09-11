@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
+import ArtworkComboRenderer from '@/components/admin/ArtworkComboRenderer';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -169,6 +170,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
           customName: v.combo_name,
           customNumber: v.combo_number,
           staticDisplay: true,
+          isArtwork: true,
           renderWidth: renderW,
           renderHeight: renderH,
         });
@@ -310,18 +312,33 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
           height: `${currentRender.renderHeight || (currentRender.staticDisplay ? 600 : 800)}px`,
           pointerEvents: 'none',
         }}>
-          <ComboImageRenderer
-            imageUrl={currentRender.imageUrl}
-            customName={currentRender.customName}
-            customNumber={currentRender.customNumber}
-            nameStyle={nameStyle}
-            numberStyle={numberStyle}
-            customFontUrl={customFontUrl}
-            customFontName={customFontName}
-            staticDisplay={currentRender.staticDisplay}
-            enableName={enableName}
-            enableNumber={enableNumber}
-          />
+          {currentRender.isArtwork ? (
+            <ArtworkComboRenderer
+              imageUrl={currentRender.imageUrl}
+              customName={currentRender.customName}
+              customNumber={currentRender.customNumber}
+              nameStyle={nameStyle}
+              numberStyle={numberStyle}
+              customFontUrl={customFontUrl}
+              customFontName={customFontName}
+              enableName={enableName}
+              enableNumber={enableNumber}
+              containerWidth={currentRender.renderWidth || 600}
+            />
+          ) : (
+            <ComboImageRenderer
+              imageUrl={currentRender.imageUrl}
+              customName={currentRender.customName}
+              customNumber={currentRender.customNumber}
+              nameStyle={nameStyle}
+              numberStyle={numberStyle}
+              customFontUrl={customFontUrl}
+              customFontName={customFontName}
+              staticDisplay={currentRender.staticDisplay}
+              enableName={enableName}
+              enableNumber={enableNumber}
+            />
+          )}
         </div>
       )}
       {showConfirm && (
