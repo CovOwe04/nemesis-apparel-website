@@ -93,7 +93,7 @@ export default function ArtworkNameOverlay({
   // Scale font proportionally to the artwork's width vs the 3D mockup (300 wide),
   // then adjust with a tunable constant so the text isn't overly large.
   // Lower ARTWORK_SCALE_ADJUSTMENT = smaller text. 1.0 ≈ matches 3D mockup size.
-  const ARTWORK_SCALE_ADJUSTMENT = 1.0;
+  const ARTWORK_SCALE_ADJUSTMENT = 0.7;
   const RES_SCALE = vbWidth / 300;
   const FONT_SCALE = (staticDisplay ? (4 / 3) : 1) * RES_SCALE * ARTWORK_SCALE_ADJUSTMENT;
 
