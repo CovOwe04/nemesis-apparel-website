@@ -15,14 +15,18 @@ const DEFAULT_NUMBER_STYLE = {
 const FONT_SCALE = 4 / 3;
 
 // Adobe-style warp (400x400 viewBox):
-//  ARCH (Arc):  quadratic bezier, control point lifted above baseline → upward bow
-//  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
+//  ARCH (Arc):  cubic bezier, control points lifted → upward bow (spans text width only)
+//  FLAG:        cubic bezier wave — start up, end down (flipped for negative)
 //  RISE:        applied as <g> rotation (separate, not in path)
-function buildPath(y, archPct, flagPct) {
+function buildPath(cx, y, textWidth, archPct, flagPct) {
+  const w = Math.max(textWidth, 1);
+  const halfW = w / 2;
   const warpScale = 4 / 3;
   const archHeight = 50 * warpScale * archPct;
   const flagHeight = 35 * warpScale * flagPct;
-  return `M 0 ${y - flagHeight} Q 200 ${y - archHeight} 400 ${y + flagHeight}`;
+  const startX = cx - halfW;
+  const endX = cx + halfW;
+  return `M ${startX} ${y - flagHeight} C ${startX + w / 3} ${y - flagHeight - archHeight}, ${endX - w / 3} ${y + flagHeight - archHeight}, ${endX} ${y + flagHeight}`;
 }
 
 export default function StaticNameOverlay({
@@ -69,6 +73,11 @@ export default function StaticNameOverlay({
   const numBaselineY = 250 + (nus.vert_pos - 50) * 2;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} 200 ${numBaselineY})` : undefined;
 
+  // Path center X based on horiz_pos (maps 0-100 to 25%-75% of viewBox width)
+  const VB_WIDTH = 400;
+  const namePathCenterX = VB_WIDTH * (0.25 + ns.horiz_pos / 200);
+  const numPathCenterX = VB_WIDTH * (0.25 + nus.horiz_pos / 200);
+
   // Text wrapping for long names (path width is 200 in 400w viewBox)
   const ARC_WIDTH = 200;
   const charFactor = 0.7;
@@ -90,6 +99,7 @@ export default function StaticNameOverlay({
 
   const numLines = Math.max(lines.length, 1);
   const startBase = nameBaselineY - ((numLines - 1) / 2) * lineHeight;
+  const numTextWidth = displayNumber.length * nus.font_size * FONT_SCALE * charFactor + Math.max(0, displayNumber.length - 1) * ls;
 
   return (
     <div className={`relative overflow-hidden bg-black ${className}`}>
@@ -103,7 +113,7 @@ export default function StaticNameOverlay({
           {displayName && (
             <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
               {lines.map((line, i) => (
-                <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
+                <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct)} fill="none" stroke="none" />
               ))}
               <text
                 fontFamily={fontFam}
@@ -116,7 +126,7 @@ export default function StaticNameOverlay({
                 style={{ textTransform: 'uppercase' }}
               >
                 {lines.map((line, i) => (
-                  <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${25 + ns.horiz_pos / 2}%`} textAnchor="middle">
+                  <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset="50%" textAnchor="middle">
                     {line}
                   </textPath>
                 ))}
@@ -125,7 +135,7 @@ export default function StaticNameOverlay({
           )}
           {displayNumber && (
             <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
-              <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
+              <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
                 fontSize={nus.font_size * FONT_SCALE}
@@ -134,7 +144,7 @@ export default function StaticNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness * FONT_SCALE : 0}
                 paintOrder="stroke fill"
               >
-                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${25 + nus.horiz_pos / 2}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset="50%" textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>

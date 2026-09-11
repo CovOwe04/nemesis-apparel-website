@@ -21,13 +21,17 @@ const DEFAULT_HORIZ_OFFSET = 55;
 const DEFAULT_VERT_OFFSET = -5;
 
 // Adobe-style warp:
-//  ARCH (Arc):  quadratic bezier, control point lifted above baseline → upward bow
-//  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
+//  ARCH (Arc):  cubic bezier, control points lifted → upward bow (spans text width only)
+//  FLAG:        cubic bezier wave — start up, end down (flipped for negative)
 //  RISE:        applied as <g> rotation (separate, not in path)
-function buildPath(cx, y, archPct, flagPct, scale) {
+function buildPath(cx, y, textWidth, archPct, flagPct, scale) {
+  const w = Math.max(textWidth, 1);
+  const halfW = w / 2;
   const archHeight = 50 * scale * archPct;
   const flagHeight = 35 * scale * flagPct;
-  return `M 0 ${y - flagHeight} Q ${cx} ${y - archHeight} ${2 * cx} ${y + flagHeight}`;
+  const startX = cx - halfW;
+  const endX = cx + halfW;
+  return `M ${startX} ${y - flagHeight} C ${startX + w / 3} ${y - flagHeight - archHeight}, ${endX - w / 3} ${y + flagHeight - archHeight}, ${endX} ${y + flagHeight}`;
 }
 
 export default function ArtworkNameOverlay({
@@ -87,6 +91,8 @@ export default function ArtworkNameOverlay({
   // Apply shared horizontal offset (moves both together)
   const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
   const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
+  const namePathCenterX = vbWidth * (0.25 + nameHorizPos / 200);
+  const numPathCenterX = vbWidth * (0.25 + numHorizPos / 200);
 
   // Text wrapping for long names (scaled to match Identity Lab visual size)
   const ARC_WIDTH = 150 * FONT_SCALE;
@@ -108,6 +114,7 @@ export default function ArtworkNameOverlay({
 
   const numLines = Math.max(lines.length, 1);
   const startBase = nameBaselineY - ((numLines - 1) / 2) * lineHeight;
+  const numTextWidth = displayNumber.length * nus.font_size * FONT_SCALE * charFactor + Math.max(0, displayNumber.length - 1) * ls;
 
   return (
     <div className="relative overflow-hidden w-full h-full">
@@ -116,7 +123,7 @@ export default function ArtworkNameOverlay({
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${vbWidth} ${vbHeight}`} preserveAspectRatio="xMidYMid meet">
           <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
             {lines.map((line, i) => (
-              <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(cx, startBase + i * lineHeight, nameArchPct, nameFlagPct, FONT_SCALE)} fill="none" stroke="none" />
+              <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct, FONT_SCALE)} fill="none" stroke="none" />
             ))}
             <text
               fontFamily={fontFam}
@@ -129,7 +136,7 @@ export default function ArtworkNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${25 + nameHorizPos / 2}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset="50%" textAnchor="middle">
                   {line}
                 </textPath>
               ))}
@@ -137,7 +144,7 @@ export default function ArtworkNameOverlay({
           </g>
           {displayNumber && (
             <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
-              <path id={`${uid}-num`} d={buildPath(cx, numBaselineY, numArchPct, numFlagPct, FONT_SCALE)} fill="none" stroke="none" />
+              <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct, FONT_SCALE)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
                 fontSize={nus.font_size * FONT_SCALE}
@@ -146,7 +153,7 @@ export default function ArtworkNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness * FONT_SCALE : 0}
                 paintOrder="stroke fill"
               >
-                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${25 + numHorizPos / 2}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset="50%" textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>
