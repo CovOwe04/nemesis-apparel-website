@@ -309,6 +309,26 @@
       "default": {},
       "title": "Merchize Variant SKUs (by size)"
     },
+    "artwork_front": {
+      "type": "string",
+      "default": "",
+      "title": "Artwork - Front"
+    },
+    "artwork_back": {
+      "type": "string",
+      "default": "",
+      "title": "Artwork - Back"
+    },
+    "artwork_sleeve": {
+      "type": "string",
+      "default": "",
+      "title": "Artwork - Sleeve"
+    },
+    "artwork_hood": {
+      "type": "string",
+      "default": "",
+      "title": "Artwork - Hood"
+    },
     "variant_merchize_ids": {
       "type": "array",
       "items": {

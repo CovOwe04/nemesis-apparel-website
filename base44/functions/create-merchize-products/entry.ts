@@ -153,11 +153,48 @@ export default async function(req) {
           console.error(`Failed to fetch variants for product ${productId}:`, err.message);
         }
 
+        // Upload artwork (front/back/sleeve/hood) to the created product
+        let artworkUploaded = false;
+        const artwork = {
+          front: jersey.artwork_front,
+          back: jersey.artwork_back,
+          sleeve: jersey.artwork_sleeve,
+          hood: jersey.artwork_hood,
+        };
+        const artworkEntries = Object.entries(artwork).filter(([, url]) => url);
+        if (artworkEntries.length > 0) {
+          try {
+            const formData = new FormData();
+            for (const [piece, url] of artworkEntries) {
+              const imgRes = await fetch(url);
+              if (!imgRes.ok) continue;
+              const blob = await imgRes.blob();
+              const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
+              formData.append(piece, blob, `${piece}.${ext}`);
+            }
+            if ([...formData.keys()].length > 0) {
+              const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+              });
+              const artworkData = await artworkRes.json();
+              artworkUploaded = artworkData.success === true;
+              if (!artworkUploaded) {
+                console.error(`Artwork upload returned non-success for ${productId}:`, artworkData.message);
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to upload artwork for product ${productId}:`, err.message);
+          }
+        }
+
         results.push({
           color_name, combo_name, combo_number,
           merchize_product_id: productId,
           variant_ids: variantIds,
           skus,
+          artwork_uploaded: artworkUploaded,
           success: true,
         });
       } catch (err) {

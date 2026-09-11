@@ -9,6 +9,7 @@ import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
+import ArtworkUploader from '@/components/admin/ArtworkUploader';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -31,7 +32,8 @@ const EMPTY_FORM = {
   static_display: false,
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
-  merchize_product_id: '', merchize_variants: {}, variant_merchize_ids: []
+  merchize_product_id: '', merchize_variants: {}, variant_merchize_ids: [],
+  artwork_front: '', artwork_back: '', artwork_sleeve: '', artwork_hood: ''
 };
 
 function Toggle({ checked, onChange, label, disabled = false }) {
@@ -393,6 +395,20 @@ export default function JerseyEditor() {
                 ))}
               </div>
             </div>
+            <ArtworkUploader
+              artwork={{
+                artwork_front: form.artwork_front,
+                artwork_back: form.artwork_back,
+                artwork_sleeve: form.artwork_sleeve,
+                artwork_hood: form.artwork_hood,
+              }}
+              onChange={(a) => {
+                setField('artwork_front', a.artwork_front || '');
+                setField('artwork_back', a.artwork_back || '');
+                setField('artwork_sleeve', a.artwork_sleeve || '');
+                setField('artwork_hood', a.artwork_hood || '');
+              }}
+            />
             <VariantMerchizeIdsEditor
               colors={form.colors}
               combos={form.name_number_combos}
