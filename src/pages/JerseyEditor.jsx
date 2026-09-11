@@ -9,7 +9,6 @@ import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
-import ArtworkUploader from '@/components/admin/ArtworkUploader';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -395,20 +394,6 @@ export default function JerseyEditor() {
                 ))}
               </div>
             </div>
-            <ArtworkUploader
-              artwork={{
-                artwork_front: form.artwork_front,
-                artwork_back: form.artwork_back,
-                artwork_sleeve: form.artwork_sleeve,
-                artwork_hood: form.artwork_hood,
-              }}
-              onChange={(a) => {
-                setField('artwork_front', a.artwork_front || '');
-                setField('artwork_back', a.artwork_back || '');
-                setField('artwork_sleeve', a.artwork_sleeve || '');
-                setField('artwork_hood', a.artwork_hood || '');
-              }}
-            />
             <VariantMerchizeIdsEditor
               colors={form.colors}
               combos={form.name_number_combos}
@@ -417,12 +402,15 @@ export default function JerseyEditor() {
               jerseyId={jerseyId}
               merchizeProductId={form.merchize_product_id}
               merchizeVariants={form.merchize_variants}
-              artwork={{
-                front: form.artwork_front,
-                back: form.artwork_back,
-                sleeve: form.artwork_sleeve,
-                hood: form.artwork_hood,
-              }}
+              colorArtwork={form.colors.reduce((acc, c) => {
+                acc[c.name || 'Default'] = {
+                  front: c.artwork_front || '',
+                  back: c.artwork_back || '',
+                  sleeve: c.artwork_sleeve || '',
+                  hood: c.artwork_hood || '',
+                };
+                return acc;
+              }, {})}
               onPrimaryGenerated={({ merchize_product_id, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_variants', merchize_variants);

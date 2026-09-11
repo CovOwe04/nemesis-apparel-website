@@ -23,7 +23,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, artwork }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [expandedIdx, setExpandedIdx] = useState(null);
@@ -39,6 +39,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       combo_name: v.combo_name,
       combo_number: v.combo_number,
       merchize_product_id: existing?.merchize_product_id || '',
+      title: existing?.title || '',
       manually_set: existing?.manually_set || false,
       variant_ids: existing?.variant_ids || {},
       skus: existing?.skus || {},
@@ -70,7 +71,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
         merchize_product_id: merchizeProductId,
         merchize_variants: merchizeVariants,
-        artwork,
+        colorArtwork,
       });
       if (res.data?.error) {
         setError(res.data.error);
@@ -79,7 +80,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       const results = res.data?.results || [];
       const updated = syncedIds.map((v) => {
         const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);
-        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
+        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, title: r.title || '', manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
         return v;
       });
       onChange(updated);
@@ -125,13 +126,20 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
               <div key={i}>
                 <div className="flex items-center gap-2">
                   <span className="mono-label text-fog/40 text-[0.6rem] w-32 shrink-0 truncate">{label}</span>
-                  <input
-                    type="text"
-                    value={vmi.merchize_product_id || ''}
-                    onChange={(e) => updateField(i, e.target.value)}
-                    placeholder="Auto-filled on generate"
-                    className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
-                  />
+                  {vmi.title ? (
+                    <div className="flex-1 min-w-0 px-2 py-1.5">
+                      <div className="text-fog text-xs truncate">{vmi.title}</div>
+                      <div className="mono-label text-fog/30 text-[0.55rem] truncate">{vmi.merchize_product_id}</div>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={vmi.merchize_product_id || ''}
+                      onChange={(e) => updateField(i, e.target.value)}
+                      placeholder="Auto-filled on generate"
+                      className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
+                    />
+                  )}
                   {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic shrink-0">MANUAL</span>}
                   {vmi.skus && Object.keys(vmi.skus).length > 0 && (
                     <button

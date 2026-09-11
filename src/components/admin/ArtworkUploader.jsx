@@ -9,7 +9,7 @@ const PIECES = [
   { key: 'artwork_hood', label: 'HOOD' },
 ];
 
-export default function ArtworkUploader({ artwork, onChange }) {
+export default function ArtworkUploader({ artwork, onChange, compact = false }) {
   const [uploading, setUploading] = useState(null);
   const fileRefs = useRef({});
 
@@ -34,10 +34,14 @@ export default function ArtworkUploader({ artwork, onChange }) {
 
   return (
     <div>
-      <label className="mono-label text-fog/50 block mb-2">FULFILLMENT ARTWORK</label>
-      <p className="mono-label text-fog/30 text-[0.6rem] mb-3">
-        Print-ready files sent to Merchize on Generate. Used for front, back, sleeve & hood printing.
-      </p>
+      {!compact && (
+        <>
+          <label className="mono-label text-fog/50 block mb-2">FULFILLMENT ARTWORK</label>
+          <p className="mono-label text-fog/30 text-[0.6rem] mb-3">
+            Print-ready files sent to Merchize on Generate. Used for front, back, sleeve & hood printing.
+          </p>
+        </>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {PIECES.map(({ key, label }) => {
           const url = artwork?.[key] || '';

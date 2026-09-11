@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { Trash2, Plus } from 'lucide-react';
+import ArtworkUploader from '@/components/admin/ArtworkUploader';
 
 export default function ColorsEditor({ colors, onChange }) {
   const [uploading, setUploading] = useState(null);
@@ -94,6 +95,25 @@ export default function ColorsEditor({ colors, onChange }) {
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) addImage(ci, f); e.target.value = ''; }}
               />
             </label>
+          </div>
+          <div className="pt-2 border-t border-steel">
+            <div className="mono-label text-fog/40 text-[0.6rem] mb-2">ARTWORK</div>
+            <ArtworkUploader
+              artwork={{
+                artwork_front: color.artwork_front || '',
+                artwork_back: color.artwork_back || '',
+                artwork_sleeve: color.artwork_sleeve || '',
+                artwork_hood: color.artwork_hood || '',
+              }}
+              onChange={(a) => onChange(colors.map((c, i) => i === ci ? {
+                ...c,
+                artwork_front: a.artwork_front || '',
+                artwork_back: a.artwork_back || '',
+                artwork_sleeve: a.artwork_sleeve || '',
+                artwork_hood: a.artwork_hood || '',
+              } : c))}
+              compact
+            />
           </div>
         </div>
       ))}

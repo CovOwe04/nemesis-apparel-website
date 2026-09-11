@@ -69,6 +69,22 @@
                 }
               }
             }
+          },
+          "artwork_front": {
+            "type": "string",
+            "default": ""
+          },
+          "artwork_back": {
+            "type": "string",
+            "default": ""
+          },
+          "artwork_sleeve": {
+            "type": "string",
+            "default": ""
+          },
+          "artwork_hood": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -347,6 +363,10 @@
             "default": ""
           },
           "merchize_product_id": {
+            "type": "string",
+            "default": ""
+          },
+          "title": {
             "type": "string",
             "default": ""
           },

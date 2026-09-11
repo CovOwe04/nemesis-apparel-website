@@ -24,7 +24,7 @@ export default async function(req) {
     }
 
     const body = await req.json();
-    const { jerseyId, variants, merchize_product_id, merchize_variants, artwork } = body;
+    const { jerseyId, variants, merchize_product_id, merchize_variants, colorArtwork } = body;
 
     if (!jerseyId || !variants || !Array.isArray(variants) || variants.length === 0) {
       return Response.json({ error: 'jerseyId and variants array required' });
@@ -40,13 +40,6 @@ export default async function(req) {
 
     const baseProductId = merchize_product_id || jersey.merchize_product_id || '';
     const fallbackSkus = merchize_variants || jersey.merchize_variants || {};
-    const artworkUrls = artwork || {
-      front: jersey.artwork_front,
-      back: jersey.artwork_back,
-      sleeve: jersey.artwork_sleeve,
-      hood: jersey.artwork_hood,
-    };
-
     if (!baseProductId) {
       return Response.json({ error: 'No Merchize catalog product selected. Please choose a base product in the Merchize Fulfillment section before generating.' });
     }
@@ -59,6 +52,7 @@ export default async function(req) {
 
       const colorObj = (jersey.colors || []).find((c) => c.name === color_name);
       const colorHex = colorObj?.hex || '#000000';
+      const artworkUrls = (colorArtwork && colorArtwork[color_name]) || {};
 
       const productImages = [];
       if (colorObj?.images?.length > 0) {
@@ -124,7 +118,7 @@ export default async function(req) {
         if (!createRes.ok || !createData.success || !createData.data?._id) {
           results.push({
             color_name, combo_name, combo_number,
-            merchize_product_id: '', variant_ids: {}, skus: {},
+            merchize_product_id: '', title: '', variant_ids: {}, skus: {},
             success: false,
             error: createData.msg || createData.error || `HTTP ${createRes.status}`,
           });
@@ -229,6 +223,7 @@ export default async function(req) {
         results.push({
           color_name, combo_name, combo_number,
           merchize_product_id: productId,
+          title: variantLabel,
           variant_ids: variantIds,
           skus,
           artwork_uploaded: artworkUploaded,
@@ -238,7 +233,7 @@ export default async function(req) {
       } catch (err) {
         results.push({
           color_name, combo_name, combo_number,
-          merchize_product_id: '', variant_ids: {}, skus: {},
+          merchize_product_id: '', title: '', variant_ids: {}, skus: {},
           success: false,
           error: err.message,
         });
