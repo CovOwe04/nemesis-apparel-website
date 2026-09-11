@@ -4,7 +4,8 @@ import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
-import { ArrowLeft, Plus, Minus, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 function getColors(jersey) {
   if (jersey.colors && jersey.colors.length > 0) return jersey.colors;
@@ -51,6 +52,8 @@ export default function IdentityLab() {
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [nameOn, setNameOn] = useState(true);
   const [numberOn, setNumberOn] = useState(true);
+  const [rendering, setRendering] = useState(false);
+  const previewRef = useRef(null);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -126,7 +129,28 @@ export default function IdentityLab() {
     if (canCustomizeNumber && numberOn) setNumber(combo.number || '');
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    setRendering(true);
+    let renderedImage = '';
+    if (previewRef.current) {
+      try {
+        const canvas = await html2canvas(previewRef.current, {
+          useCORS: true,
+          backgroundColor: null,
+          scale: 2,
+        });
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+          const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
+          const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+          renderedImage = file_url;
+        }
+      } catch (err) {
+        console.error('Preview render failed:', err);
+      }
+    }
+    setRendering(false);
+
     const payload = {
       jerseyId: jersey.id,
       name: jersey.name,
@@ -146,6 +170,7 @@ export default function IdentityLab() {
       letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
+      rendered_image: renderedImage,
     };
     if (editId && items.some((i) => i.id === editId)) {
       editItem(editId, payload);
@@ -172,7 +197,7 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
+            <div ref={previewRef} className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
               {jersey.static_display ? (
                 <StaticNameOverlay
                   image={selectedImage}
@@ -445,10 +470,14 @@ export default function IdentityLab() {
             </div>
             <button
               onClick={handleAdd}
-              disabled={added}
+              disabled={added || rendering}
               className="btn-solid flex-1 gap-2 px-6 py-3 font-heading uppercase disabled:opacity-70"
             >
-              {added ? (
+              {rendering ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" /> Rendering…
+                </>
+              ) : added ? (
                 <>
                   <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>

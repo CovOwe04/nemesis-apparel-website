@@ -23,6 +23,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "pending_approval",
         "approved",
         "rejected",
         "fulfilled"
@@ -53,6 +54,16 @@
       "type": "string",
       "default": "",
       "title": "Merchize Fulfillment Order ID"
+    },
+    "stripe_payment_id": {
+      "type": "string",
+      "default": "",
+      "title": "Stripe Payment Intent ID"
+    },
+    "shipping_address_json": {
+      "type": "string",
+      "default": "",
+      "title": "Shipping Address (JSON)"
     }
   },
   "required": [

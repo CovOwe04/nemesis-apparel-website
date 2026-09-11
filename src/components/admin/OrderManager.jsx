@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Check, X, Clock, Mail, User, Package } from 'lucide-react';
+import { Check, X, Clock, Mail, User, Package, Loader2 } from 'lucide-react';
 
 const STATUS_STYLES = {
   pending: 'text-kinetic border-kinetic',
+  pending_approval: 'text-kinetic border-kinetic',
   approved: 'text-fog border-fog',
   rejected: 'text-fog/40 border-steel',
   fulfilled: 'text-fog/60 border-fog/40',
@@ -14,6 +15,7 @@ export default function OrderManager() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
   const [expanded, setExpanded] = useState(null);
+  const [processing, setProcessing] = useState(null);
 
   const loadOrders = () => {
     setLoading(true);
@@ -34,6 +36,39 @@ export default function OrderManager() {
     }
   };
 
+  const approveOrder = async (id) => {
+    setProcessing(id);
+    try {
+      const res = await base44.functions.invoke('approve-custom-order', { orderId: id });
+      if (res.data?.error) {
+        alert('Approval failed: ' + res.data.error);
+      } else {
+        loadOrders();
+      }
+    } catch (err) {
+      alert('Approval failed: ' + (err?.message || 'unknown error'));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const rejectOrder = async (id) => {
+    if (!confirm('Reject this order and issue a full refund? The customer will be emailed.')) return;
+    setProcessing(id);
+    try {
+      const res = await base44.functions.invoke('reject-custom-order', { orderId: id });
+      if (res.data?.error) {
+        alert('Rejection failed: ' + res.data.error);
+      } else {
+        loadOrders();
+      }
+    } catch (err) {
+      alert('Rejection failed: ' + (err?.message || 'unknown error'));
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const filtered = orders.filter((o) => filter === 'all' ? true : o.status === filter);
 
   const parseItems = (o) => {
@@ -44,7 +79,7 @@ export default function OrderManager() {
     <div>
       {/* Filter tabs */}
       <div className="flex items-center gap-2 mb-6">
-        {['pending', 'approved', 'rejected', 'fulfilled', 'all'].map((s) => (
+        {['pending', 'pending_approval', 'approved', 'rejected', 'fulfilled', 'all'].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
             className={`mono-label px-4 py-2 border rounded-[6px] transition-colors ${filter === s ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}>
             {s.toUpperCase()}
@@ -114,15 +149,17 @@ export default function OrderManager() {
                     </div>
 
                     {/* Approval actions */}
-                    {o.status === 'pending' && (
+                    {o.status === 'pending_approval' && (
                       <div className="flex gap-3 pt-2">
-                        <button onClick={() => updateStatus(o.id, 'approved')}
-                          className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px]">
-                          <Check size={16} /> Approve
+                        <button onClick={() => approveOrder(o.id)} disabled={processing === o.id}
+                          className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
+                          {processing === o.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                          {processing === o.id ? 'Approving…' : 'Approve & Fulfill'}
                         </button>
-                        <button onClick={() => updateStatus(o.id, 'rejected')}
-                          className="inline-flex items-center gap-2 border border-steel px-5 py-2.5 font-heading uppercase text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors rounded-[6px]">
-                          <X size={16} /> Reject
+                        <button onClick={() => rejectOrder(o.id)} disabled={processing === o.id}
+                          className="inline-flex items-center gap-2 border border-steel px-5 py-2.5 font-heading uppercase text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors rounded-[6px] disabled:opacity-60">
+                          {processing === o.id ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+                          {processing === o.id ? 'Rejecting…' : 'Reject & Refund'}
                         </button>
                       </div>
                     )}

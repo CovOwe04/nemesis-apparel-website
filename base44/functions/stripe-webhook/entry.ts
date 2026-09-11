@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
+import { createCustomProduct, createMerchizeOrder } from '../../shared/merchize.ts';
 
 const CAD_RATE = 1.36;
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
@@ -164,8 +165,12 @@ export default async function(req) {
       const addrStr = [addrLines, shippingAddress.city, shippingAddress.state, shippingAddress.postalCode, shippingAddress.country]
         .filter(Boolean).join(', ');
 
+      // Store payment + shipping info for later fulfillment / refund
+      const stripePaymentId = typeof session.payment_intent === 'string' ? session.payment_intent : '';
       await base44.asServiceRole.entities.Order.update(orderId, {
         status: 'approved',
+        stripe_payment_id: stripePaymentId,
+        shipping_address_json: JSON.stringify(shippingAddress),
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
       });
 
@@ -212,88 +217,135 @@ export default async function(req) {
         console.error('Receipt email FAILED:', emailErr.message || emailErr);
       }
 
-      // Forward to Merchize for supplier fulfillment
-      try {
-        const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
-        if (jerseyIds.length > 0) {
+      // Check for custom Identity Lab items that need admin approval
+      const customItems = cartItems.filter((i) => i.customName || i.customNumber);
+      const hasCustom = customItems.length > 0;
+
+      const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
+      const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
+      const merchizeKey = secrets.get('MERCHIZE_API_KEY');
+
+      if (hasCustom) {
+        // Create custom Merchize products for Identity Lab items, then route to admin approval
+        try {
           const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
           const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
 
-          const merchizeItems = [];
           for (const item of cartItems) {
-            if (item.isCustomDesign) continue;
+            if (!item.customName && !item.customNumber) continue;
             const jersey = jerseyMap.get(item.jerseyId);
-            if (!jersey?.merchize_product_id) continue;
+            if (!jersey?.merchize_product_id) {
+              console.error(`Skipping custom product for ${item.name}: no base Merchize product`);
+              continue;
+            }
 
-            const variantSkus = jersey.merchize_variants || {};
+            const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
+            const colorHex = colorObj?.hex || '#000000';
             const size = item.shirtSize || 'M';
-            const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
-            if (!merchizeSku) continue;
+            const sizeValue = size.toLowerCase();
 
-            merchizeItems.push({
-              product_id: jersey.merchize_product_id,
-              sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
-              merchize_sku: merchizeSku,
-              quantity: item.quantity,
-              price: item.price,
-              currency: 'USD',
-              image: jersey.front_image || item.front_image || '',
-            });
+            const productImages = [];
+            if (item.rendered_image) productImages.push(item.rendered_image);
+            else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
+            else if (jersey.front_image) productImages.push(jersey.front_image);
+
+            const artworkUrls = {};
+            if (colorObj?.artwork_front) artworkUrls.front = colorObj.artwork_front;
+            if (colorObj?.artwork_back) artworkUrls.back = colorObj.artwork_back;
+            if (colorObj?.artwork_sleeve) artworkUrls.sleeve = colorObj.artwork_sleeve;
+            if (colorObj?.artwork_hood) artworkUrls.hood = colorObj.artwork_hood;
+
+            const titleParts = [jersey.name, item.colorName, item.customName, item.customNumber ? `#${item.customNumber}` : ''].filter(Boolean);
+
+            try {
+              const { productId, variantId, sku } = await createCustomProduct({
+                baseUrl, token: merchizeToken, apiKey: merchizeKey,
+                baseProductId: jersey.merchize_product_id,
+                title: titleParts.join(' - '),
+                description: jersey.description || '',
+                productImages,
+                colorName: item.colorName || 'Default',
+                colorHex,
+                size, sizeValue,
+                price: jersey.price,
+                fallbackSku: jersey.merchize_variants?.[size] || '',
+                artworkUrls,
+              });
+              item.custom_merchize_product_id = productId;
+              item.custom_merchize_variant_id = variantId;
+              item.custom_merchize_sku = sku;
+              console.log(`Custom product created: ${productId} for ${item.customName} #${item.customNumber}`);
+            } catch (err) {
+              console.error(`Failed to create custom product for ${item.name}:`, err.message);
+            }
           }
 
-          if (merchizeItems.length > 0) {
-            const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
-            const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
-            const merchizeKey = secrets.get('MERCHIZE_API_KEY');
+          await base44.asServiceRole.entities.Order.update(orderId, {
+            items_json: JSON.stringify(cartItems),
+            status: 'pending_approval',
+            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for custom items.`,
+          });
+          console.log(`Order ${orderId} set to pending_approval for custom items`);
+        } catch (err) {
+          console.error('Custom product creation error:', err.message);
+        }
+      } else {
+        // No custom items — fulfill directly via Merchize
+        try {
+          const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
+          if (jerseyIds.length > 0) {
+            const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
+            const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
 
-            const merchizeRes = await fetch(`${baseUrl}/order/external/orders/catalog`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${merchizeToken}`,
-                'x-api-key': merchizeKey,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                order_id: orderId,
-                identifier: 'nemesis-apparel.base44.app',
-                shipping_info: {
-                  full_name: customerName,
-                  address_1: shippingAddress.line1 || '',
-                  address_2: shippingAddress.line2 || '',
-                  city: shippingAddress.city || '',
-                  state: shippingAddress.state || '',
-                  postcode: shippingAddress.postalCode || '',
-                  country: shippingAddress.country || 'US',
-                  email: customerEmail,
-                  phone: '',
-                },
-                items: merchizeItems,
-              }),
-            });
+            const merchizeItems = [];
+            for (const item of cartItems) {
+              if (item.isCustomDesign) continue;
+              const jersey = jerseyMap.get(item.jerseyId);
+              if (!jersey?.merchize_product_id) continue;
 
-            const merchizeData = await merchizeRes.json();
-            if (merchizeData.success && merchizeData.data?._id) {
-              await base44.asServiceRole.entities.Order.update(orderId, {
-                merchize_order_id: merchizeData.data._id,
-                status: 'fulfilled',
-                admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
-              });
-              console.log(`Merchize order created: ${merchizeData.data._id}`);
-            } else {
-              console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
-              await base44.asServiceRole.entities.Order.update(orderId, {
-                admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+              const variantSkus = jersey.merchize_variants || {};
+              const size = item.shirtSize || 'M';
+              const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
+              if (!merchizeSku) continue;
+
+              merchizeItems.push({
+                product_id: jersey.merchize_product_id,
+                sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+                merchize_sku: merchizeSku,
+                quantity: item.quantity,
+                price: item.price,
+                currency: 'USD',
+                image: jersey.front_image || item.front_image || '',
               });
             }
-          } else {
-            console.log('No items with Merchize product mapping — skipping fulfillment');
+
+            if (merchizeItems.length > 0) {
+              const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
+                orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
+              });
+              if (merchizeData.success && merchizeData.data?._id) {
+                await base44.asServiceRole.entities.Order.update(orderId, {
+                  merchize_order_id: merchizeData.data._id,
+                  status: 'fulfilled',
+                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+                });
+                console.log(`Merchize order created: ${merchizeData.data._id}`);
+              } else {
+                console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
+                await base44.asServiceRole.entities.Order.update(orderId, {
+                  admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+                });
+              }
+            } else {
+              console.log('No items with Merchize product mapping — skipping fulfillment');
+            }
           }
+        } catch (merchizeErr) {
+          console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
         }
-      } catch (merchizeErr) {
-        console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
       }
 
-      console.log(`Order ${orderId} approved for ${customerEmail}, total $${totalUsd}`);
+      console.log(`Order ${orderId} processed for ${customerEmail}, total $${totalUsd}`);
     }
 
     return Response.json({ received: true });
