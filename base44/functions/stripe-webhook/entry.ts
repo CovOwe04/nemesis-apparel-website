@@ -217,7 +217,7 @@ export default async function(req) {
         console.error('Receipt email FAILED:', emailErr.message || emailErr);
       }
 
-      // Check for custom Identity Lab items that need admin approval
+      // Check for custom Identity Lab items
       const customItems = cartItems.filter((i) => i.customName || i.customNumber);
       const hasCustom = customItems.length > 0;
 
@@ -225,43 +225,87 @@ export default async function(req) {
       const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
       const merchizeKey = secrets.get('MERCHIZE_API_KEY');
 
+      // Fetch jerseys for fulfillment (needed for both custom and standard items)
+      const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
+      const jerseys = jerseyIds.length > 0 ? await base44.asServiceRole.entities.Jersey.list('-created_date', 100) : [];
+      const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
+
+      // Check if a custom item matches a preset combo and return the variant mapping
+      const findPresetMatch = (item, jersey) => {
+        const combos = jersey?.name_number_combos || [];
+        const matchedCombo = combos.find((c) =>
+          (c.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
+          (c.number || '') === (item.customNumber || '')
+        );
+        if (!matchedCombo) return null;
+        const vmis = jersey?.variant_merchize_ids || [];
+        const vmi = vmis.find((v) =>
+          (v.color_name || 'Default') === (item.colorName || 'Default') &&
+          (v.combo_name || '').toUpperCase() === (matchedCombo.name || '').toUpperCase() &&
+          (v.combo_number || '') === (matchedCombo.number || '')
+        );
+        return (vmi && vmi.merchize_product_id) ? vmi : null;
+      };
+
+      // Build a merchize item for a standard (non-custom) cart item
+      const buildStandardItem = (item) => {
+        const jersey = jerseyMap.get(item.jerseyId);
+        if (!jersey?.merchize_product_id) return null;
+        const variantSkus = jersey.merchize_variants || {};
+        const size = item.shirtSize || 'M';
+        const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
+        if (!merchizeSku) return null;
+        return {
+          product_id: jersey.merchize_product_id,
+          sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+          merchize_sku: merchizeSku,
+          quantity: item.quantity,
+          price: item.price,
+          currency: 'USD',
+          image: jersey.front_image || item.front_image || '',
+        };
+      };
+
       if (hasCustom) {
-        // Custom Identity Lab items need admin review before production.
-        // Merchize products are created at approval time (approve-custom-order),
-        // not here — the admin reviews the design first.
-        await base44.asServiceRole.entities.Order.update(orderId, {
-          status: 'pending_approval',
-          admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for custom items.`,
-        });
-        console.log(`Order ${orderId} set to pending_approval for custom items`);
-      } else {
-        // No custom items — fulfill directly via Merchize
-        try {
-          const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
-          if (jerseyIds.length > 0) {
-            const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
-            const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
+        // Determine which custom items match presets vs need new products
+        const presetMatches = [];
+        const needsApproval = [];
+        for (const item of customItems) {
+          const jersey = jerseyMap.get(item.jerseyId);
+          const vmi = jersey ? findPresetMatch(item, jersey) : null;
+          if (vmi) presetMatches.push({ item, vmi });
+          else needsApproval.push(item);
+        }
 
+        if (needsApproval.length > 0) {
+          // Some custom items don't match presets — admin must review and create new products
+          await base44.asServiceRole.entities.Order.update(orderId, {
+            status: 'pending_approval',
+            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for ${needsApproval.length} custom item(s).`,
+          });
+          console.log(`Order ${orderId} set to pending_approval for ${needsApproval.length} non-preset custom items`);
+        } else {
+          // All custom items match presets — fulfill directly using preset variant IDs
+          try {
             const merchizeItems = [];
-            for (const item of cartItems) {
-              if (item.isCustomDesign) continue;
-              const jersey = jerseyMap.get(item.jerseyId);
-              if (!jersey?.merchize_product_id) continue;
-
-              const variantSkus = jersey.merchize_variants || {};
+            for (const { item, vmi } of presetMatches) {
               const size = item.shirtSize || 'M';
-              const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
+              const merchizeSku = vmi.skus?.[size] || vmi.skus?.['M'] || Object.values(vmi.skus || {})[0] || '';
               if (!merchizeSku) continue;
-
               merchizeItems.push({
-                product_id: jersey.merchize_product_id,
-                sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+                product_id: vmi.merchize_product_id,
+                sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
                 merchize_sku: merchizeSku,
                 quantity: item.quantity,
                 price: item.price,
                 currency: 'USD',
-                image: jersey.front_image || item.front_image || '',
+                image: item.rendered_image || item.front_image || '',
               });
+            }
+            for (const item of cartItems) {
+              if (item.customName || item.customNumber || item.isCustomDesign) continue;
+              const mItem = buildStandardItem(item);
+              if (mItem) merchizeItems.push(mItem);
             }
 
             if (merchizeItems.length > 0) {
@@ -272,18 +316,54 @@ export default async function(req) {
                 await base44.asServiceRole.entities.Order.update(orderId, {
                   merchize_order_id: merchizeData.data._id,
                   status: 'fulfilled',
-                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nPreset custom items auto-fulfilled.`,
                 });
-                console.log(`Merchize order created: ${merchizeData.data._id}`);
+                console.log(`Merchize order created (preset): ${merchizeData.data._id}`);
               } else {
                 console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
                 await base44.asServiceRole.entities.Order.update(orderId, {
+                  status: 'pending_approval',
                   admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
                 });
               }
-            } else {
-              console.log('No items with Merchize product mapping — skipping fulfillment');
             }
+          } catch (merchizeErr) {
+            console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
+            await base44.asServiceRole.entities.Order.update(orderId, {
+              status: 'pending_approval',
+              admin_notes: `Stripe: ${session.id}\nMerchize ERROR: ${merchizeErr.message}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+            });
+          }
+        }
+      } else {
+        // No custom items — fulfill directly via Merchize
+        try {
+          const merchizeItems = [];
+          for (const item of cartItems) {
+            if (item.isCustomDesign) continue;
+            const mItem = buildStandardItem(item);
+            if (mItem) merchizeItems.push(mItem);
+          }
+
+          if (merchizeItems.length > 0) {
+            const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
+              orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
+            });
+            if (merchizeData.success && merchizeData.data?._id) {
+              await base44.asServiceRole.entities.Order.update(orderId, {
+                merchize_order_id: merchizeData.data._id,
+                status: 'fulfilled',
+                admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+              });
+              console.log(`Merchize order created: ${merchizeData.data._id}`);
+            } else {
+              console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
+              await base44.asServiceRole.entities.Order.update(orderId, {
+                admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
+              });
+            }
+          } else {
+            console.log('No items with Merchize product mapping — skipping fulfillment');
           }
         } catch (merchizeErr) {
           console.error('Merchize integration error:', merchizeErr.message || merchizeErr);

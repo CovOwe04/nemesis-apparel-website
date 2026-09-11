@@ -135,7 +135,7 @@ export default async function(req) {
     const hstUsd = country === 'CA' ? Math.round(subtotalUsd * 0.13 * 100) / 100 : 0;
     const totalUsd = subtotalUsd + shippingUsd + hstUsd;
     const itemCount = verifiedItems.reduce((s, i) => s + i.quantity, 0);
-    const hasCustom = verifiedItems.some((i) => i.customName || i.isCustomDesign);
+    const hasCustom = verifiedItems.some((i) => i.customName || i.customNumber);
 
     const addrLines = [shippingAddress?.line1, shippingAddress?.line2].filter(Boolean).join(', ');
     const addrStr = [addrLines, shippingAddress?.city, shippingAddress?.state, shippingAddress?.postalCode, shippingAddress?.country]

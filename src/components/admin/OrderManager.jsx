@@ -19,8 +19,9 @@ export default function OrderManager() {
 
   const loadOrders = () => {
     setLoading(true);
-    base44.entities.Order.list('-created_date', 100)
-      .then((d) => setOrders((d || []).filter((o) => o.has_custom_names)))
+    const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+    base44.functions.invoke('get-admin-orders', { passcode })
+      .then((res) => setOrders((res.data?.orders || []).filter((o) => o.has_custom_names)))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   };

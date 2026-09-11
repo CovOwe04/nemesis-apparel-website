@@ -11,6 +11,7 @@ export function useAdminAuth() {
       const res = await base44.functions.invoke('verify-admin-passcode', { passcode: code });
       if (res.data?.valid) {
         sessionStorage.setItem(AUTH_KEY, '1');
+        sessionStorage.setItem('nemesis-admin-passcode', code);
         setAuthed(true);
         return true;
       }
@@ -21,6 +22,7 @@ export function useAdminAuth() {
   };
   const logout = () => {
     sessionStorage.removeItem(AUTH_KEY);
+    sessionStorage.removeItem('nemesis-admin-passcode');
     setAuthed(false);
   };
   return { authed, login, logout };
