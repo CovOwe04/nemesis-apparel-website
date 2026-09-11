@@ -60,7 +60,7 @@ export default function StaticNameOverlay({
   const [imgAspect, setImgAspect] = useState(1);
   useEffect(() => {
     if (!image) return;
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => setImgAspect(img.naturalWidth / img.naturalHeight || 1);
     img.onerror = () => setImgAspect(1);
     img.src = image;
