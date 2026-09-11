@@ -27,8 +27,7 @@ const DEFAULT_VERT_OFFSET = -5;
 function buildPath(cx, y, archPct, flagPct) {
   const archHeight = 40 * archPct;
   const flagHeight = 30 * flagPct;
-  const halfW = 75;
-  return `M ${cx - halfW} ${y - flagHeight} Q ${cx} ${y - archHeight} ${cx + halfW} ${y + flagHeight}`;
+  return `M 0 ${y - flagHeight} Q ${cx} ${y - archHeight} ${2 * cx} ${y + flagHeight}`;
 }
 
 export default function ArtworkNameOverlay({
@@ -128,7 +127,7 @@ export default function ArtworkNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${nameHorizPos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${((cx - 75) + 1.5 * nameHorizPos) / (2 * cx) * 100}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
@@ -145,7 +144,7 @@ export default function ArtworkNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness : 0}
                 paintOrder="stroke fill"
               >
-                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${numHorizPos}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${((cx - 75) + 1.5 * numHorizPos) / (2 * cx) * 100}%`} textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>

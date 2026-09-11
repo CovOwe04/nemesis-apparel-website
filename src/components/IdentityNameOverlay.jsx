@@ -25,7 +25,7 @@ const DEFAULT_NUMBER_STYLE = {
 function buildPath(y, archPct, flagPct) {
   const archHeight = 40 * archPct;
   const flagHeight = 30 * flagPct;
-  return `M 75 ${y - flagHeight} Q 150 ${y - archHeight} 225 ${y + flagHeight}`;
+  return `M 0 ${y - flagHeight} Q 150 ${y - archHeight} 300 ${y + flagHeight}`;
 }
 
 export default function IdentityNameOverlay({
@@ -119,7 +119,7 @@ export default function IdentityNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${25 + ns.horiz_pos / 2}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
@@ -136,7 +136,7 @@ export default function IdentityNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness : 0}
                 paintOrder="stroke fill"
                 >
-                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${25 + nus.horiz_pos / 2}%`} textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>
