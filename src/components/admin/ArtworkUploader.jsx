@@ -68,9 +68,7 @@ export default function ArtworkUploader({ artwork, onChange, compact = false, je
   };
 
   const handleRemove = (key) => {
-    const updatedArtwork = { ...artwork, [key]: '' };
-    onChange(updatedArtwork);
-    syncToMerchize(updatedArtwork);
+    onChange({ ...artwork, [key]: '' });
   };
 
   return (
