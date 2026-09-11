@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useId, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 
 const DEFAULT_NAME_STYLE = {
@@ -9,6 +9,18 @@ const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
   arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
 };
+
+// Static display uses a square (1:1) container, so the SVG viewBox is 400x400.
+// IdentityNameOverlay uses 300x400; we scale font/stroke by 4/3 to match visually.
+const FONT_SCALE = 4 / 3;
+
+function buildPath(y, archPct, flagPct) {
+  const archOffset = 22 * archPct;
+  const flagLeft = -14 * flagPct;
+  const flagMid = 6 * flagPct;
+  const flagRight = 20 * flagPct;
+  return `M 100 ${y + flagLeft} Q 200 ${y - archOffset + flagMid} 300 ${y + 18 + flagRight}`;
+}
 
 export default function StaticNameOverlay({
   image,
@@ -24,6 +36,7 @@ export default function StaticNameOverlay({
   className = '',
   plainImage = false,
 }) {
+  const uid = useId().replace(/:/g, '');
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
 
@@ -40,64 +53,91 @@ export default function StaticNameOverlay({
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
   const displayName = (customName || '').toUpperCase() || (showNamePlaceholder ? 'YOUR NAME' : '');
   const displayNumber = customNumber || (showNumberPlaceholder ? '00' : '');
+  const ls = letterSpacing ? letterSpacing / 10 : 0;
 
-  // Map admin SVG coordinates to percentages (WYSIWYG with admin preview)
-  // Name: baselineY = 112.5 + (vert_pos - 50) in 400h → posY = (62.5 + vert_pos) / 4
-  // Number: baselineY = 250 + (vert_pos - 50) * 2 in 400h → posY = (150 + 2*vert_pos) / 4
-  // X: 75 + (horiz_pos/100)*150 in 300w → posX = 25 + horiz_pos / 2
-  const namePosX = 25 + ns.horiz_pos / 2;
-  const namePosY = (62.5 + ns.vert_pos) / 4;
-  const numPosX = 25 + nus.horiz_pos / 2;
-  const numPosY = (150 + 2 * nus.vert_pos) / 4;
+  // Same Y formulas as IdentityNameOverlay (both use 400h)
+  const nameArchPct = ns.arch / 100;
+  const nameFlagPct = ns.flag / 100;
+  const nameBaselineY = 112.5 + (ns.vert_pos - 50);
+  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} 200 ${nameBaselineY})` : undefined;
 
-  // Font size: SVG units to cqw (300w viewBox → 1 cqw = 3 SVG units)
-  const nameLen = displayName.length;
-  const nameBaseCqw = ns.font_size / 3;
-  const nameFontSizeCqw = nameLen > 10 ? Math.max(2, nameBaseCqw - (nameLen - 10) * 0.08) : nameBaseCqw;
-  const numFontSizeCqw = nus.font_size / 3;
+  const numArchPct = nus.arch / 100;
+  const numFlagPct = nus.flag / 100;
+  const numBaselineY = 250 + (nus.vert_pos - 50) * 2;
+  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} 200 ${numBaselineY})` : undefined;
 
-  const ls = letterSpacing ? letterSpacing / 1000 : 0;
+  // Text wrapping for long names (path width is 200 in 400w viewBox)
+  const ARC_WIDTH = 200;
+  const charFactor = 0.7;
+  const scaledNameSize = ns.font_size * FONT_SCALE;
+  const words = displayName.split(' ').filter(Boolean);
+  const longestWord = Math.max(...words.map((w) => w.length), 1);
+  const fitForLongest = (ARC_WIDTH - Math.max(0, longestWord - 1) * ls) / (longestWord * charFactor);
+  const actualNameFontSize = Math.min(scaledNameSize, fitForLongest);
+  const lineHeight = actualNameFontSize * 1.15;
+  const textWidth = (t) => t.length * actualNameFontSize * charFactor + Math.max(0, t.length - 1) * ls;
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const trial = cur ? `${cur} ${w}` : w;
+    if (textWidth(trial) <= ARC_WIDTH) cur = trial;
+    else { if (cur) lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
 
-  const makeShadow = (s) => s.outline
-    ? `0.12em 0.12em 0 ${s.outline_color}, -0.06em -0.06em 0 ${s.outline_color}, 0.06em -0.06em 0 ${s.outline_color}, -0.06em 0.06em 0 ${s.outline_color}`
-    : 'none';
+  const numLines = Math.max(lines.length, 1);
+  const startBase = nameBaselineY - ((numLines - 1) / 2) * lineHeight;
 
   return (
-    <div className={`relative overflow-hidden bg-black ${className}`} style={{ containerType: 'inline-size' }}>
+    <div className={`relative overflow-hidden bg-black ${className}`}>
       {plainImage ? (
         <img src={image} alt="jersey" crossOrigin="anonymous" className="w-full h-full object-contain" />
       ) : (
         <Image src={image} alt="jersey" fittingType="fit" className="w-full h-full" />
       )}
-      {displayName && (
-        <div className="absolute pointer-events-none" style={{ left: `${namePosX}%`, top: `${namePosY}%`, transform: 'translate(-50%, -50%)' }}>
-          <span style={{
-            fontFamily: fontFam,
-            fontSize: `${nameFontSizeCqw}cqw`,
-            lineHeight: 1.1,
-            color: ns.color,
-            textShadow: makeShadow(ns),
-            letterSpacing: `${ls}em`,
-            whiteSpace: 'nowrap',
-            textTransform: 'uppercase',
-          }}>
-            {displayName}
-          </span>
-        </div>
-      )}
-      {displayNumber && (
-        <div className="absolute pointer-events-none" style={{ left: `${numPosX}%`, top: `${numPosY}%`, transform: 'translate(-50%, -50%)' }}>
-          <span style={{
-            fontFamily: fontFam,
-            fontSize: `${numFontSizeCqw}cqw`,
-            lineHeight: 1.1,
-            color: nus.color,
-            textShadow: makeShadow(nus),
-            whiteSpace: 'nowrap',
-          }}>
-            {displayNumber}
-          </span>
-        </div>
+      {(displayName || displayNumber) && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
+          {displayName && (
+            <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
+              {lines.map((line, i) => (
+                <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
+              ))}
+              <text
+                fontFamily={fontFam}
+                fontSize={actualNameFontSize}
+                fill={ns.color}
+                stroke={ns.outline ? ns.outline_color : 'none'}
+                strokeWidth={ns.outline ? ns.outline_thickness * FONT_SCALE : 0}
+                paintOrder="stroke fill"
+                letterSpacing={ls}
+                style={{ textTransform: 'uppercase' }}
+              >
+                {lines.map((line, i) => (
+                  <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
+                    {line}
+                  </textPath>
+                ))}
+              </text>
+            </g>
+          )}
+          {displayNumber && (
+            <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
+              <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
+              <text
+                fontFamily={fontFam}
+                fontSize={nus.font_size * FONT_SCALE}
+                fill={nus.color}
+                stroke={nus.outline ? nus.outline_color : 'none'}
+                strokeWidth={nus.outline ? nus.outline_thickness * FONT_SCALE : 0}
+                paintOrder="stroke fill"
+              >
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
+                  {displayNumber}
+                </textPath>
+              </text>
+            </g>
+          )}
+        </svg>
       )}
     </div>
   );
