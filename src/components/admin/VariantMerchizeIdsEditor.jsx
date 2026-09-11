@@ -321,6 +321,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             customFontUrl={customFontUrl}
             customFontName={customFontName}
             staticDisplay={currentRender.staticDisplay}
+            isArtwork={currentRender.isArtwork}
+            aspectRatio={currentRender.renderWidth && currentRender.renderHeight ? currentRender.renderWidth / currentRender.renderHeight : 1}
             enableName={enableName}
             enableNumber={enableNumber}
           />

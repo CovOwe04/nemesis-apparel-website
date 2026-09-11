@@ -1,8 +1,11 @@
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
+import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 
 // Renders a single color + name/number combo with the jersey overlay.
 // Uses plain <img> (plainImage prop) for reliable html2canvas capture.
+// When isArtwork is true, uses ArtworkNameOverlay which applies positioning
+// offsets so the designer values land correctly on the print-ready artwork.
 export default function ComboImageRenderer({
   imageUrl,
   customName,
@@ -12,9 +15,28 @@ export default function ComboImageRenderer({
   customFontUrl,
   customFontName,
   staticDisplay,
+  isArtwork = false,
+  aspectRatio = 1,
   enableName = true,
   enableNumber = true,
 }) {
+  if (isArtwork) {
+    return (
+      <ArtworkNameOverlay
+        artworkUrl={imageUrl}
+        customName={customName}
+        customNumber={customNumber}
+        nameStyle={nameStyle}
+        numberStyle={numberStyle}
+        customFontUrl={customFontUrl}
+        customFontName={customFontName}
+        aspectRatio={aspectRatio}
+        enableName={enableName}
+        enableNumber={enableNumber}
+      />
+    );
+  }
+
   if (staticDisplay) {
     return (
       <StaticNameOverlay
