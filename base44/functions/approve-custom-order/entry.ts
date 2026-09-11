@@ -16,7 +16,7 @@ export default async function (req) {
     }
 
     const body = await req.json();
-    const { orderId, compositedArtwork } = body;
+    const { orderId, compositedArtwork, compositedDisplay } = body;
     if (!orderId) {
       return Response.json({ error: 'orderId required' });
     }
@@ -60,14 +60,16 @@ export default async function (req) {
       const size = item.shirtSize || 'M';
       const sizeValue = size.toLowerCase();
 
-      const productImages = [];
-      if (item.rendered_image) productImages.push(item.rendered_image);
-      else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
-      else if (jersey.front_image) productImages.push(jersey.front_image);
-
       // Use composited artwork (with name/number) for front, base artwork for other pieces
       const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
       const compositedFront = compositedArtwork?.[artworkKey];
+      const freshDisplay = compositedDisplay?.[artworkKey];
+
+      const productImages = [];
+      if (freshDisplay) productImages.push(freshDisplay);
+      else if (item.rendered_image) productImages.push(item.rendered_image);
+      else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
+      else if (jersey.front_image) productImages.push(jersey.front_image);
 
       const artworkUrls = {};
       if (compositedFront) artworkUrls.front = compositedFront;
@@ -95,6 +97,7 @@ export default async function (req) {
         item.custom_merchize_product_id = productId;
         item.custom_merchize_variant_id = variantId;
         item.custom_merchize_sku = sku;
+        if (freshDisplay) item.fresh_display_image = freshDisplay;
         console.log(`Custom product created: ${productId} for ${item.customName} #${item.customNumber}`);
       } catch (err) {
         console.error(`Failed to create custom product for ${item.name}:`, err.message);
@@ -120,7 +123,7 @@ export default async function (req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: item.rendered_image || item.front_image || '',
+          image: item.fresh_display_image || item.rendered_image || item.front_image || '',
         });
       } else {
         // Standard product

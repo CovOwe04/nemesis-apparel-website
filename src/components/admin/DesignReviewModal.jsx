@@ -34,68 +34,106 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
     setProgress('Rendering artwork…');
 
     try {
-      // Render composited artwork (name/number on front artwork) for each custom item
+      // Render composited display images AND artwork for each custom item,
+      // matching the "Generate in Merchize" button's rendering exactly so the
+      // custom Merchize product gets the same 3D preview + print file.
       const compositedArtwork = {};
+      const compositedDisplay = {};
+      const fontFam = (jersey) => jersey.custom_font_name
+        ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
+        : "'Archivo Black', sans-serif";
+
       for (let i = 0; i < customItems.length; i++) {
         const item = customItems[i];
         const jersey = jerseys[item.jerseyId];
         if (!jersey) continue;
         const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
+        const images = colorObj?.images || [];
+        const isStatic = images.length <= 1;
+        const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
+        const fam = fontFam(jersey);
+
+        // 1. Render 3D display image (same params as Generate in Merchize)
+        if (images.length > 0) {
+          setProgress(`Rendering display ${i + 1}/${customItems.length}…`);
+          const displayUrl = isStatic ? images[0].url : images[images.length - 1].url;
+          const dispW = isStatic ? 1200 : 900;
+          const dispH = isStatic ? 1200 : 1200;
+          try {
+            const dispBlob = await renderOverlayToBlob({
+              imageUrl: displayUrl,
+              imageFit: 'cover',
+              customName: item.customName,
+              customNumber: item.customNumber,
+              nameStyle: jersey.name_style,
+              numberStyle: jersey.number_style,
+              fontFam: fam,
+              customFontUrl: jersey.custom_font_url,
+              customFontName: jersey.custom_font_name,
+              enableName: jersey.enable_name,
+              enableNumber: jersey.enable_number,
+              staticDisplay: isStatic,
+              isArtwork: false,
+              renderW: dispW,
+              renderH: dispH,
+            });
+            if (dispBlob) {
+              const file = new File([dispBlob], `display-${key}.png`, { type: 'image/png' });
+              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              compositedDisplay[key] = file_url;
+            }
+          } catch (err) {
+            console.error('Display render failed:', err);
+          }
+        }
+
+        // 2. Render artwork (print file) — same params as Generate in Merchize
         const artworkFront = colorObj?.artwork_front;
-        if (!artworkFront) continue;
+        if (artworkFront) {
+          setProgress(`Rendering artwork ${i + 1}/${customItems.length}…`);
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = artworkFront;
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 5000);
+          });
+          const naturalW = img.naturalWidth || 1200;
+          const naturalH = img.naturalHeight || 1200;
+          const maxDim = 1200;
+          const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
+          const renderW = Math.round(naturalW * sz);
+          const renderH = Math.round(naturalH * sz);
 
-        setProgress(`Rendering artwork ${i + 1}/${customItems.length}…`);
-
-        // Load artwork to get natural dimensions
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = artworkFront;
-        await new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-          setTimeout(resolve, 5000);
-        });
-        const naturalW = img.naturalWidth || 1200;
-        const naturalH = img.naturalHeight || 1200;
-        const maxDim = 1200;
-        const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
-        const renderW = Math.round(naturalW * sz);
-        const renderH = Math.round(naturalH * sz);
-
-        const isStatic = (colorObj?.images?.length || 0) <= 1;
-        const fontFam = jersey.custom_font_name
-          ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
-          : "'Archivo Black', sans-serif";
-
-        const blob = await renderOverlayToBlob({
-          imageUrl: artworkFront,
-          imageFit: 'contain',
-          customName: item.customName,
-          customNumber: item.customNumber,
-          nameStyle: jersey.name_style,
-          numberStyle: jersey.number_style,
-          fontFam,
-          customFontUrl: jersey.custom_font_url,
-          customFontName: jersey.custom_font_name,
-          enableName: jersey.enable_name,
-          enableNumber: jersey.enable_number,
-          staticDisplay: isStatic,
-          isArtwork: true,
-          artworkPosition: jersey.artwork_position,
-          aspectRatio: naturalW / naturalH,
-          renderW,
-          renderH,
-        });
-
-        if (blob) {
-          const file = new File(
-            [blob],
-            `artwork-${item.colorName || 'Default'}-${item.customName || ''}-${item.customNumber || ''}.png`,
-            { type: 'image/png' }
-          );
-          const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-          const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
-          compositedArtwork[key] = file_url;
+          try {
+            const blob = await renderOverlayToBlob({
+              imageUrl: artworkFront,
+              imageFit: 'contain',
+              customName: item.customName,
+              customNumber: item.customNumber,
+              nameStyle: jersey.name_style,
+              numberStyle: jersey.number_style,
+              fontFam: fam,
+              customFontUrl: jersey.custom_font_url,
+              customFontName: jersey.custom_font_name,
+              enableName: jersey.enable_name,
+              enableNumber: jersey.enable_number,
+              staticDisplay: isStatic,
+              isArtwork: true,
+              artworkPosition: jersey.artwork_position,
+              aspectRatio: naturalW / naturalH,
+              renderW,
+              renderH,
+            });
+            if (blob) {
+              const file = new File([blob], `artwork-${key}.png`, { type: 'image/png' });
+              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              compositedArtwork[key] = file_url;
+            }
+          } catch (err) {
+            console.error('Artwork render failed:', err);
+          }
         }
       }
 
@@ -103,6 +141,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
       const res = await base44.functions.invoke('approve-custom-order', {
         orderId: order.id,
         compositedArtwork,
+        compositedDisplay,
       });
       if (res.data?.error) {
         setError(res.data.error);
