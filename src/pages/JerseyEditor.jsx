@@ -130,6 +130,7 @@ export default function JerseyEditor() {
   }, [form.enable_name, form.enable_number, designerTab]);
 
   const hasImages = form.colors.some((c) => c.images && c.images.length > 0);
+  const staticDisplay = (form.colors.find((c) => c.images?.length > 0)?.images?.length || 0) <= 1;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -322,6 +323,7 @@ export default function JerseyEditor() {
                     artworkPosition={form.artwork_position}
                     onChange={(pos) => setField('artwork_position', pos)}
                     jerseyId={jerseyId}
+                    staticDisplay={staticDisplay}
                   />
                 </div>
               ) : (
@@ -335,7 +337,7 @@ export default function JerseyEditor() {
                   customFontName={form.custom_font_name}
                   enableName={form.enable_name}
                   enableNumber={form.enable_number}
-                  staticDisplay={(form.colors.find((c) => c.images?.length > 0)?.images?.length || 0) <= 1} />
+                  staticDisplay={staticDisplay} />
                 
                 </div>
                 <div className="p-4 space-y-2">

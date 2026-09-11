@@ -164,11 +164,12 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const renderH = Math.round(naturalH * sz);
 
         // Trigger render with artwork image
+        const isStaticArtwork = (colorObj?.images?.length || 0) <= 1;
         setCurrentRender({
           imageUrl: artworkFront,
           customName: v.combo_name,
           customNumber: v.combo_number,
-          staticDisplay: false,
+          staticDisplay: isStaticArtwork,
           isArtwork: true,
           renderWidth: renderW,
           renderHeight: renderH,

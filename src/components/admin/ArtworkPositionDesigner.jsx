@@ -25,6 +25,7 @@ export default function ArtworkPositionDesigner({
   artworkPosition,
   onChange,
   jerseyId,
+  staticDisplay = false,
 }) {
   const availablePieces = PIECES.filter((p) => colors.some((c) => c[p.key]));
   const [selectedPiece, setSelectedPiece] = useState(availablePieces[0]?.key || 'artwork_front');
@@ -157,6 +158,7 @@ export default function ArtworkPositionDesigner({
               enableNumber={enableNumber}
               horizOffset={horizOffset}
               vertOffset={vertOffset}
+              staticDisplay={staticDisplay}
             />
           </div>
         ) : (
@@ -218,6 +220,7 @@ export default function ArtworkPositionDesigner({
             enableNumber={enableNumber}
             horizOffset={horizOffset}
             vertOffset={vertOffset}
+            staticDisplay={staticDisplay}
           />
         </div>
       )}
