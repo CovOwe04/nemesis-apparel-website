@@ -26,7 +26,7 @@ export default async function(req) {
     }
 
     const body = await req.json();
-    const { jerseyId, variants, merchize_product_id, merchize_variants, colorArtwork, renderedImages } = body;
+    const { jerseyId, variants, merchize_product_id, merchize_variants, colorArtwork, renderedImages, renderedArtwork } = body;
 
     if (!jerseyId || !variants || !Array.isArray(variants) || variants.length === 0) {
       return Response.json({ error: 'jerseyId and variants array required' });
@@ -55,7 +55,10 @@ export default async function(req) {
 
       const colorObj = (jersey.colors || []).find((c) => c.name === color_name);
       const colorHex = colorObj?.hex || '#000000';
-      const artworkUrls = (colorArtwork && colorArtwork[color_name]) || {};
+      const renderArtworkKey = `${color_name}|${combo_name}|${combo_number}`;
+      const compositedBack = renderedArtwork?.[renderArtworkKey];
+      const artworkUrls = { ...((colorArtwork && colorArtwork[color_name]) || {}) };
+      if (compositedBack) artworkUrls.back = compositedBack;
 
       const productImages = [];
       const renderKey = `${color_name}|${combo_name}|${combo_number}`;

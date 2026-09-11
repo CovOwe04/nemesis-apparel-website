@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
+import { compositeArtworkWithName } from '@/lib/artworkCompositor';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -137,9 +138,37 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         }
       }
       setCurrentRender(null);
+
+      // Step 1b: Composite name/number onto artwork (print-ready back piece)
+      const renderedArtwork = {};
+      for (let i = 0; i < needsRender.length; i++) {
+        const v = needsRender[i];
+        setRenderProgress(`Compositing artwork ${i + 1}/${needsRender.length}…`);
+        const colorObj = (colors || []).find((c) => c.name === v.color_name);
+        const artworkBack = colorObj?.artwork_back || '';
+        if (!artworkBack) continue;
+        try {
+          const blob = await compositeArtworkWithName(artworkBack, {
+            name: v.combo_name,
+            number: v.combo_number,
+            nameStyle,
+            numberStyle,
+            customFontUrl,
+            customFontName,
+          });
+          if (blob) {
+            const file = new File([blob], `artwork-back-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
+            renderedArtwork[key] = file_url;
+          }
+        } catch (err) {
+          console.error('Artwork compositing failed:', err);
+        }
+      }
       setRenderProgress('');
 
-      // Step 2: Call create-merchize-products with rendered images
+      // Step 2: Call create-merchize-products with rendered images and artwork
       const res = await base44.functions.invoke('create-merchize-products', {
         jerseyId,
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
@@ -147,6 +176,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         merchize_variants: merchizeVariants,
         colorArtwork,
         renderedImages,
+        renderedArtwork,
       });
       if (res.data?.error) {
         setError(res.data.error);
