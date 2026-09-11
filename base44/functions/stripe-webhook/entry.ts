@@ -230,6 +230,12 @@ export default async function(req) {
             const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
             if (!merchizeSku) continue;
 
+            // Use per-color artwork for design_front/design_back (actual print files, not mockups)
+            const colorName = item.colorName || '';
+            const colorObj = (jersey.colors || []).find((c) => c.name === colorName);
+            const designFront = colorObj?.artwork_front || jersey.artwork_front || jersey.front_image || '';
+            const designBack = colorObj?.artwork_back || jersey.artwork_back || jersey.back_image || '';
+
             merchizeItems.push({
               product_id: jersey.merchize_product_id,
               sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
@@ -238,8 +244,8 @@ export default async function(req) {
               price: item.price,
               currency: 'USD',
               image: jersey.front_image || item.front_image || '',
-              design_front: jersey.front_image || '',
-              design_back: jersey.back_image || item.back_image || '',
+              design_front: designFront,
+              design_back: designBack,
             });
           }
 

@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Zap } from 'lucide-react';
+import { Loader2, Zap, AlertTriangle } from 'lucide-react';
+
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+
+function sortSizes(entries) {
+  return [...entries].sort(([a], [b]) => {
+    const ai = SIZE_ORDER.indexOf(a);
+    const bi = SIZE_ORDER.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+}
 
 function generateVariants(colors, combos) {
   const variants = [];
@@ -26,6 +36,7 @@ function generateVariants(colors, combos) {
 export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const allVariants = generateVariants(colors, combos);
 
@@ -60,6 +71,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
   };
 
   const generate = async () => {
+    setShowConfirm(false);
     if (!jerseyId) {
       setError('Save the jersey first, then generate.');
       return;
@@ -113,7 +125,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         <div className="mono-label text-fog/50">PER-VARIANT MERCHIZE IDs ({allVariants.length})</div>
         <button
           type="button"
-          onClick={generate}
+          onClick={() => setShowConfirm(true)}
           disabled={generating}
           className="inline-flex items-center gap-1.5 bg-kinetic px-3 py-1.5 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60"
         >
@@ -149,7 +161,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                   <div>
                     <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {Object.entries(vmi.skus).map(([size, sku]) => (
+                      {sortSizes(Object.entries(vmi.skus)).map(([size, sku]) => (
                         <div key={size}>
                           <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
                           <input
@@ -166,6 +178,37 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
               </div>
             );
           })}
+        </div>
+      )}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-void/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={20} className="text-kinetic shrink-0 mt-0.5" />
+              <div>
+                <p className="font-heading text-fog text-sm uppercase mb-2">Clear old products?</p>
+                <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
+                  Before generating new products, make sure you've deleted any old or unused products in Merchize that are no longer needed. This prevents duplicate or orphaned products.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={generate}
+                className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px]"
+              >
+                <Zap size={12} /> Continue & Generate
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

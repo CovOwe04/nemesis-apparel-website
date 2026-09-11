@@ -39,6 +39,7 @@ export default async function(req) {
 
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
+    const apiKey = secrets.get('MERCHIZE_API_KEY');
 
     const baseProductId = merchize_product_id || jersey.merchize_product_id || '';
     const fallbackSkus = merchize_variants || jersey.merchize_variants || {};
@@ -179,6 +180,20 @@ export default async function(req) {
               if (!artworkUploaded) {
                 console.error(`Artwork upload returned non-success for ${productId}:`, artworkData.message);
               }
+            }
+            // Also try POST with artwork URLs directly on the product
+            try {
+              const artworkBody = {};
+              for (const [piece, url] of artworkEntries) {
+                artworkBody[piece] = url;
+              }
+              await fetch(`${baseUrl}/product/products/${productId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artwork: artworkBody }),
+              });
+            } catch (err) {
+              console.error(`Failed to set artwork via POST for ${productId}:`, err.message);
             }
           } catch (err) {
             console.error(`Failed to upload artwork for product ${productId}:`, err.message);

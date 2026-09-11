@@ -134,6 +134,7 @@ export default function IdentityLab() {
       price: jersey.price,
       front_image: selectedImage,
       back_image: selectedImage,
+      colorName: currentColor?.name || '',
       static_display: jersey.static_display,
       customName: canCustomizeName && nameOn ? name.toUpperCase() : '',
       customNumber: canCustomizeNumber && numberOn ? number : '',
