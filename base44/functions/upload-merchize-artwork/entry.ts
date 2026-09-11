@@ -15,7 +15,7 @@ export default async function(req) {
     }
 
     const body = await req.json();
-    const { jerseyId, color_name, artwork } = body;
+    const { jerseyId, color_name, artwork, combo_name, combo_number } = body;
 
     if (!jerseyId || !color_name) {
       return Response.json({ error: 'jerseyId and color_name required' });
@@ -26,9 +26,14 @@ export default async function(req) {
       return Response.json({ error: 'Jersey not found' });
     }
 
-    const variantEntries = (jersey.variant_merchize_ids || []).filter(
-      (v) => v.color_name === color_name && v.merchize_product_id
-    );
+    // When combo_name/combo_number are provided, target the specific variant's product.
+    // When omitted (raw artwork upload), upload to all products for that color.
+    const variantEntries = (jersey.variant_merchize_ids || []).filter((v) => {
+      if (v.color_name !== color_name || !v.merchize_product_id) return false;
+      if (combo_name !== undefined && v.combo_name !== combo_name) return false;
+      if (combo_number !== undefined && v.combo_number !== combo_number) return false;
+      return true;
+    });
 
     if (variantEntries.length === 0) {
       return Response.json({ error: 'No Merchize products found for this color. Generate products first.' });

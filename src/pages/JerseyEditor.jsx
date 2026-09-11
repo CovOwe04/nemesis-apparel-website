@@ -314,6 +314,7 @@ export default function JerseyEditor() {
                 <div className="p-4">
                   <ArtworkPositionDesigner
                     colors={form.colors}
+                    combos={form.name_number_combos}
                     nameStyle={form.name_style}
                     numberStyle={form.number_style}
                     customFontUrl={form.custom_font_url}

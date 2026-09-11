@@ -16,6 +16,7 @@ const PREVIEW_NUMBER = '00';
 
 export default function ArtworkPositionDesigner({
   colors,
+  combos = [],
   nameStyle,
   numberStyle,
   customFontUrl,
@@ -62,10 +63,24 @@ export default function ArtworkPositionDesigner({
       const pieceKey = selectedPiece.replace('artwork_', '');
       const colorsWithArtwork = colors.filter((c) => c[selectedPiece]);
 
-      for (let i = 0; i < colorsWithArtwork.length; i++) {
-        const color = colorsWithArtwork[i];
+      // Build render targets: one per color+combo (or just color if no combos)
+      const renderTargets = [];
+      for (const color of colorsWithArtwork) {
+        const validCombos = (combos || []).filter((c) => c.name || c.number);
+        if (validCombos.length > 0) {
+          for (const combo of validCombos) {
+            renderTargets.push({ color, comboName: combo.name || '', comboNumber: combo.number || '' });
+          }
+        } else {
+          renderTargets.push({ color, comboName: '', comboNumber: '' });
+        }
+      }
+
+      for (let i = 0; i < renderTargets.length; i++) {
+        const { color, comboName, comboNumber } = renderTargets[i];
         const url = color[selectedPiece];
-        setUploadStatus(`Rendering ${color.name || 'Default'} (${i + 1}/${colorsWithArtwork.length})…`);
+        const label = [color.name || 'Default', comboName, comboNumber].filter(Boolean).join(' · ');
+        setUploadStatus(`Rendering ${label} (${i + 1}/${renderTargets.length})…`);
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -82,7 +97,9 @@ export default function ArtworkPositionDesigner({
         const renderW = Math.round(naturalW * sz);
         const renderH = Math.round(naturalH * sz);
 
-        setCurrentRender({ url, renderW, renderH, aspectRatio: naturalW / naturalH });
+        const renderName = comboName || PREVIEW_NAME;
+        const renderNumber = comboNumber || PREVIEW_NUMBER;
+        setCurrentRender({ url, renderW, renderH, aspectRatio: naturalW / naturalH, customName: renderName, customNumber: renderNumber });
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -96,7 +113,7 @@ export default function ArtworkPositionDesigner({
             });
             const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
             if (blob) {
-              const file = new File([blob], `artwork-${pieceKey}-${color.name || 'default'}.png`, { type: 'image/png' });
+              const file = new File([blob], `artwork-${pieceKey}-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
               const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
               renderedUrl = file_url;
             }
@@ -106,14 +123,16 @@ export default function ArtworkPositionDesigner({
         }
 
         if (renderedUrl) {
-          setUploadStatus(`Uploading ${color.name || 'Default'} to Merchize…`);
+          setUploadStatus(`Uploading ${label} to Merchize…`);
           const res = await base44.functions.invoke('upload-merchize-artwork', {
             jerseyId,
             color_name: color.name || 'Default',
+            combo_name: comboName,
+            combo_number: comboNumber,
             artwork: { [pieceKey]: renderedUrl },
           });
           if (res.data?.error) {
-            setUploadError(`${color.name}: ${res.data.error}`);
+            setUploadError(`${label}: ${res.data.error}`);
           }
         }
       }
@@ -209,8 +228,8 @@ export default function ArtworkPositionDesigner({
         }}>
           <ArtworkNameOverlay
             artworkUrl={currentRender.url}
-            customName={enableName ? PREVIEW_NAME : ''}
-            customNumber={enableNumber ? PREVIEW_NUMBER : ''}
+            customName={enableName ? (currentRender.customName || PREVIEW_NAME) : ''}
+            customNumber={enableNumber ? (currentRender.customNumber || PREVIEW_NUMBER) : ''}
             nameStyle={nameStyle}
             numberStyle={numberStyle}
             customFontUrl={customFontUrl}
