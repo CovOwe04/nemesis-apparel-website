@@ -88,6 +88,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       if (firstSuccess && onPrimaryGenerated) {
         onPrimaryGenerated({
           merchize_product_id: firstSuccess.merchize_product_id,
+          merchize_product_title: firstSuccess.title || '',
           merchize_variants: firstSuccess.skus || {},
         });
       }

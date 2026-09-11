@@ -31,7 +31,7 @@ const EMPTY_FORM = {
   static_display: false,
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
-  merchize_product_id: '', merchize_variants: {}, variant_merchize_ids: [],
+  merchize_product_id: '', merchize_product_title: '', merchize_variants: {}, variant_merchize_ids: [],
   artwork_front: '', artwork_back: '', artwork_sleeve: '', artwork_hood: ''
 };
 
@@ -373,8 +373,15 @@ export default function JerseyEditor() {
             <div>
               <label className={labelCls}>MERCHIZE PRODUCT ID</label>
               <div className="flex gap-2">
-                <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
-                placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
+                {form.merchize_product_title ? (
+                  <div className="flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 min-w-0">
+                    <div className="text-sm font-medium truncate">{form.merchize_product_title}</div>
+                    <div className="mono-label text-black/40 text-[0.6rem] truncate">{form.merchize_product_id}</div>
+                  </div>
+                ) : (
+                  <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
+                  placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
+                )}
                 <button type="button" onClick={() => setShowMerchizePicker(true)}
                 className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
                   Browse
@@ -411,8 +418,9 @@ export default function JerseyEditor() {
                 };
                 return acc;
               }, {})}
-              onPrimaryGenerated={({ merchize_product_id, merchize_variants }) => {
+              onPrimaryGenerated={({ merchize_product_id, merchize_product_title, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
+                setField('merchize_product_title', merchize_product_title || '');
                 setField('merchize_variants', merchize_variants);
               }}
             />
@@ -420,8 +428,9 @@ export default function JerseyEditor() {
 
           {showMerchizePicker && (
             <MerchizeCatalogPicker
-              onSelect={({ merchize_product_id, merchize_variants }) => {
+              onSelect={({ merchize_product_id, merchize_variants, productTitle }) => {
                 setField('merchize_product_id', merchize_product_id);
+                setField('merchize_product_title', productTitle || '');
                 setField('merchize_variants', merchize_variants);
               }}
               onClose={() => setShowMerchizePicker(false)}

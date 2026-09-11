@@ -297,6 +297,11 @@
       "default": "",
       "title": "Merchize Product ID"
     },
+    "merchize_product_title": {
+      "type": "string",
+      "default": "",
+      "title": "Merchize Product Title"
+    },
     "merchize_variants": {
       "type": "object",
       "properties": {
