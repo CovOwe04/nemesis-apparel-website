@@ -201,11 +201,11 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 12
+          "default": 30
         },
         "vert_pos": {
           "type": "number",
-          "default": 99
+          "default": 40
         },
         "font_size": {
           "type": "number",
@@ -247,11 +247,11 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 12
+          "default": 30
         },
         "vert_pos": {
           "type": "number",
-          "default": 23
+          "default": 50
         },
         "font_size": {
           "type": "number",

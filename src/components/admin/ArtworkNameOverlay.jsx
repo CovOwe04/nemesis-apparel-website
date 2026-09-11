@@ -10,11 +10,11 @@ export const FONTS = [
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 50, font_size: 35
 };
 
 const DEFAULT_HORIZ_OFFSET = 55;
@@ -80,19 +80,19 @@ export default function ArtworkNameOverlay({
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
   const nameFlagPct = ns.flag / 100;
-  const nameBaselineY = 112.5 + (ns.vert_pos - 50) + vertOffset;
+  const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
 
   const numArchPct = nus.arch / 100;
   const numFlagPct = nus.flag / 100;
-  const numBaselineY = 250 + (nus.vert_pos - 50) * 2 + vertOffset;
+  const numBaselineY = (nus.vert_pos / 100) * vbHeight + vertOffset;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
 
   // Apply shared horizontal offset (moves both together)
   const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
   const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
-  const namePathCenterX = vbWidth * (0.25 + nameHorizPos / 200);
-  const numPathCenterX = vbWidth * (0.25 + numHorizPos / 200);
+  const namePathCenterX = vbWidth * (nameHorizPos / 100);
+  const numPathCenterX = vbWidth * (numHorizPos / 100);
 
   // Text wrapping for long names (scaled to match Identity Lab visual size)
   const ARC_WIDTH = 150 * FONT_SCALE;

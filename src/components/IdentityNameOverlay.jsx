@@ -11,11 +11,11 @@ export const FONTS = [
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 99, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 50, font_size: 35
 };
 
 // Adobe-style warp:
@@ -70,18 +70,18 @@ export default function IdentityNameOverlay({
   // Positioning — same formulas as admin TextWarpPreview for WYSIWYG
   const nameArchPct = ns.arch / 100;
   const nameFlagPct = ns.flag / 100;
-  const nameBaselineY = 112.5 + (ns.vert_pos - 50);
+  const nameBaselineY = (ns.vert_pos / 100) * 400;
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} 150 ${nameBaselineY})` : undefined;
 
   const numArchPct = nus.arch / 100;
   const numFlagPct = nus.flag / 100;
-  const numBaselineY = 250 + (nus.vert_pos - 50) * 2;
+  const numBaselineY = (nus.vert_pos / 100) * 400;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} 150 ${numBaselineY})` : undefined;
 
   // Path center X based on horiz_pos (maps 0-100 to 25%-75% of viewBox width)
   const VB_WIDTH = 300;
-  const namePathCenterX = VB_WIDTH * (0.25 + ns.horiz_pos / 200);
-  const numPathCenterX = VB_WIDTH * (0.25 + nus.horiz_pos / 200);
+  const namePathCenterX = VB_WIDTH * (ns.horiz_pos / 100);
+  const numPathCenterX = VB_WIDTH * (nus.horiz_pos / 100);
 
   // Text wrapping for long names
   const ARC_WIDTH = 150;
