@@ -301,10 +301,8 @@ export async function renderOverlayToBlob({
     viewBoxH = 400;
     viewBoxW = Math.round(400 * actualAspect);
 
-    // Scale font proportionally to the artwork width vs the 3D mockup (300 wide).
-    // Base 1.5× for flat artwork; gap scaled 1.25× (matches ArtworkNameOverlay).
-    const RES_SCALE = viewBoxW / 300;
-    const ARTWORK_FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.5 * RES_SCALE;
+    // 1.5× base scaling for flat artwork; gap scaled 1.25× (matches ArtworkNameOverlay).
+    const ARTWORK_FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.5;
 
     fontScale = ARTWORK_FONT_SCALE;
     warpScale = ARTWORK_FONT_SCALE;
@@ -314,7 +312,7 @@ export async function renderOverlayToBlob({
 
     nameBaselineY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
     const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * viewBoxH;
-    numBaselineY = nameBaselineY + designerGap * 1.25 * RES_SCALE;
+    numBaselineY = nameBaselineY + designerGap * 1.25;
 
     const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
     const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));

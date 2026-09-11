@@ -90,11 +90,8 @@ export default function ArtworkNameOverlay({
   const vbHeight = 400;
   const vbWidth = Math.round(400 * actualAspect);
   const cx = vbWidth / 2;
-  // Scale font proportionally to the artwork width vs the 3D mockup (300 wide).
-  // This keeps the name/number the same relative size regardless of image
-  // resolution or aspect ratio. Base 1.5× for flat artwork; gap scaled 1.25×.
-  const RES_SCALE = vbWidth / 300;
-  const FONT_SCALE = (staticDisplay ? (4 / 3) : 1) * 1.5 * RES_SCALE;
+  // 1.5× base scaling for the flat artwork; gap scaled 1.25×.
+  const FONT_SCALE = staticDisplay ? (4 / 3) * 1.5 : 1.5;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
@@ -103,10 +100,10 @@ export default function ArtworkNameOverlay({
   const numFlagPct = nus.flag / 100;
 
   const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
-  // Scale the name→number gap by 1.25× and by the same resolution factor as the
-  // font so it stays proportional to the 3D designer gap at any image size.
+  // Scale the name→number gap by 1.25 so it stays proportional to the 3D
+  // designer gap while the larger 1.5× font size keeps clearance — no overlap.
   const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * vbHeight;
-  const numBaselineY = nameBaselineY + designerGap * 1.25 * RES_SCALE;
+  const numBaselineY = nameBaselineY + designerGap * 1.25;
 
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
