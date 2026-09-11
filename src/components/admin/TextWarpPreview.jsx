@@ -1,9 +1,8 @@
-import IdentityNameOverlay from '@/components/IdentityNameOverlay';
-import StaticNameOverlay from '@/components/StaticNameOverlay';
+import { useState, useEffect } from 'react';
+import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 
-// Thin wrapper that renders the SAME overlay the user sees on the Arsenal /
-// Identity Lab pages, so the admin preview is WYSIWYG — position, size, and
-// style changes in the designer translate proportionally to the storefront.
+// Uses the SAME ArtworkNameOverlay as the Artwork Position Designer so the
+// admin preview is WYSIWYG with the storefront.
 export default function TextWarpPreview({
   imageUrl = '',
   nameStyle = {},
@@ -13,37 +12,37 @@ export default function TextWarpPreview({
   enableName = true,
   enableNumber = true,
   staticDisplay = false,
+  artworkPosition,
 }) {
+  const [aspectRatio, setAspectRatio] = useState(1);
+
+  useEffect(() => {
+    if (!imageUrl) return;
+    const img = new Image();
+    img.onload = () => setAspectRatio(img.naturalWidth / img.naturalHeight || 1);
+    img.onerror = () => setAspectRatio(1);
+    img.src = imageUrl;
+  }, [imageUrl]);
+
   const aspectCls = staticDisplay ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel';
 
-  if (staticDisplay) {
-    return (
-      <StaticNameOverlay
-        image={imageUrl}
+  return (
+    <div className={`relative w-full overflow-hidden rounded-[6px] ${aspectCls}`}>
+      <ArtworkNameOverlay
+        artworkUrl={imageUrl}
         customName={enableName ? 'YOUR NAME' : ''}
         customNumber={enableNumber ? '00' : ''}
         nameStyle={nameStyle}
         numberStyle={numberStyle}
         customFontUrl={customFontUrl}
         customFontName={customFontName}
-        showNamePlaceholder={false}
-        showNumberPlaceholder={false}
-        className={`w-full overflow-hidden rounded-[6px] ${aspectCls}`}
+        aspectRatio={aspectRatio}
+        enableName={enableName}
+        enableNumber={enableNumber}
+        horizOffset={artworkPosition?.horiz_offset ?? 55}
+        vertOffset={artworkPosition?.vert_offset ?? -5}
+        staticDisplay={staticDisplay}
       />
-    );
-  }
-  return (
-    <IdentityNameOverlay
-      back_image={imageUrl}
-      customName={enableName ? 'YOUR NAME' : ''}
-      customNumber={enableNumber ? '00' : ''}
-      nameStyle={nameStyle}
-      numberStyle={numberStyle}
-      customFontUrl={customFontUrl}
-      customFontName={customFontName}
-      showNamePlaceholder={false}
-      showNumberPlaceholder={false}
-      className={`w-full overflow-hidden rounded-[6px] ${aspectCls}`}
-    />
+    </div>
   );
 }

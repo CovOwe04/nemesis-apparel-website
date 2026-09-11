@@ -338,7 +338,8 @@ export default function JerseyEditor() {
                   customFontName={form.custom_font_name}
                   enableName={form.enable_name}
                   enableNumber={form.enable_number}
-                  staticDisplay={staticDisplay} />
+                  staticDisplay={staticDisplay}
+                  artworkPosition={form.artwork_position} />
                 
                 </div>
                 <div className="p-4 space-y-2">

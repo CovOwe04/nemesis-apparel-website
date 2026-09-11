@@ -1,11 +1,9 @@
-import IdentityNameOverlay from '@/components/IdentityNameOverlay';
-import StaticNameOverlay from '@/components/StaticNameOverlay';
+import { useState, useEffect } from 'react';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 
-// Renders a single color + name/number combo with the jersey overlay.
-// Uses plain <img> (plainImage prop) for reliable html2canvas capture.
-// When isArtwork is true, uses ArtworkNameOverlay which applies positioning
-// offsets so the designer values land correctly on the print-ready artwork.
+// Renders a single color + name/number combo using the SAME ArtworkNameOverlay
+// the admin sees in the Artwork Position Designer — so storefront, approval,
+// and admin previews are all WYSIWYG consistent.
 export default function ComboImageRenderer({
   imageUrl,
   customName,
@@ -14,59 +12,42 @@ export default function ComboImageRenderer({
   numberStyle,
   customFontUrl,
   customFontName,
-  staticDisplay,
+  staticDisplay = false,
   isArtwork = false,
-  aspectRatio = 1,
+  aspectRatio: propAspectRatio = 1,
   enableName = true,
   enableNumber = true,
   artworkPosition,
 }) {
-  if (isArtwork) {
-    return (
-      <ArtworkNameOverlay
-        artworkUrl={imageUrl}
-        customName={customName}
-        customNumber={customNumber}
-        nameStyle={nameStyle}
-        numberStyle={numberStyle}
-        customFontUrl={customFontUrl}
-        customFontName={customFontName}
-        aspectRatio={aspectRatio}
-        enableName={enableName}
-        enableNumber={enableNumber}
-        horizOffset={artworkPosition?.horiz_offset ?? 55}
-        vertOffset={artworkPosition?.vert_offset ?? -5}
-        staticDisplay={staticDisplay}
-      />
-    );
-  }
+  const [aspectRatio, setAspectRatio] = useState(propAspectRatio);
 
-  if (staticDisplay) {
-    return (
-      <StaticNameOverlay
-        image={imageUrl}
-        customName={enableName ? customName : ''}
-        customNumber={enableNumber ? customNumber : ''}
-        nameStyle={nameStyle}
-        numberStyle={numberStyle}
-        customFontUrl={customFontUrl}
-        customFontName={customFontName}
-        plainImage
-        className="w-full h-full"
-      />
-    );
-  }
+  useEffect(() => {
+    if (isArtwork) {
+      setAspectRatio(propAspectRatio);
+      return;
+    }
+    if (!imageUrl) return;
+    const img = new Image();
+    img.onload = () => setAspectRatio(img.naturalWidth / img.naturalHeight || 1);
+    img.onerror = () => setAspectRatio(1);
+    img.src = imageUrl;
+  }, [imageUrl, isArtwork, propAspectRatio]);
+
   return (
-    <IdentityNameOverlay
-      back_image={imageUrl}
+    <ArtworkNameOverlay
+      artworkUrl={imageUrl}
       customName={enableName ? customName : ''}
       customNumber={enableNumber ? customNumber : ''}
       nameStyle={nameStyle}
       numberStyle={numberStyle}
       customFontUrl={customFontUrl}
       customFontName={customFontName}
-      plainImage
-      className="w-full h-full"
+      aspectRatio={aspectRatio}
+      enableName={enableName}
+      enableNumber={enableNumber}
+      horizOffset={artworkPosition?.horiz_offset ?? 55}
+      vertOffset={artworkPosition?.vert_offset ?? -5}
+      staticDisplay={staticDisplay}
     />
   );
 }

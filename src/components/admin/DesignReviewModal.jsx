@@ -214,6 +214,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             staticDisplay={isStatic}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}
+                            artworkPosition={jersey.artwork_position}
                           />
                         </div>
                       ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
-import StaticNameOverlay from '@/components/StaticNameOverlay';
+import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -53,6 +53,7 @@ export default function IdentityLab() {
   const [nameOn, setNameOn] = useState(true);
   const [numberOn, setNumberOn] = useState(true);
   const [rendering, setRendering] = useState(false);
+  const [imgAspect, setImgAspect] = useState(1);
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -61,6 +62,14 @@ export default function IdentityLab() {
       .catch(() => setJersey(null))
       .finally(() => setLoading(false));
   }, [jerseyId]);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    const img = new Image();
+    img.onload = () => setImgAspect(img.naturalWidth / img.naturalHeight || 1);
+    img.onerror = () => setImgAspect(1);
+    img.src = selectedImage;
+  }, [selectedImage]);
 
   const populatedEdit = useRef(false);
   useEffect(() => {
@@ -198,36 +207,23 @@ export default function IdentityLab() {
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
             <div ref={previewRef} className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
-              {jersey.static_display ? (
-                <StaticNameOverlay
-                  image={selectedImage}
-                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber && numberOn ? number : ''}
-                  nameStyle={jersey.name_style || {}}
-                  numberStyle={jersey.number_style || {}}
-                  customFontUrl={jersey.custom_font_url || ''}
-                  customFontName={jersey.custom_font_name || ''}
-                  letterSpacing={letterSpacing}
-                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
-                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
-                  className="w-full h-full"
-                />
-              ) : (
-                <IdentityNameOverlay
-                  back_image={selectedImage}
-                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber && numberOn ? number : ''}
-                  fontId={fontId}
-                  nameStyle={jersey.name_style || {}}
-                  numberStyle={jersey.number_style || {}}
-                  customFontUrl={jersey.custom_font_url || ''}
-                  customFontName={jersey.custom_font_name || ''}
-                  letterSpacing={letterSpacing}
-                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
-                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
-                  className="w-full h-full"
-                />
-              )}
+              <ArtworkNameOverlay
+                artworkUrl={selectedImage}
+                customName={canCustomizeName && nameOn ? (name.toUpperCase() || 'YOUR NAME') : ''}
+                customNumber={canCustomizeNumber && numberOn ? (number || '00') : ''}
+                fontId={fontId}
+                nameStyle={jersey.name_style || {}}
+                numberStyle={jersey.number_style || {}}
+                customFontUrl={jersey.custom_font_url || ''}
+                customFontName={jersey.custom_font_name || ''}
+                letterSpacing={letterSpacing}
+                aspectRatio={imgAspect}
+                enableName={canCustomize && canCustomizeName && nameOn}
+                enableNumber={canCustomize && canCustomizeNumber && numberOn}
+                horizOffset={jersey.artwork_position?.horiz_offset ?? 55}
+                vertOffset={jersey.artwork_position?.vert_offset ?? -5}
+                staticDisplay={jersey.static_display}
+              />
             </div>
           </div>
           <div className="mt-4 text-center mono-label text-fog/40">
