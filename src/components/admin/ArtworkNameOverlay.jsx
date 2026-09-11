@@ -20,9 +20,9 @@ const DEFAULT_NUMBER_STYLE = {
 // Offsets to map designer (jersey back) positions → artwork (front) positions.
 // The artwork has a different design layout than the jersey back preview,
 // so we shift the name/number up and to the right from the designer values.
-const VERT_OFFSET_NAME = 15;    // shift name up from designer value
-const VERT_OFFSET_NUMBER = 0;   // shift number up from designer value
-const HORIZ_OFFSET = 50;        // shift right from designer value
+const VERT_OFFSET_NAME = -5;    // shift name up from designer value
+const VERT_OFFSET_NUMBER = 5;   // shift number down to clear the name
+const HORIZ_OFFSET = 55;        // shift right from designer value
 
 function buildPath(cx, y, archPct, flagPct) {
   const archOffset = 22 * archPct;
@@ -78,15 +78,17 @@ export default function ArtworkNameOverlay({
   const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + HORIZ_OFFSET));
   const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + HORIZ_OFFSET));
 
+  // Force flag=0 and rise=0 on artwork — tilt/slope from designer values
+  // looks wrong on the flat artwork surface (unlike the jersey back preview)
   const nameArchPct = ns.arch / 100;
-  const nameFlagPct = ns.flag / 100;
+  const nameFlagPct = 0;
   const nameBaselineY = 112.5 + (nameVertPos - 50);
-  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
+  const nameRotation = undefined;
 
   const numArchPct = nus.arch / 100;
-  const numFlagPct = nus.flag / 100;
+  const numFlagPct = 0;
   const numBaselineY = 250 + (numVertPos - 50) * 2;
-  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
+  const numRotation = undefined;
 
   // Text wrapping for long names
   const ARC_WIDTH = 150;
