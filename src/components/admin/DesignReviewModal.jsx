@@ -138,10 +138,12 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
       }
 
       setProgress('Creating Merchize products & fulfilling…');
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('approve-custom-order', {
         orderId: order.id,
         compositedArtwork,
         compositedDisplay,
+        passcode,
       });
       if (res.data?.error) {
         setError(res.data.error);
@@ -161,7 +163,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
     setProcessing(true);
     setError('');
     try {
-      const res = await base44.functions.invoke('reject-custom-order', { orderId: order.id });
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const res = await base44.functions.invoke('reject-custom-order', { orderId: order.id, passcode });
       if (res.data?.error) {
         setError(res.data.error);
       } else {

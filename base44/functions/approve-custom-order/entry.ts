@@ -4,19 +4,16 @@ import { createCustomProduct, createMerchizeOrder } from '../../shared/merchize.
 
 export default async function (req) {
   try {
-    const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    const body = await req.json();
+    const { orderId, compositedArtwork, compositedDisplay, passcode } = body;
+
+    // Validate admin passcode (guest-only app — no real auth session)
+    const adminPasscode = secrets.get('ADMIN_PASSCODE') || '';
+    if (!passcode || passcode !== adminPasscode) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { orderId, compositedArtwork, compositedDisplay } = body;
+    const base44 = createClientFromRequest(req);
     if (!orderId) {
       return Response.json({ error: 'orderId required' });
     }
@@ -71,12 +68,10 @@ export default async function (req) {
       else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
       else if (jersey.front_image) productImages.push(jersey.front_image);
 
+      // Only upload the composited front artwork (the design from admin order review).
+      // Do NOT upload base back/sleeve/hood — this product contains only the customizations.
       const artworkUrls = {};
       if (compositedFront) artworkUrls.front = compositedFront;
-      else if (colorObj?.artwork_front) artworkUrls.front = colorObj.artwork_front;
-      if (colorObj?.artwork_back) artworkUrls.back = colorObj.artwork_back;
-      if (colorObj?.artwork_sleeve) artworkUrls.sleeve = colorObj.artwork_sleeve;
-      if (colorObj?.artwork_hood) artworkUrls.hood = colorObj.artwork_hood;
 
       const titleParts = [jersey.name, item.colorName, item.customName, item.customNumber ? `#${item.customNumber}` : ''].filter(Boolean);
 
@@ -125,8 +120,8 @@ export default async function (req) {
           currency: 'USD',
           image: item.fresh_display_image || item.rendered_image || item.front_image || '',
         });
-      } else {
-        // Standard product
+      } else if (!item.customName && !item.customNumber) {
+        // Standard product (non-custom items only)
         const jersey = jerseyMap.get(item.jerseyId);
         if (!jersey?.merchize_product_id) continue;
         const variantSkus = jersey.merchize_variants || {};
@@ -143,6 +138,7 @@ export default async function (req) {
           image: jersey.front_image || item.front_image || '',
         });
       }
+      // Custom items whose product creation failed are skipped — no base fallback.
     }
 
     if (merchizeItems.length === 0) {

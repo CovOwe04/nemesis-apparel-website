@@ -117,6 +117,20 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
           body: formData,
         });
       }
+      // Also set artwork URLs directly on the product (matches Generate button behavior)
+      try {
+        const artworkBody = {};
+        for (const [piece, url] of artworkEntries) {
+          artworkBody[piece] = url;
+        }
+        await fetch(`${baseUrl}/product/products/${productId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artwork: artworkBody }),
+        });
+      } catch (err) {
+        console.error(`Failed to set artwork via POST for ${productId}:`, err.message);
+      }
     } catch (err) {
       console.error(`Failed to upload artwork for custom product ${productId}:`, err.message);
     }

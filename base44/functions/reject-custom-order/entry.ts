@@ -39,19 +39,16 @@ function buildRefundHtml({ customerName, orderId }) {
 
 export default async function (req) {
   try {
-    const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    const body = await req.json();
+    const { orderId, reason, passcode } = body;
+
+    // Validate admin passcode (guest-only app — no real auth session)
+    const adminPasscode = secrets.get('ADMIN_PASSCODE') || '';
+    if (!passcode || passcode !== adminPasscode) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { orderId, reason } = body;
+    const base44 = createClientFromRequest(req);
     if (!orderId) {
       return Response.json({ error: 'orderId required' });
     }
