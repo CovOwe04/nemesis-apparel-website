@@ -9,16 +9,55 @@ const PIECES = [
   { key: 'artwork_hood', label: 'HOOD' },
 ];
 
-export default function ArtworkUploader({ artwork, onChange, compact = false }) {
+const PIECE_MAP = {
+  artwork_front: 'front',
+  artwork_back: 'back',
+  artwork_sleeve: 'sleeve',
+  artwork_hood: 'hood',
+};
+
+export default function ArtworkUploader({ artwork, onChange, compact = false, jerseyId, colorName }) {
   const [uploading, setUploading] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
   const fileRefs = useRef({});
+
+  const syncToMerchize = async (updatedArtwork) => {
+    if (!jerseyId || !colorName) return;
+    setSyncing(true);
+    setSyncStatus('');
+    try {
+      const merchizeArtwork = {};
+      for (const [k, v] of Object.entries(updatedArtwork)) {
+        if (PIECE_MAP[k] && v) merchizeArtwork[PIECE_MAP[k]] = v;
+      }
+      const res = await base44.functions.invoke('upload-merchize-artwork', {
+        jerseyId,
+        color_name: colorName,
+        artwork: merchizeArtwork,
+      });
+      if (res.data?.error) {
+        setSyncStatus('error');
+        console.error('Merchize artwork sync:', res.data.error);
+      } else {
+        setSyncStatus('done');
+      }
+    } catch (err) {
+      setSyncStatus('error');
+      console.error('Merchize artwork sync failed:', err);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleUpload = async (key, file) => {
     if (!file) return;
     setUploading(key);
     try {
       const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-      onChange({ ...artwork, [key]: file_url });
+      const updatedArtwork = { ...artwork, [key]: file_url };
+      onChange(updatedArtwork);
+      syncToMerchize(updatedArtwork);
     } catch (err) {
       console.error('Artwork upload failed:', err);
       alert('Upload failed: ' + (err?.message || 'unknown error'));
@@ -29,7 +68,9 @@ export default function ArtworkUploader({ artwork, onChange, compact = false }) 
   };
 
   const handleRemove = (key) => {
-    onChange({ ...artwork, [key]: '' });
+    const updatedArtwork = { ...artwork, [key]: '' };
+    onChange(updatedArtwork);
+    syncToMerchize(updatedArtwork);
   };
 
   return (
@@ -90,6 +131,21 @@ export default function ArtworkUploader({ artwork, onChange, compact = false }) 
           );
         })}
       </div>
+      {jerseyId && colorName && (
+        <div className="mt-2">
+          {syncing && (
+            <span className="mono-label text-fog/50 text-[0.55rem] flex items-center gap-1">
+              <Loader2 size={10} className="animate-spin" /> SYNCING TO MERCHIZE…
+            </span>
+          )}
+          {!syncing && syncStatus === 'done' && (
+            <span className="mono-label text-kinetic text-[0.55rem]">ARTWORK SYNCED TO MERCHIZE</span>
+          )}
+          {!syncing && syncStatus === 'error' && (
+            <span className="mono-label text-red-500 text-[0.55rem]">MERCHIZE SYNC FAILED — CHECK CONSOLE</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

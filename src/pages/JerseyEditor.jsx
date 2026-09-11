@@ -250,7 +250,7 @@ export default function JerseyEditor() {
           </Section>
 
           <Section title="COLORS & IMAGES">
-            <ColorsEditor colors={form.colors} onChange={(c) => setField('colors', c)} />
+            <ColorsEditor colors={form.colors} onChange={(c) => setField('colors', c)} jerseyId={jerseyId} />
           </Section>
 
           <Section title="NAME & NUMBER PRESETS">

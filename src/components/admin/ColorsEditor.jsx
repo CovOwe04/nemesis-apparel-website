@@ -4,7 +4,7 @@ import { Image } from '@/components/ui/image';
 import { Trash2, Plus } from 'lucide-react';
 import ArtworkUploader from '@/components/admin/ArtworkUploader';
 
-export default function ColorsEditor({ colors, onChange }) {
+export default function ColorsEditor({ colors, onChange, jerseyId }) {
   const [uploading, setUploading] = useState(null);
 
   const addColor = () => {
@@ -99,6 +99,8 @@ export default function ColorsEditor({ colors, onChange }) {
           <div className="pt-2 border-t border-steel">
             <div className="mono-label text-fog/40 text-[0.6rem] mb-2">ARTWORK</div>
             <ArtworkUploader
+              jerseyId={jerseyId}
+              colorName={color.name || 'Default'}
               artwork={{
                 artwork_front: color.artwork_front || '',
                 artwork_back: color.artwork_back || '',
