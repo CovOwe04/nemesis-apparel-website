@@ -86,10 +86,7 @@ export default function ArtworkNameOverlay({
   const numFlagPct = nus.flag / 100;
 
   const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
-  // Scale the name→number gap by FONT_SCALE so it stays proportional to the
-  // 3D designer gap ((numVertPos - nameVertPos) × vbHeight) — prevents overlap.
-  const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * vbHeight;
-  const numBaselineY = nameBaselineY + designerGap * FONT_SCALE;
+  const numBaselineY = (nus.vert_pos / 100) * vbHeight + vertOffset;
 
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
