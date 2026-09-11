@@ -107,7 +107,7 @@ export default function ArtworkNameOverlay({
   // Scale the name→number gap by the resolution factor and a separate tunable
   // constant so the gap can be adjusted independently from the font size.
   // Lower GAP_SCALE = tighter name/number spacing.
-  const GAP_SCALE = 1.25;
+  const GAP_SCALE = 0.7;
   const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * vbHeight;
   const numBaselineY = nameBaselineY + designerGap * GAP_SCALE * RES_SCALE;
 
