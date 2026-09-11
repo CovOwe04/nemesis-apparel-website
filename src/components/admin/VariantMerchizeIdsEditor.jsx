@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
-import { compositeArtworkWithName } from '@/lib/artworkCompositor';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -139,7 +138,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       }
       setCurrentRender(null);
 
-      // Step 1b: Composite name/number onto artwork (print-ready back piece)
+      // Step 1b: Render name/number onto artwork (print-ready back piece) via html2canvas
       const renderedArtwork = {};
       for (let i = 0; i < needsRender.length; i++) {
         const v = needsRender[i];
@@ -147,25 +146,56 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const colorObj = (colors || []).find((c) => c.name === v.color_name);
         const artworkBack = colorObj?.artwork_back || '';
         if (!artworkBack) continue;
-        try {
-          const blob = await compositeArtworkWithName(artworkBack, {
-            name: v.combo_name,
-            number: v.combo_number,
-            nameStyle,
-            numberStyle,
-            customFontUrl,
-            customFontName,
-          });
-          if (blob) {
-            const file = new File([blob], `artwork-back-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
-            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
-            renderedArtwork[key] = file_url;
+
+        // Load artwork to get natural dimensions for proper print resolution
+        const artworkImg = new Image();
+        artworkImg.crossOrigin = 'anonymous';
+        artworkImg.src = artworkBack;
+        await new Promise((resolve) => {
+          artworkImg.onload = resolve;
+          artworkImg.onerror = resolve;
+          setTimeout(resolve, 5000);
+        });
+        const naturalW = artworkImg.naturalWidth || 1200;
+        const naturalH = artworkImg.naturalHeight || 1200;
+        const maxDim = 1200;
+        const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
+        const renderW = Math.round(naturalW * sz);
+        const renderH = Math.round(naturalH * sz);
+
+        // Trigger render with artwork image
+        setCurrentRender({
+          imageUrl: artworkBack,
+          customName: v.combo_name,
+          customNumber: v.combo_number,
+          staticDisplay: true,
+          renderWidth: renderW,
+          renderHeight: renderH,
+        });
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Capture
+        if (renderRef.current) {
+          try {
+            const canvas = await html2canvas(renderRef.current, {
+              useCORS: true,
+              backgroundColor: null,
+              scale: 2,
+            });
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            if (blob) {
+              const file = new File([blob], `artwork-back-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
+              renderedArtwork[key] = file_url;
+            }
+          } catch (err) {
+            console.error('Artwork render capture failed:', err);
           }
-        } catch (err) {
-          console.error('Artwork compositing failed:', err);
         }
       }
+      setCurrentRender(null);
       setRenderProgress('');
 
       // Step 2: Call create-merchize-products with rendered images and artwork
@@ -276,8 +306,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
           position: 'fixed',
           left: '-9999px',
           top: 0,
-          width: '600px',
-          height: currentRender.staticDisplay ? '600px' : '800px',
+          width: `${currentRender.renderWidth || 600}px`,
+          height: `${currentRender.renderHeight || (currentRender.staticDisplay ? 600 : 800)}px`,
           pointerEvents: 'none',
         }}>
           <ComboImageRenderer
