@@ -62,8 +62,8 @@ export default function OrderManager() {
             return (
               <div key={o.id} className="border border-steel rounded-[6px] overflow-hidden">
                 {/* Header row */}
-                <button onClick={() => setExpanded(isOpen ? null : o.id)}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-steel/20 transition-colors text-left">
+                <div onClick={() => setExpanded(isOpen ? null : o.id)}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-steel/20 transition-colors text-left cursor-pointer">
                   <div className={`mono-label px-3 py-1 border rounded-[6px] shrink-0 ${STATUS_STYLES[o.status] || ''}`}>
                     {o.status === 'pending_approval' ? 'PENDING APPROVAL' : o.status.toUpperCase()}
                   </div>
@@ -80,9 +80,9 @@ export default function OrderManager() {
                     onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
                     className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
                   >
-                    <Eye size={12} /> View and Approve Design
+                    <Eye size={12} /> View &amp; Approve Design
                   </button>
-                </button>
+                </div>
 
                 {/* Expanded details */}
                 {isOpen && (
