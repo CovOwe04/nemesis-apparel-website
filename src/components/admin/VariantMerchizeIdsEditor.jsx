@@ -17,19 +17,19 @@ function sortSizes(entries) {
 function generateVariants(colors, combos) {
   const variants = [];
   const colorList = colors.length > 0 ? colors : [{ name: 'Default' }];
-  if (combos.length > 0) {
-    for (const color of colorList) {
-      for (const combo of combos) {
-        variants.push({
-          color_name: color.name || 'Default',
-          combo_name: combo.name || '',
-          combo_number: combo.number || '',
-        });
-      }
-    }
-  } else {
-    for (const color of colorList) {
-      variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
+  // Always include base (no name/number) variants for each color
+  for (const color of colorList) {
+    variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
+  }
+  // Add combo variants (skip empty combos to avoid duplicates with base)
+  for (const color of colorList) {
+    for (const combo of combos) {
+      if (!combo.name && !combo.number) continue;
+      variants.push({
+        color_name: color.name || 'Default',
+        combo_name: combo.name || '',
+        combo_number: combo.number || '',
+      });
     }
   }
   return variants;
@@ -275,8 +275,9 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                     type="text"
                     value={vmi.title || ''}
                     onChange={(e) => updateTitle(i, e.target.value)}
+                    disabled={generating}
                     placeholder="Auto-filled on generate"
-                    className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
+                    className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 {vmi.skus && Object.keys(vmi.skus).length > 0 && (
@@ -290,7 +291,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                             type="text"
                             value={sku || ''}
                             onChange={(e) => updateSku(i, size, e.target.value)}
-                            className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none"
+                            disabled={generating}
+                            className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                           />
                         </div>
                       ))}
