@@ -75,7 +75,11 @@ export default function ArtworkNameOverlay({
   const vbHeight = 400;
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
-  const FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.15 * 1.15;
+  // Match the 3D mockup (IdentityNameOverlay) scale exactly so the flat
+  // artwork is proportionally accurate — no inflation that would cause the
+  // large number to overlap the name. Static display uses 4/3 to match
+  // StaticNameOverlay's square-viewBox scaling.
+  const FONT_SCALE = staticDisplay ? 4 / 3 : 1;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
