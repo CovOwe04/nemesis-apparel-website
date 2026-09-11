@@ -20,9 +20,7 @@ function getColors(jersey) {
 export default function JerseyCard({ jersey, currency = 'USD' }) {
   const { addItem } = useCart();
   const colors = getColors(jersey);
-  const ARTWORK_PIECES = ['artwork_front', 'artwork_back', 'artwork_sleeve', 'artwork_hood'];
-  const artworkUrl = ARTWORK_PIECES.map((k) => colors[0]?.[k]).find(Boolean);
-  const front = (jersey.static_display && artworkUrl) ? artworkUrl : (colors[0]?.images?.[0]?.url || jersey.front_image);
+  const front = colors[0]?.images?.[0]?.url || jersey.front_image;
   const back = colors[0]?.images?.[1]?.url || front;
 
   const quickAdd = (e) => {

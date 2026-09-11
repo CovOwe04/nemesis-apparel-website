@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
-import ArtworkPreview from '@/components/admin/ArtworkPreview';
+import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -118,8 +118,6 @@ export default function IdentityLab() {
   const currentColor = colors[Math.min(selectedColor, colors.length - 1)];
   const currentImages = currentColor?.images || [];
   const selectedImage = currentImages[Math.min(selectedImageIdx, currentImages.length - 1)]?.url || jersey.front_image;
-  const ARTWORK_PIECES = ['artwork_front', 'artwork_back', 'artwork_sleeve', 'artwork_hood'];
-  const artworkUrl = ARTWORK_PIECES.map((k) => currentColor?.[k]).find(Boolean) || selectedImage;
 
   const selectColor = (idx) => {
     setSelectedColor(idx);
@@ -201,21 +199,18 @@ export default function IdentityLab() {
           <div className="relative mx-auto max-w-md">
             <div ref={previewRef} className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
               {jersey.static_display ? (
-                <ArtworkPreview
-                  artworkUrl={artworkUrl}
-                  customName={canCustomizeName && nameOn ? (name.toUpperCase() || 'YOUR NAME') : ''}
-                  customNumber={canCustomizeNumber && numberOn ? (number || '00') : ''}
-                  fontId={fontId}
+                <StaticNameOverlay
+                  image={selectedImage}
+                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
+                  customNumber={canCustomizeNumber && numberOn ? number : ''}
                   nameStyle={jersey.name_style || {}}
                   numberStyle={jersey.number_style || {}}
                   customFontUrl={jersey.custom_font_url || ''}
                   customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
-                  enableName={canCustomizeName && nameOn}
-                  enableNumber={canCustomizeNumber && numberOn}
-                  horizOffset={jersey.artwork_position?.horiz_offset ?? 55}
-                  vertOffset={jersey.artwork_position?.vert_offset ?? -5}
-                  staticDisplay={true}
+                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
+                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
+                  className="w-full h-full"
                 />
               ) : (
                 <IdentityNameOverlay

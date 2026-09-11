@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Check, Loader2, Mail, User, Shirt, Palette } from 'lucide-react';
-import ArtworkPreview from '@/components/admin/ArtworkPreview';
+import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
+import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 
 export default function DesignReviewModal({ order, onClose, onAction }) {
@@ -61,7 +62,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         const renderW = Math.round(naturalW * sz);
         const renderH = Math.round(naturalH * sz);
 
-        const isStatic = jersey.static_display || (colorObj?.images?.length || 0) <= 1;
+        const isStatic = (colorObj?.images?.length || 0) <= 1;
         const fontFam = jersey.custom_font_name
           ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
           : "'Archivo Black', sans-serif";
@@ -169,8 +170,12 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               const jersey = jerseys[item.jerseyId];
               const colorObj = (jersey?.colors || []).find((c) => c.name === item.colorName);
               const images = colorObj?.images || [];
-              const isStatic = jersey?.static_display || images.length <= 1;
+              const isStatic = images.length <= 1;
+              const displayImageUrl = item.rendered_image || (isStatic ? images[0]?.url : images[images.length - 1]?.url) || jersey?.back_image || '';
               const artworkUrl = colorObj?.artwork_front || '';
+              const fontFam = jersey?.custom_font_name
+                ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
+                : "'Archivo Black', sans-serif";
 
               return (
                 <div key={i} className="border border-steel rounded-[6px] p-4">
@@ -191,31 +196,60 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                     </div>
                   </div>
 
-                  {/* Preview — same rendering as the Artwork Position Designer */}
-                  <div>
-                    <div className="mono-label text-fog/40 mb-2 text-[0.6rem]">PREVIEW (PRINT FILE)</div>
-                    {artworkUrl && jersey ? (
-                      <div className="aspect-[3/4] bg-void rounded-[4px] overflow-hidden border border-steel">
-                        <ArtworkPreview
-                          artworkUrl={artworkUrl}
-                          customName={item.customName}
-                          customNumber={item.customNumber}
-                          nameStyle={jersey.name_style}
-                          numberStyle={jersey.number_style}
-                          customFontUrl={jersey.custom_font_url}
-                          customFontName={jersey.custom_font_name}
-                          enableName={jersey.enable_name}
-                          enableNumber={jersey.enable_number}
-                          horizOffset={jersey.artwork_position?.horiz_offset ?? 55}
-                          vertOffset={jersey.artwork_position?.vert_offset ?? -5}
-                          staticDisplay={isStatic}
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-[3/4] bg-void rounded-[4px] border border-steel flex items-center justify-center">
-                        <span className="mono-label text-fog/30 text-xs">NO ARTWORK</span>
-                      </div>
-                    )}
+                  {/* Previews */}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {/* Display preview */}
+                    <div>
+                      <div className="mono-label text-fog/40 mb-2 text-[0.6rem]">DISPLAY PREVIEW</div>
+                      {displayImageUrl && jersey ? (
+                        <div className="aspect-[3/4] bg-void rounded-[4px] overflow-hidden border border-steel">
+                          <ComboImageRenderer
+                            imageUrl={displayImageUrl}
+                            customName={item.customName}
+                            customNumber={item.customNumber}
+                            nameStyle={jersey.name_style}
+                            numberStyle={jersey.number_style}
+                            customFontUrl={jersey.custom_font_url}
+                            customFontName={jersey.custom_font_name}
+                            staticDisplay={isStatic}
+                            enableName={jersey.enable_name}
+                            enableNumber={jersey.enable_number}
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[3/4] bg-void rounded-[4px] border border-steel flex items-center justify-center">
+                          <span className="mono-label text-fog/30 text-xs">NO IMAGE</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Artwork preview */}
+                    <div>
+                      <div className="mono-label text-fog/40 mb-2 text-[0.6rem]">ARTWORK (PRINT FILE)</div>
+                      {artworkUrl && jersey ? (
+                        <div className="aspect-[3/4] bg-void rounded-[4px] overflow-hidden border border-steel">
+                          <ArtworkNameOverlay
+                            artworkUrl={artworkUrl}
+                            customName={item.customName}
+                            customNumber={item.customNumber}
+                            nameStyle={jersey.name_style}
+                            numberStyle={jersey.number_style}
+                            customFontUrl={jersey.custom_font_url}
+                            customFontName={jersey.custom_font_name}
+                            aspectRatio={1}
+                            enableName={jersey.enable_name}
+                            enableNumber={jersey.enable_number}
+                            horizOffset={jersey.artwork_position?.horiz_offset ?? 55}
+                            vertOffset={jersey.artwork_position?.vert_offset ?? -5}
+                            staticDisplay={isStatic}
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[3/4] bg-void rounded-[4px] border border-steel flex items-center justify-center">
+                          <span className="mono-label text-fog/30 text-xs">NO ARTWORK</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
