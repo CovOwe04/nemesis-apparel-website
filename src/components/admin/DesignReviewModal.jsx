@@ -171,7 +171,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               const colorObj = (jersey?.colors || []).find((c) => c.name === item.colorName);
               const images = colorObj?.images || [];
               const isStatic = images.length <= 1;
-              const displayImageUrl = item.rendered_image || (isStatic ? images[0]?.url : images[images.length - 1]?.url) || jersey?.back_image || '';
+              const displayImageUrl = (isStatic ? images[0]?.url : images[images.length - 1]?.url) || jersey?.back_image || '';
               const artworkUrl = colorObj?.artwork_front || '';
               const fontFam = jersey?.custom_font_name
                 ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
