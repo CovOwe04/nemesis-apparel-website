@@ -321,6 +321,7 @@ export default function JerseyEditor() {
                     enableNumber={form.enable_number}
                     artworkPosition={form.artwork_position}
                     onChange={(pos) => setField('artwork_position', pos)}
+                    jerseyId={jerseyId}
                   />
                 </div>
               ) : (
