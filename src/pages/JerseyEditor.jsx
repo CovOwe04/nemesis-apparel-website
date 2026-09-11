@@ -58,7 +58,7 @@ function Section({ title, children }) {
 
 }
 
-function PropRow({ label, value, min, max, step = 1, onChange }) {
+function PropRow({ label, value, min, max, step = 0.1, onChange }) {
   return (
     <div className="flex items-center gap-2">
       <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">{label}</span>

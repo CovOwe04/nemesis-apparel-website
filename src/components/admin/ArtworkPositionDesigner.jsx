@@ -171,19 +171,19 @@ export default function ArtworkPositionDesigner({
         </p>
         <div className="flex items-center gap-2">
           <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">HORIZ POS</span>
-          <input type="range" min={-50} max={100} value={horizOffset}
+          <input type="range" min={-50} max={100} step={0.1} value={horizOffset}
             onChange={(e) => onChange({ ...artworkPosition, horiz_offset: Number(e.target.value) })}
             className="flex-1 min-w-0" />
-          <input type="number" min={-50} max={100} value={horizOffset}
+          <input type="number" min={-50} max={100} step={0.1} value={horizOffset}
             onChange={(e) => onChange({ ...artworkPosition, horiz_offset: Number(e.target.value) })}
             className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
         </div>
         <div className="flex items-center gap-2">
           <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">VERT POS</span>
-          <input type="range" min={-100} max={100} value={vertOffset}
+          <input type="range" min={-100} max={100} step={0.1} value={vertOffset}
             onChange={(e) => onChange({ ...artworkPosition, vert_offset: Number(e.target.value) })}
             className="flex-1 min-w-0" />
-          <input type="number" min={-100} max={100} value={vertOffset}
+          <input type="number" min={-100} max={100} step={0.1} value={vertOffset}
             onChange={(e) => onChange({ ...artworkPosition, vert_offset: Number(e.target.value) })}
             className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
         </div>
