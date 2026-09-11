@@ -26,7 +26,6 @@ function generateVariants(colors, combos) {
 export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
-  const [expandedIdx, setExpandedIdx] = useState(null);
 
   const allVariants = generateVariants(colors, combos);
 
@@ -46,9 +45,16 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     };
   });
 
-  const updateField = (index, value) => {
+  const updateTitle = (index, value) => {
     const updated = syncedIds.map((v, i) =>
-      i === index ? { ...v, merchize_product_id: value, manually_set: true } : v
+      i === index ? { ...v, title: value } : v
+    );
+    onChange(updated);
+  };
+
+  const updateSku = (index, size, value) => {
+    const updated = syncedIds.map((v, i) =>
+      i === index ? { ...v, skus: { ...v.skus, [size]: value } } : v
     );
     onChange(updated);
   };
@@ -119,46 +125,42 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       {allVariants.length === 0 ? (
         <p className="mono-label text-fog/30 text-[0.65rem]">Add colors or presets to generate variants.</p>
       ) : (
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+        <div className="space-y-2">
           {allVariants.map((v, i) => {
             const vmi = syncedIds[i];
             const label = [v.color_name, v.combo_name, v.combo_number].filter(Boolean).join(' · ');
             return (
-              <div key={i}>
-                <div className="flex items-center gap-2">
-                  <span className="mono-label text-fog/40 text-[0.6rem] w-32 shrink-0 truncate">{label}</span>
-                  {vmi.title ? (
-                    <div className="flex-1 min-w-0 px-2 py-1.5">
-                      <div className="text-fog text-xs truncate">{vmi.title}</div>
-                      <div className="mono-label text-fog/30 text-[0.55rem] truncate">{vmi.merchize_product_id}</div>
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={vmi.merchize_product_id || ''}
-                      onChange={(e) => updateField(i, e.target.value)}
-                      placeholder="Auto-filled on generate"
-                      className="flex-1 bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
-                    />
-                  )}
-                  {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic shrink-0">MANUAL</span>}
-                  {vmi.skus && Object.keys(vmi.skus).length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setExpandedIdx(expandedIdx === i ? null : i)}
-                      className="mono-label text-[0.55rem] text-fog/40 hover:text-kinetic shrink-0 transition-colors"
-                    >
-                      {Object.keys(vmi.skus).length} SZ {expandedIdx === i ? '▲' : '▼'}
-                    </button>
-                  )}
+              <div key={i} className="border border-steel rounded-[4px] p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="mono-label text-fog/40 text-[0.6rem]">{label}</span>
+                  {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic">MANUAL</span>}
                 </div>
-                {expandedIdx === i && vmi.skus && Object.keys(vmi.skus).length > 0 && (
-                  <div className="pl-32 mt-1 mb-2 flex flex-wrap gap-x-3 gap-y-0.5">
-                    {Object.entries(vmi.skus).map(([size, sku]) => (
-                      <span key={size} className="mono-label text-[0.55rem] text-fog/40">
-                        {size}: <span className="text-fog/70">{sku}</span>
-                      </span>
-                    ))}
+                <div>
+                  <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">TITLE</span>
+                  <input
+                    type="text"
+                    value={vmi.title || ''}
+                    onChange={(e) => updateTitle(i, e.target.value)}
+                    placeholder="Auto-filled on generate"
+                    className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none"
+                  />
+                </div>
+                {vmi.skus && Object.keys(vmi.skus).length > 0 && (
+                  <div>
+                    <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {Object.entries(vmi.skus).map(([size, sku]) => (
+                        <div key={size}>
+                          <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
+                          <input
+                            type="text"
+                            value={sku || ''}
+                            onChange={(e) => updateSku(i, size, e.target.value)}
+                            className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

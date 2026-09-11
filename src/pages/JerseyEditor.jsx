@@ -373,15 +373,8 @@ export default function JerseyEditor() {
             <div>
               <label className={labelCls}>MERCHIZE PRODUCT ID</label>
               <div className="flex gap-2">
-                {form.merchize_product_title ? (
-                  <div className="flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-3 min-w-0">
-                    <div className="text-sm font-medium truncate">{form.merchize_product_title}</div>
-                    <div className="mono-label text-black/40 text-[0.6rem] truncate">{form.merchize_product_id}</div>
-                  </div>
-                ) : (
-                  <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
-                  placeholder="e.g. 6aa08a2602a86515786ffbec" className={inputCls} />
-                )}
+                <input value={form.merchize_product_title || ''} onChange={(e) => setField('merchize_product_title', e.target.value)}
+                placeholder="Use Browse to select a product" className={inputCls} />
                 <button type="button" onClick={() => setShowMerchizePicker(true)}
                 className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
                   Browse
