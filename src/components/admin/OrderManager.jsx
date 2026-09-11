@@ -80,7 +80,7 @@ export default function OrderManager() {
                     onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
                     className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
                   >
-                    <Eye size={12} /> View & Approve Design
+                    <Eye size={12} /> View {'&'} Approve Design
                   </button>
                 </button>
 
