@@ -415,6 +415,14 @@ export default function JerseyEditor() {
               variantMerchizeIds={form.variant_merchize_ids}
               onChange={(ids) => setField('variant_merchize_ids', ids)}
               jerseyId={jerseyId}
+              merchizeProductId={form.merchize_product_id}
+              merchizeVariants={form.merchize_variants}
+              artwork={{
+                front: form.artwork_front,
+                back: form.artwork_back,
+                sleeve: form.artwork_sleeve,
+                hood: form.artwork_hood,
+              }}
               onPrimaryGenerated={({ merchize_product_id, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_variants', merchize_variants);

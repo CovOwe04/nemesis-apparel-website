@@ -24,7 +24,7 @@ export default async function(req) {
     }
 
     const body = await req.json();
-    const { jerseyId, variants } = body;
+    const { jerseyId, variants, merchize_product_id, merchize_variants, artwork } = body;
 
     if (!jerseyId || !variants || !Array.isArray(variants) || variants.length === 0) {
       return Response.json({ error: 'jerseyId and variants array required' });
@@ -38,8 +38,14 @@ export default async function(req) {
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
 
-    const baseProductId = jersey.merchize_product_id || '';
-    const fallbackSkus = jersey.merchize_variants || {};
+    const baseProductId = merchize_product_id || jersey.merchize_product_id || '';
+    const fallbackSkus = merchize_variants || jersey.merchize_variants || {};
+    const artworkUrls = artwork || {
+      front: jersey.artwork_front,
+      back: jersey.artwork_back,
+      sleeve: jersey.artwork_sleeve,
+      hood: jersey.artwork_hood,
+    };
 
     if (!baseProductId) {
       return Response.json({ error: 'No Merchize catalog product selected. Please choose a base product in the Merchize Fulfillment section before generating.' });
@@ -155,13 +161,7 @@ export default async function(req) {
 
         // Upload artwork (front/back/sleeve/hood) to the created product
         let artworkUploaded = false;
-        const artwork = {
-          front: jersey.artwork_front,
-          back: jersey.artwork_back,
-          sleeve: jersey.artwork_sleeve,
-          hood: jersey.artwork_hood,
-        };
-        const artworkEntries = Object.entries(artwork).filter(([, url]) => url);
+        const artworkEntries = Object.entries(artworkUrls).filter(([, url]) => url);
         if (artworkEntries.length > 0) {
           try {
             const formData = new FormData();

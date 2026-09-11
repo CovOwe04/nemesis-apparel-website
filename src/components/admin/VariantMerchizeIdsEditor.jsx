@@ -23,7 +23,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, artwork }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [expandedIdx, setExpandedIdx] = useState(null);
@@ -68,6 +68,9 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       const res = await base44.functions.invoke('create-merchize-products', {
         jerseyId,
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
+        merchize_product_id: merchizeProductId,
+        merchize_variants: merchizeVariants,
+        artwork,
       });
       if (res.data?.error) {
         setError(res.data.error);
