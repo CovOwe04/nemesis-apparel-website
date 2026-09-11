@@ -76,9 +76,6 @@ export default function ArtworkNameOverlay({
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
   const FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.15 * 1.15;
-  // Scale the name/number gap to match the font increase so the proportional
-  // spacing stays the same as the Name and Number Designer
-  const GAP_SCALE = 1.15 * 1.15;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
@@ -86,12 +83,8 @@ export default function ArtworkNameOverlay({
   const numArchPct = nus.arch / 100;
   const numFlagPct = nus.flag / 100;
 
-  const rawNameY = (ns.vert_pos / 100) * vbHeight + vertOffset;
-  const rawNumY = (nus.vert_pos / 100) * vbHeight + vertOffset;
-  const baselineCenter = (rawNameY + rawNumY) / 2;
-  const halfGap = (rawNumY - rawNameY) / 2;
-  const nameBaselineY = baselineCenter - halfGap * GAP_SCALE;
-  const numBaselineY = baselineCenter + halfGap * GAP_SCALE;
+  const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
+  const numBaselineY = (nus.vert_pos / 100) * vbHeight + vertOffset;
 
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;

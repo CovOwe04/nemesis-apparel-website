@@ -292,7 +292,6 @@ export async function renderOverlayToBlob({
     const horizOffset = artworkPosition?.horiz_offset ?? 55;
     const vertOffset = artworkPosition?.vert_offset ?? -5;
     const ARTWORK_FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.15 * 1.15;
-    const GAP_SCALE = 1.15 * 1.15;
 
     viewBoxH = 400;
     viewBoxW = Math.round(400 * aspectRatio);
@@ -302,12 +301,8 @@ export async function renderOverlayToBlob({
 
     const cx = viewBoxW / 2;
 
-    const rawNameY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
-    const rawNumY = (nus.vert_pos / 100) * viewBoxH + vertOffset;
-    const baselineCenter = (rawNameY + rawNumY) / 2;
-    const halfGap = (rawNumY - rawNameY) / 2;
-    nameBaselineY = baselineCenter - halfGap * GAP_SCALE;
-    numBaselineY = baselineCenter + halfGap * GAP_SCALE;
+    nameBaselineY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
+    numBaselineY = (nus.vert_pos / 100) * viewBoxH + vertOffset;
 
     const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
     const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
