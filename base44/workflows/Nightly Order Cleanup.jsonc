@@ -1,0 +1,44 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 2 * * *",
+      "one_time_date": null,
+      "timezone": "America/Toronto",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Deletes orders older than 1 year every night at 2am to prevent database overload",
+  "name": "Nightly Order Cleanup",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "nightly_order_cleanup",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "cleanup": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "cleanup-old-orders"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Delete old orders",
+            "description": "Removes orders older than 1 year"
+          }
+        }
+      }
+    ]
+  }
+}
