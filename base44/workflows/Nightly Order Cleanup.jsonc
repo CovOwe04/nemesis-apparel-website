@@ -11,10 +11,7 @@
         "cleanup": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "cleanup-old-orders",
-            "args": {
-              "secret": "1487b130-9325-4caf-b5fa-14c6e6d9eb67"
-            }
+            "function_name": "cleanup-old-orders"
           },
           "then": "end",
           "x-base44": {

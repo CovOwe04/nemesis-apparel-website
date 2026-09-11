@@ -6,9 +6,13 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
 
-    // Allow if: admin user (manual trigger) OR valid shared secret (workflow trigger)
+    // Allow if: internal platform call (workflow engine), admin user (manual trigger),
+    // or valid shared secret (legacy). The platform sets base44-service-authorization
+    // on internal invocations — external public requests cannot forge it.
     let isAuthorized = false;
-    if (body.secret && body.secret === secrets.get('CLEANUP_SECRET')) {
+    if (req.headers.get('base44-service-authorization')) {
+      isAuthorized = true;
+    } else if (body.secret && body.secret === secrets.get('CLEANUP_SECRET')) {
       isAuthorized = true;
     } else {
       try {
