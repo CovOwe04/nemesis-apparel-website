@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createCustomProduct, createMerchizeOrder } from '../../shared/merchize.ts';
+import { createMerchizeOrder } from '../../shared/merchize.ts';
 
 const CAD_RATE = 1.36;
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
@@ -226,69 +226,14 @@ export default async function(req) {
       const merchizeKey = secrets.get('MERCHIZE_API_KEY');
 
       if (hasCustom) {
-        // Create custom Merchize products for Identity Lab items, then route to admin approval
-        try {
-          const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
-          const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
-
-          for (const item of cartItems) {
-            if (!item.customName && !item.customNumber) continue;
-            const jersey = jerseyMap.get(item.jerseyId);
-            if (!jersey?.merchize_product_id) {
-              console.error(`Skipping custom product for ${item.name}: no base Merchize product`);
-              continue;
-            }
-
-            const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
-            const colorHex = colorObj?.hex || '#000000';
-            const size = item.shirtSize || 'M';
-            const sizeValue = size.toLowerCase();
-
-            const productImages = [];
-            if (item.rendered_image) productImages.push(item.rendered_image);
-            else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
-            else if (jersey.front_image) productImages.push(jersey.front_image);
-
-            const artworkUrls = {};
-            if (colorObj?.artwork_front) artworkUrls.front = colorObj.artwork_front;
-            if (colorObj?.artwork_back) artworkUrls.back = colorObj.artwork_back;
-            if (colorObj?.artwork_sleeve) artworkUrls.sleeve = colorObj.artwork_sleeve;
-            if (colorObj?.artwork_hood) artworkUrls.hood = colorObj.artwork_hood;
-
-            const titleParts = [jersey.name, item.colorName, item.customName, item.customNumber ? `#${item.customNumber}` : ''].filter(Boolean);
-
-            try {
-              const { productId, variantId, sku } = await createCustomProduct({
-                baseUrl, token: merchizeToken, apiKey: merchizeKey,
-                baseProductId: jersey.merchize_product_id,
-                title: titleParts.join(' - '),
-                description: jersey.description || '',
-                productImages,
-                colorName: item.colorName || 'Default',
-                colorHex,
-                size, sizeValue,
-                price: jersey.price,
-                fallbackSku: jersey.merchize_variants?.[size] || '',
-                artworkUrls,
-              });
-              item.custom_merchize_product_id = productId;
-              item.custom_merchize_variant_id = variantId;
-              item.custom_merchize_sku = sku;
-              console.log(`Custom product created: ${productId} for ${item.customName} #${item.customNumber}`);
-            } catch (err) {
-              console.error(`Failed to create custom product for ${item.name}:`, err.message);
-            }
-          }
-
-          await base44.asServiceRole.entities.Order.update(orderId, {
-            items_json: JSON.stringify(cartItems),
-            status: 'pending_approval',
-            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for custom items.`,
-          });
-          console.log(`Order ${orderId} set to pending_approval for custom items`);
-        } catch (err) {
-          console.error('Custom product creation error:', err.message);
-        }
+        // Custom Identity Lab items need admin review before production.
+        // Merchize products are created at approval time (approve-custom-order),
+        // not here — the admin reviews the design first.
+        await base44.asServiceRole.entities.Order.update(orderId, {
+          status: 'pending_approval',
+          admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for custom items.`,
+        });
+        console.log(`Order ${orderId} set to pending_approval for custom items`);
       } else {
         // No custom items — fulfill directly via Merchize
         try {

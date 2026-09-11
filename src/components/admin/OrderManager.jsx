@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Check, X, Clock, Mail, User, Package, Loader2 } from 'lucide-react';
+import { Eye, Mail, User, Package } from 'lucide-react';
+import DesignReviewModal from '@/components/admin/DesignReviewModal';
 
 const STATUS_STYLES = {
-  pending: 'text-kinetic border-kinetic',
   pending_approval: 'text-kinetic border-kinetic',
   approved: 'text-fog border-fog',
   rejected: 'text-fog/40 border-steel',
@@ -13,76 +13,34 @@ const STATUS_STYLES = {
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('pending_approval');
   const [expanded, setExpanded] = useState(null);
-  const [processing, setProcessing] = useState(null);
+  const [reviewOrder, setReviewOrder] = useState(null);
 
   const loadOrders = () => {
     setLoading(true);
     base44.entities.Order.list('-created_date', 100)
-      .then((d) => setOrders(d || []))
+      .then((d) => setOrders((d || []).filter((o) => o.has_custom_names)))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadOrders(); }, []);
 
-  const updateStatus = async (id, status) => {
-    try {
-      await base44.entities.Order.update(id, { status });
-      loadOrders();
-    } catch (err) {
-      alert('Update failed: ' + (err?.message || 'unknown error'));
-    }
-  };
-
-  const approveOrder = async (id) => {
-    setProcessing(id);
-    try {
-      const res = await base44.functions.invoke('approve-custom-order', { orderId: id });
-      if (res.data?.error) {
-        alert('Approval failed: ' + res.data.error);
-      } else {
-        loadOrders();
-      }
-    } catch (err) {
-      alert('Approval failed: ' + (err?.message || 'unknown error'));
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  const rejectOrder = async (id) => {
-    if (!confirm('Reject this order and issue a full refund? The customer will be emailed.')) return;
-    setProcessing(id);
-    try {
-      const res = await base44.functions.invoke('reject-custom-order', { orderId: id });
-      if (res.data?.error) {
-        alert('Rejection failed: ' + res.data.error);
-      } else {
-        loadOrders();
-      }
-    } catch (err) {
-      alert('Rejection failed: ' + (err?.message || 'unknown error'));
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  const filtered = orders.filter((o) => filter === 'all' ? true : o.status === filter);
-
   const parseItems = (o) => {
     try { return JSON.parse(o.items_json || '[]'); } catch { return []; }
   };
 
+  const filtered = orders.filter((o) => filter === 'all' ? true : o.status === filter);
+
   return (
     <div>
-      {/* Filter tabs */}
+      {/* Filter tabs — only custom-name orders are shown */}
       <div className="flex items-center gap-2 mb-6">
-        {['pending', 'pending_approval', 'approved', 'rejected', 'fulfilled', 'all'].map((s) => (
+        {['pending_approval', 'fulfilled', 'rejected', 'all'].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
             className={`mono-label px-4 py-2 border rounded-[6px] transition-colors ${filter === s ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}>
-            {s.toUpperCase()}
+            {s === 'pending_approval' ? 'PENDING' : s.toUpperCase()}
           </button>
         ))}
       </div>
@@ -92,12 +50,13 @@ export default function OrderManager() {
       ) : filtered.length === 0 ? (
         <div className="border border-steel rounded-[6px] p-10 text-center">
           <Package size={32} className="text-steel mx-auto mb-3" />
-          <p className="mono-label text-fog/40">NO {filter.toUpperCase()} ORDERS.</p>
+          <p className="mono-label text-fog/40">NO {filter.toUpperCase()} CUSTOM ORDERS.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((o) => {
             const items = parseItems(o);
+            const customItems = items.filter((i) => i.customName || i.customNumber);
             const isOpen = expanded === o.id;
             return (
               <div key={o.id} className="border border-steel rounded-[6px] overflow-hidden">
@@ -111,19 +70,24 @@ export default function OrderManager() {
                     <div className="font-heading text-fog text-sm truncate">{o.customer_name} — ${o.total}</div>
                     <div className="mono-label text-fog/40 mt-0.5 flex items-center gap-3">
                       <span className="flex items-center gap-1"><User size={11} /> {o.item_count || items.length} ITEMS</span>
-                      {o.has_custom_names && <span className="text-kinetic">CUSTOM NAMES</span>}
+                      <span className="text-kinetic">{customItems.length} CUSTOM</span>
                       <span>{new Date(o.created_date).toLocaleDateString()}</span>
                     </div>
                   </div>
+                  {/* View Design button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
+                    className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
+                  >
+                    <Eye size={12} /> View Design
+                  </button>
                 </button>
 
                 {/* Expanded details */}
                 {isOpen && (
                   <div className="border-t border-steel p-4 space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2 text-fog/60 text-sm">
-                        <Mail size={14} className="text-fog/40" /> {o.customer_email}
-                      </div>
+                    <div className="flex items-center gap-2 text-fog/60 text-sm">
+                      <Mail size={14} className="text-fog/40" /> {o.customer_email}
                     </div>
 
                     {/* Items */}
@@ -135,38 +99,21 @@ export default function OrderManager() {
                             <span className="font-heading text-fog">{item.name}</span>
                             <span className="mono-label text-fog/50">QTY {item.quantity} · SIZE {item.shirtSize || 'M'}</span>
                           </div>
-                          {item.customName && (
+                          {(item.customName || item.customNumber) && (
                             <div className="mt-1 mono-label text-kinetic">
-                              CUSTOM NAME: {item.customName}
-                              {item.font && ` · FONT: ${item.font}`}
+                              CUSTOM: {item.customName || '—'} {item.customNumber ? `#${item.customNumber}` : ''}
                             </div>
-                          )}
-                          {item.isCustomDesign && (
-                            <div className="mt-1 mono-label text-fog/50">CUSTOM DESIGN SUBMISSION</div>
                           )}
                         </div>
                       ))}
                     </div>
 
-                    {/* Approval actions */}
                     {o.status === 'pending_approval' && (
-                      <div className="flex gap-3 pt-2">
-                        <button onClick={() => approveOrder(o.id)} disabled={processing === o.id}
-                          className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
-                          {processing === o.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                          {processing === o.id ? 'Approving…' : 'Approve & Fulfill'}
-                        </button>
-                        <button onClick={() => rejectOrder(o.id)} disabled={processing === o.id}
-                          className="inline-flex items-center gap-2 border border-steel px-5 py-2.5 font-heading uppercase text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors rounded-[6px] disabled:opacity-60">
-                          {processing === o.id ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
-                          {processing === o.id ? 'Rejecting…' : 'Reject & Refund'}
-                        </button>
-                      </div>
-                    )}
-                    {o.status === 'approved' && (
-                      <button onClick={() => updateStatus(o.id, 'fulfilled')}
-                        className="inline-flex items-center gap-2 border border-steel px-5 py-2.5 font-heading uppercase text-fog hover:text-kinetic hover:border-kinetic transition-colors rounded-[6px]">
-                        <Check size={16} /> Mark fulfilled
+                      <button
+                        onClick={() => setReviewOrder(o)}
+                        className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] text-xs"
+                      >
+                        <Eye size={14} /> Review & Approve
                       </button>
                     )}
                   </div>
@@ -175,6 +122,18 @@ export default function OrderManager() {
             );
           })}
         </div>
+      )}
+
+      {/* Design Review Modal */}
+      {reviewOrder && (
+        <DesignReviewModal
+          order={reviewOrder}
+          onClose={() => setReviewOrder(null)}
+          onAction={() => {
+            setReviewOrder(null);
+            loadOrders();
+          }}
+        />
       )}
     </div>
   );
