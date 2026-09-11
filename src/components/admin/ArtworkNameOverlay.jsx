@@ -75,11 +75,9 @@ export default function ArtworkNameOverlay({
   const vbHeight = 400;
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
-  // Match the 3D mockup (IdentityNameOverlay) scale exactly so the flat
-  // artwork is proportionally accurate — no inflation that would cause the
-  // large number to overlap the name. Static display uses 4/3 to match
-  // StaticNameOverlay's square-viewBox scaling.
-  const FONT_SCALE = staticDisplay ? 4 / 3 : 1;
+  // 1.5× scaling for the flat artwork. The name-to-number gap is scaled by
+  // the same factor so it stays proportional to the 3D designer (no overlap).
+  const FONT_SCALE = staticDisplay ? (4 / 3) * 1.5 : 1.5;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
@@ -88,7 +86,10 @@ export default function ArtworkNameOverlay({
   const numFlagPct = nus.flag / 100;
 
   const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
-  const numBaselineY = (nus.vert_pos / 100) * vbHeight + vertOffset;
+  // Scale the name→number gap by FONT_SCALE so it stays proportional to the
+  // 3D designer gap ((numVertPos - nameVertPos) × vbHeight) — prevents overlap.
+  const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * vbHeight;
+  const numBaselineY = nameBaselineY + designerGap * FONT_SCALE;
 
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
