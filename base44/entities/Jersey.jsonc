@@ -446,6 +446,21 @@
       },
       "default": [],
       "title": "Per-Variant Merchize Product IDs"
+    },
+    "artwork_position": {
+      "type": "object",
+      "properties": {
+        "horiz_offset": {
+          "type": "number",
+          "default": 55
+        },
+        "vert_offset": {
+          "type": "number",
+          "default": -5
+        }
+      },
+      "default": {},
+      "title": "Artwork Position Offsets"
     }
   },
   "required": [

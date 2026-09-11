@@ -17,12 +17,9 @@ const DEFAULT_NUMBER_STYLE = {
   arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
 };
 
-// Offsets to map designer (jersey back) positions → artwork (front) positions.
-// The artwork has a different design layout than the jersey back preview,
-// so we shift the name/number up and to the right from the designer values.
-const VERT_OFFSET_NAME = -5;    // shift name up from designer value
-const VERT_OFFSET_NUMBER = 5;   // shift number down to clear the name
-const HORIZ_OFFSET = 55;        // shift right from designer value
+// Default artwork position offsets (admin-adjustable via ArtworkPositionDesigner)
+const DEFAULT_HORIZ_OFFSET = 55;
+const DEFAULT_VERT_OFFSET = -5;
 
 function buildPath(cx, y, archPct, flagPct) {
   const archOffset = 22 * archPct;
@@ -46,6 +43,8 @@ export default function ArtworkNameOverlay({
   aspectRatio = 1,
   enableName = true,
   enableNumber = true,
+  horizOffset = DEFAULT_HORIZ_OFFSET,
+  vertOffset = DEFAULT_VERT_OFFSET,
 }) {
   const uid = useId();
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
@@ -72,22 +71,30 @@ export default function ArtworkNameOverlay({
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
 
-  // Apply offsets to designer positioning values
-  const nameVertPos = ns.vert_pos + VERT_OFFSET_NAME;
-  const numVertPos = nus.vert_pos + VERT_OFFSET_NUMBER;
-  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + HORIZ_OFFSET));
-  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + HORIZ_OFFSET));
+  // Apply shared offsets — both name and number move together.
+  // horizOffset shifts both horizontally; vertOffset shifts both vertically
+  // by the same pixel amount so they stay in the same relative position.
+  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
+  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
 
   // Force flag=0 and rise=0 on artwork — tilt/slope from designer values
   // looks wrong on the flat artwork surface (unlike the jersey back preview)
   const nameArchPct = ns.arch / 100;
   const nameFlagPct = 0;
-  const nameBaselineY = 112.5 + (nameVertPos - 50);
+  const baseNameY = 112.5 + (ns.vert_pos - 50);
   const nameRotation = undefined;
 
   const numArchPct = nus.arch / 100;
   const numFlagPct = 0;
-  const numBaselineY = 250 + (numVertPos - 50) * 2;
+  const baseNumY = 250 + (nus.vert_pos - 50) * 2;
+
+  // Ensure minimum vertical gap so the name stays above the number
+  const minGap = ns.font_size + nus.font_size * 0.8;
+  const adjustedNumY = Math.max(baseNumY, baseNameY + minGap);
+
+  // Apply shared vertical offset (moves both together)
+  const nameBaselineY = baseNameY + vertOffset;
+  const numBaselineY = adjustedNumY + vertOffset;
   const numRotation = undefined;
 
   // Text wrapping for long names

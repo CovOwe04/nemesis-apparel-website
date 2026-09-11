@@ -19,6 +19,7 @@ export default function ComboImageRenderer({
   aspectRatio = 1,
   enableName = true,
   enableNumber = true,
+  artworkPosition,
 }) {
   if (isArtwork) {
     return (
@@ -33,6 +34,8 @@ export default function ComboImageRenderer({
         aspectRatio={aspectRatio}
         enableName={enableName}
         enableNumber={enableNumber}
+        horizOffset={artworkPosition?.horiz_offset ?? 55}
+        vertOffset={artworkPosition?.vert_offset ?? -5}
       />
     );
   }

@@ -9,6 +9,7 @@ import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
+import ArtworkPositionDesigner from '@/components/admin/ArtworkPositionDesigner';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -32,7 +33,8 @@ const EMPTY_FORM = {
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
   merchize_product_id: '', merchize_product_title: '', merchize_variants: {}, variant_merchize_ids: [],
-  artwork_front: '', artwork_back: '', artwork_sleeve: '', artwork_hood: ''
+  artwork_front: '', artwork_back: '', artwork_sleeve: '', artwork_hood: '',
+  artwork_position: {}
 };
 
 function Toggle({ checked, onChange, label, disabled = false }) {
@@ -289,6 +291,39 @@ export default function JerseyEditor() {
           {form.enable_customization &&
           <div className="border border-steel rounded-[6px] overflow-hidden">
               <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
+              <div className="px-4 pt-4 flex gap-2 flex-wrap">
+                {form.enable_name &&
+                  <button type="button" onClick={() => setDesignerTab('name')}
+                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                    NAME
+                  </button>
+                }
+                {form.enable_number &&
+                  <button type="button" onClick={() => setDesignerTab('number')}
+                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                    NUMBER
+                  </button>
+                }
+                <button type="button" onClick={() => setDesignerTab('artwork')}
+                  className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'artwork' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                  ARTWORK
+                </button>
+              </div>
+              {designerTab === 'artwork' ? (
+                <div className="p-4">
+                  <ArtworkPositionDesigner
+                    colors={form.colors}
+                    nameStyle={form.name_style}
+                    numberStyle={form.number_style}
+                    customFontUrl={form.custom_font_url}
+                    customFontName={form.custom_font_name}
+                    enableName={form.enable_name}
+                    enableNumber={form.enable_number}
+                    artworkPosition={form.artwork_position}
+                    onChange={(pos) => setField('artwork_position', pos)}
+                  />
+                </div>
+              ) : (
               <div className="grid lg:grid-cols-2">
                 <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
                   <TextWarpPreview
@@ -308,21 +343,6 @@ export default function JerseyEditor() {
 
                   {form.enable_name || form.enable_number ?
                 <>
-                      <div className="flex gap-2 pt-1">
-                        {form.enable_name &&
-                    <button type="button" onClick={() => setDesignerTab('name')}
-                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                            NAME
-                          </button>
-                    }
-                        {form.enable_number &&
-                    <button type="button" onClick={() => setDesignerTab('number')}
-                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                            NUMBER
-                          </button>
-                    }
-                      </div>
-
                       <div className="flex items-center gap-3">
                         <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
                         <input type="color" value={currentStyle.color} onChange={(e) => setStyle('color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
@@ -348,6 +368,7 @@ export default function JerseyEditor() {
                 }
                 </div>
               </div>
+              )}
             </div>
           }
 
@@ -417,6 +438,7 @@ export default function JerseyEditor() {
               customFontName={form.custom_font_name}
               enableName={form.enable_name}
               enableNumber={form.enable_number}
+              artworkPosition={form.artwork_position}
               onPrimaryGenerated={({ merchize_product_id, merchize_product_title, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_product_title', merchize_product_title || '');

@@ -35,7 +35,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, enableName, enableNumber }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, enableName, enableNumber, artworkPosition }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -327,6 +327,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             aspectRatio={currentRender.renderWidth && currentRender.renderHeight ? currentRender.renderWidth / currentRender.renderHeight : 1}
             enableName={enableName}
             enableNumber={enableNumber}
+            artworkPosition={artworkPosition}
           />
         </div>
       )}
