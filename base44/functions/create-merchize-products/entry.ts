@@ -26,7 +26,7 @@ export default async function(req) {
     }
 
     const body = await req.json();
-    const { jerseyId, variants, merchize_product_id, merchize_variants, colorArtwork } = body;
+    const { jerseyId, variants, merchize_product_id, merchize_variants, colorArtwork, renderedImages } = body;
 
     if (!jerseyId || !variants || !Array.isArray(variants) || variants.length === 0) {
       return Response.json({ error: 'jerseyId and variants array required' });
@@ -58,6 +58,9 @@ export default async function(req) {
       const artworkUrls = (colorArtwork && colorArtwork[color_name]) || {};
 
       const productImages = [];
+      const renderKey = `${color_name}|${combo_name}|${combo_number}`;
+      const renderedImage = renderedImages?.[renderKey];
+      if (renderedImage) productImages.push(renderedImage);
       if (colorObj?.images?.length > 0) {
         productImages.push(...colorObj.images.map((img) => img.url).filter(Boolean));
       } else {

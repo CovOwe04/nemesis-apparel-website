@@ -39,6 +39,7 @@ export default function IdentityNameOverlay({
   showNamePlaceholder = false,
   showNumberPlaceholder = false,
   className = '',
+  plainImage = false,
 }) {
   const uid = useId();
   const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
@@ -94,7 +95,11 @@ export default function IdentityNameOverlay({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <Image src={back_image} alt="jersey back" fittingType="fill" className="w-full h-full" />
+      {plainImage ? (
+        <img src={back_image} alt="jersey back" crossOrigin="anonymous" className="w-full h-full object-cover" />
+      ) : (
+        <Image src={back_image} alt="jersey back" fittingType="fill" className="w-full h-full" />
+      )}
       {displayName && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
           <defs>

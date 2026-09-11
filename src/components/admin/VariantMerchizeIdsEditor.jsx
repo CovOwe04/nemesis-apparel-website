@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -33,10 +35,13 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, enableName, enableNumber }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [currentRender, setCurrentRender] = useState(null);
+  const [renderProgress, setRenderProgress] = useState('');
+  const renderRef = useRef(null);
 
   const allVariants = generateVariants(colors, combos);
 
@@ -84,12 +89,64 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setGenerating(true);
     setError('');
     try {
+      // Step 1: Render display images for variants with name/number combos
+      const renderedImages = {};
+      const needsRender = missing.filter((v) => v.combo_name || v.combo_number);
+      for (let i = 0; i < needsRender.length; i++) {
+        const v = needsRender[i];
+        setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
+        const colorObj = (colors || []).find((c) => c.name === v.color_name);
+        const images = colorObj?.images || [];
+        if (images.length === 0) continue;
+        const isStatic = images.length <= 1;
+        const imageUrl = isStatic ? images[0].url : images[images.length - 1].url;
+
+        // Preload image to ensure html2canvas captures it
+        const preloadImg = new Image();
+        preloadImg.crossOrigin = 'anonymous';
+        preloadImg.src = imageUrl;
+        await new Promise((resolve) => {
+          preloadImg.onload = resolve;
+          preloadImg.onerror = resolve;
+          setTimeout(resolve, 3000);
+        });
+
+        // Trigger render
+        setCurrentRender({ imageUrl, customName: v.combo_name, customNumber: v.combo_number, staticDisplay: isStatic });
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await new Promise((resolve) => setTimeout(resolve, 250));
+
+        // Capture
+        if (renderRef.current) {
+          try {
+            const canvas = await html2canvas(renderRef.current, {
+              useCORS: true,
+              backgroundColor: null,
+              scale: 2,
+            });
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            if (blob) {
+              const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
+              renderedImages[key] = file_url;
+            }
+          } catch (err) {
+            console.error('Render capture failed:', err);
+        }
+        }
+      }
+      setCurrentRender(null);
+      setRenderProgress('');
+
+      // Step 2: Call create-merchize-products with rendered images
       const res = await base44.functions.invoke('create-merchize-products', {
         jerseyId,
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
         merchize_product_id: merchizeProductId,
         merchize_variants: merchizeVariants,
         colorArtwork,
+        renderedImages,
       });
       if (res.data?.error) {
         setError(res.data.error);
@@ -116,6 +173,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       setError(err?.message || 'Generation failed');
     } finally {
       setGenerating(false);
+      setCurrentRender(null);
+      setRenderProgress('');
     }
   };
 
@@ -134,6 +193,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         </button>
       </div>
       {error && <p className="mono-label text-kinetic text-[0.65rem]">{error}</p>}
+      {renderProgress && <p className="mono-label text-fog/50 text-[0.65rem]">{renderProgress}</p>}
       {allVariants.length === 0 ? (
         <p className="mono-label text-fog/30 text-[0.65rem]">Add colors or presets to generate variants.</p>
       ) : (
@@ -178,6 +238,30 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
               </div>
             );
           })}
+        </div>
+      )}
+      {/* Hidden render container for combo display images */}
+      {currentRender && (
+        <div ref={renderRef} style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: 0,
+          width: '600px',
+          height: currentRender.staticDisplay ? '600px' : '800px',
+          pointerEvents: 'none',
+        }}>
+          <ComboImageRenderer
+            imageUrl={currentRender.imageUrl}
+            customName={currentRender.customName}
+            customNumber={currentRender.customNumber}
+            nameStyle={nameStyle}
+            numberStyle={numberStyle}
+            customFontUrl={customFontUrl}
+            customFontName={customFontName}
+            staticDisplay={currentRender.staticDisplay}
+            enableName={enableName}
+            enableNumber={enableNumber}
+          />
         </div>
       )}
       {showConfirm && (

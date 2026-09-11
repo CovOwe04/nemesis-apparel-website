@@ -411,6 +411,12 @@ export default function JerseyEditor() {
                 };
                 return acc;
               }, {})}
+              nameStyle={form.name_style}
+              numberStyle={form.number_style}
+              customFontUrl={form.custom_font_url}
+              customFontName={form.custom_font_name}
+              enableName={form.enable_name}
+              enableNumber={form.enable_number}
               onPrimaryGenerated={({ merchize_product_id, merchize_product_title, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_product_title', merchize_product_title || '');

@@ -22,6 +22,7 @@ export default function StaticNameOverlay({
   showNamePlaceholder = false,
   showNumberPlaceholder = false,
   className = '',
+  plainImage = false,
 }) {
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
@@ -63,7 +64,11 @@ export default function StaticNameOverlay({
 
   return (
     <div className={`relative overflow-hidden bg-black ${className}`} style={{ containerType: 'inline-size' }}>
-      <Image src={image} alt="jersey" fittingType="fit" className="w-full h-full" />
+      {plainImage ? (
+        <img src={image} alt="jersey" crossOrigin="anonymous" className="w-full h-full object-contain" />
+      ) : (
+        <Image src={image} alt="jersey" fittingType="fit" className="w-full h-full" />
+      )}
       {displayName && (
         <div className="absolute pointer-events-none" style={{ left: `${namePosX}%`, top: `${namePosY}%`, transform: 'translate(-50%, -50%)' }}>
           <span style={{
