@@ -1,15 +1,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
+import { secrets } from 'base44:runtime';
 
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+
+    // Allow if: admin user (manual trigger) OR valid shared secret (workflow trigger)
+    let isAuthorized = false;
+    if (body.secret && body.secret === secrets.get('CLEANUP_SECRET')) {
+      isAuthorized = true;
+    } else {
+      try {
+        const user = await base44.auth.me();
+        if (user && user.role === 'admin') isAuthorized = true;
+      } catch {
+        // no user context — not an admin call
+      }
+    }
+    if (!isAuthorized) {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
     // Delete orders older than 1 year
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const cutoffIso = oneYearAgo.toISOString();
 
-    const result = await base44.asServiceRole.entities.Order.deleteMany({
+    await base44.asServiceRole.entities.Order.deleteMany({
       created_date: { $lt: cutoffIso },
     });
 

@@ -1,4 +1,30 @@
 {
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "nightly_order_cleanup",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "cleanup": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "cleanup-old-orders",
+            "args": {
+              "secret": "1487b130-9325-4caf-b5fa-14c6e6d9eb67"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Delete old orders",
+            "description": "Removes orders older than 1 year"
+          }
+        }
+      }
+    ]
+  },
   "trigger": {
     "condition": null,
     "config": {
@@ -16,29 +42,6 @@
       "ends_after_count": null
     }
   },
-  "description": "Deletes orders older than 1 year every night at 2am to prevent database overload",
   "name": "Nightly Order Cleanup",
-  "definition": {
-    "document": {
-      "dsl": "1.0.0",
-      "name": "nightly_order_cleanup",
-      "version": "1.0",
-      "namespace": "base44"
-    },
-    "do": [
-      {
-        "cleanup": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "cleanup-old-orders"
-          },
-          "then": "end",
-          "x-base44": {
-            "title": "Delete old orders",
-            "description": "Removes orders older than 1 year"
-          }
-        }
-      }
-    ]
-  }
+  "description": "Deletes orders older than 1 year every night at 2am to prevent database overload"
 }
