@@ -23,8 +23,8 @@ const DEFAULT_NUMBER_STYLE = {
 //  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
 //  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(y, archPct, flagPct) {
-  const archHeight = 40 * archPct;
-  const flagHeight = 30 * flagPct;
+  const archHeight = 50 * archPct;
+  const flagHeight = 35 * flagPct;
   return `M 0 ${y - flagHeight} Q 150 ${y - archHeight} 300 ${y + flagHeight}`;
 }
 

@@ -19,8 +19,9 @@ const FONT_SCALE = 4 / 3;
 //  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
 //  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(y, archPct, flagPct) {
-  const archHeight = 40 * archPct;
-  const flagHeight = 30 * flagPct;
+  const warpScale = 4 / 3;
+  const archHeight = 50 * warpScale * archPct;
+  const flagHeight = 35 * warpScale * flagPct;
   return `M 0 ${y - flagHeight} Q 200 ${y - archHeight} 400 ${y + flagHeight}`;
 }
 

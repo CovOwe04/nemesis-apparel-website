@@ -25,8 +25,9 @@ const DEFAULT_VERT_OFFSET = -5;
 //  FLAG:        endpoints offset in opposite directions → wave/tilt (left down, right up)
 //  RISE:        applied as <g> rotation (separate, not in path)
 function buildPath(cx, y, archPct, flagPct) {
-  const archHeight = 40 * archPct;
-  const flagHeight = 30 * flagPct;
+  const warpScale = (2 * cx) / 300;
+  const archHeight = 50 * warpScale * archPct;
+  const flagHeight = 35 * warpScale * flagPct;
   return `M 0 ${y - flagHeight} Q ${cx} ${y - archHeight} ${2 * cx} ${y + flagHeight}`;
 }
 
@@ -70,6 +71,7 @@ export default function ArtworkNameOverlay({
   const vbHeight = 400;
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
+  const FONT_SCALE = vbWidth / 300;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
@@ -86,13 +88,13 @@ export default function ArtworkNameOverlay({
   const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
   const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
 
-  // Text wrapping for long names
-  const ARC_WIDTH = 150;
+  // Text wrapping for long names (scaled to match Identity Lab visual size)
+  const ARC_WIDTH = 150 * FONT_SCALE;
   const charFactor = 0.7;
   const words = displayName.split(' ').filter(Boolean);
   const longestWord = Math.max(...words.map((w) => w.length), 1);
   const fitForLongest = (ARC_WIDTH - Math.max(0, longestWord - 1) * ls) / (longestWord * charFactor);
-  const actualNameFontSize = Math.min(ns.font_size, fitForLongest);
+  const actualNameFontSize = Math.min(ns.font_size * FONT_SCALE, fitForLongest);
   const lineHeight = actualNameFontSize * 1.15;
   const textWidth = (t) => t.length * actualNameFontSize * charFactor + Math.max(0, t.length - 1) * ls;
   const lines = [];
@@ -121,7 +123,7 @@ export default function ArtworkNameOverlay({
               fontSize={actualNameFontSize}
               fill={ns.color}
               stroke={ns.outline ? ns.outline_color : 'none'}
-              strokeWidth={ns.outline ? ns.outline_thickness : 0}
+              strokeWidth={ns.outline ? ns.outline_thickness * FONT_SCALE : 0}
               paintOrder="stroke fill"
               letterSpacing={ls}
               style={{ textTransform: 'uppercase' }}
@@ -138,10 +140,10 @@ export default function ArtworkNameOverlay({
               <path id={`${uid}-num`} d={buildPath(cx, numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
-                fontSize={nus.font_size}
+                fontSize={nus.font_size * FONT_SCALE}
                 fill={nus.color}
                 stroke={nus.outline ? nus.outline_color : 'none'}
-                strokeWidth={nus.outline ? nus.outline_thickness : 0}
+                strokeWidth={nus.outline ? nus.outline_thickness * FONT_SCALE : 0}
                 paintOrder="stroke fill"
               >
                 <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${((cx - 75) + 1.5 * numHorizPos) / (2 * cx) * 100}%`} textAnchor="middle">
