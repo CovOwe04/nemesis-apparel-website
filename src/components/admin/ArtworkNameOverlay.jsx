@@ -77,7 +77,7 @@ export default function ArtworkNameOverlay({
   const cx = vbWidth / 2;
   // 1.5× scaling for the flat artwork. The name-to-number gap is scaled by
   // the same factor so it stays proportional to the 3D designer (no overlap).
-  const FONT_SCALE = staticDisplay ? (4 / 3) * 1.5 : 1.5;
+  const FONT_SCALE = staticDisplay ? (4 / 3) * 1.25 : 1.25;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
