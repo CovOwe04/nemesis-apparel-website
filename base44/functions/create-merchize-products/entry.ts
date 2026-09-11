@@ -2,12 +2,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 
 const SIZES = [
+  { name: 'XS', value: 'xs' },
   { name: 'S', value: 's' },
   { name: 'M', value: 'm' },
   { name: 'L', value: 'l' },
   { name: 'XL', value: 'xl' },
   { name: '2XL', value: '2xl' },
   { name: '3XL', value: '3xl' },
+  { name: '4XL', value: '4xl' },
 ];
 
 export default async function(req) {

@@ -325,6 +325,9 @@
         },
         "3XL": {
           "type": "string"
+        },
+        "4XL": {
+          "type": "string"
         }
       },
       "default": {},
@@ -402,6 +405,9 @@
               },
               "3XL": {
                 "type": "string"
+              },
+              "4XL": {
+                "type": "string"
               }
             },
             "default": {}
@@ -428,6 +434,9 @@
                 "type": "string"
               },
               "3XL": {
+                "type": "string"
+              },
+              "4XL": {
                 "type": "string"
               }
             },

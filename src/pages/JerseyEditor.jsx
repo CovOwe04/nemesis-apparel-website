@@ -384,7 +384,7 @@ export default function JerseyEditor() {
             <div>
               <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'].map((size) => (
+                {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((size) => (
                   <div key={size}>
                     <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
                     <input value={form.merchize_variants?.[size] || ''}
