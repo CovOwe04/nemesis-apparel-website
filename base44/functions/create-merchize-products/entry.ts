@@ -56,9 +56,9 @@ export default async function(req) {
       const colorObj = (jersey.colors || []).find((c) => c.name === color_name);
       const colorHex = colorObj?.hex || '#000000';
       const renderArtworkKey = `${color_name}|${combo_name}|${combo_number}`;
-      const compositedBack = renderedArtwork?.[renderArtworkKey];
+      const compositedFront = renderedArtwork?.[renderArtworkKey];
       const artworkUrls = { ...((colorArtwork && colorArtwork[color_name]) || {}) };
-      if (compositedBack) artworkUrls.back = compositedBack;
+      if (compositedFront) artworkUrls.front = compositedFront;
 
       const productImages = [];
       const renderKey = `${color_name}|${combo_name}|${combo_number}`;
