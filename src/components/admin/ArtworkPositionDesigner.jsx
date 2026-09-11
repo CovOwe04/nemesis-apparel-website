@@ -11,6 +11,9 @@ const PIECES = [
   { key: 'artwork_hood', label: 'HOOD' },
 ];
 
+const PREVIEW_NAME = 'YOUR NAME';
+const PREVIEW_NUMBER = '00';
+
 export default function ArtworkPositionDesigner({
   colors,
   nameStyle,
@@ -26,8 +29,6 @@ export default function ArtworkPositionDesigner({
   const availablePieces = PIECES.filter((p) => colors.some((c) => c[p.key]));
   const [selectedPiece, setSelectedPiece] = useState(availablePieces[0]?.key || 'artwork_front');
   const [aspectRatio, setAspectRatio] = useState(1);
-  const [renderName, setRenderName] = useState('SAMPLE');
-  const [renderNumber, setRenderNumber] = useState('00');
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadError, setUploadError] = useState('');
@@ -145,8 +146,8 @@ export default function ArtworkPositionDesigner({
           <div className="relative w-full bg-card rounded-[4px] overflow-hidden" style={{ aspectRatio }}>
             <ArtworkNameOverlay
               artworkUrl={artworkUrl}
-              customName={renderName}
-              customNumber={renderNumber}
+              customName={PREVIEW_NAME}
+              customNumber={PREVIEW_NUMBER}
               nameStyle={nameStyle}
               numberStyle={numberStyle}
               customFontUrl={customFontUrl}
@@ -185,16 +186,6 @@ export default function ArtworkPositionDesigner({
             className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
         </div>
 
-        <div className="pt-3 border-t border-steel space-y-2">
-          <div className="mono-label text-fog/50 text-[0.65rem]">RENDER NAME & NUMBER</div>
-          <div className="grid grid-cols-2 gap-2">
-            <input type="text" value={renderName} onChange={(e) => setRenderName(e.target.value)}
-              placeholder="Name (blank = no name)" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs focus:border-kinetic outline-none" />
-            <input type="text" value={renderNumber} onChange={(e) => setRenderNumber(e.target.value)}
-              placeholder="Number (blank = no number)" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs focus:border-kinetic outline-none" />
-          </div>
-        </div>
-
         <button type="button" onClick={uploadToMerchize} disabled={uploading || !jerseyId}
           className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
           {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
@@ -216,8 +207,8 @@ export default function ArtworkPositionDesigner({
         }}>
           <ArtworkNameOverlay
             artworkUrl={currentRender.url}
-            customName={enableName ? renderName : ''}
-            customNumber={enableNumber ? renderNumber : ''}
+            customName={enableName ? PREVIEW_NAME : ''}
+            customNumber={enableNumber ? PREVIEW_NUMBER : ''}
             nameStyle={nameStyle}
             numberStyle={numberStyle}
             customFontUrl={customFontUrl}

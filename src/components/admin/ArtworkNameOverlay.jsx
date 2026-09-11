@@ -17,7 +17,6 @@ const DEFAULT_NUMBER_STYLE = {
   arch: 0, rise: 0, flag: 0, horiz_pos: 12, vert_pos: 23, font_size: 35
 };
 
-// Default artwork position offsets (admin-adjustable via ArtworkPositionDesigner)
 const DEFAULT_HORIZ_OFFSET = 55;
 const DEFAULT_VERT_OFFSET = -5;
 
@@ -71,31 +70,20 @@ export default function ArtworkNameOverlay({
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
 
-  // Apply shared offsets — both name and number move together.
-  // horizOffset shifts both horizontally; vertOffset shifts both vertically
-  // by the same pixel amount so they stay in the same relative position.
-  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
-  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
-
-  // Force flag=0 and rise=0 on artwork — tilt/slope from designer values
-  // looks wrong on the flat artwork surface (unlike the jersey back preview)
+  // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
-  const nameFlagPct = 0;
-  const baseNameY = 112.5 + (ns.vert_pos - 50);
-  const nameRotation = undefined;
+  const nameFlagPct = ns.flag / 100;
+  const nameBaselineY = 112.5 + (ns.vert_pos - 50) + vertOffset;
+  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
 
   const numArchPct = nus.arch / 100;
-  const numFlagPct = 0;
-  const baseNumY = 250 + (nus.vert_pos - 50) * 2;
+  const numFlagPct = nus.flag / 100;
+  const numBaselineY = 250 + (nus.vert_pos - 50) * 2 + vertOffset;
+  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
 
-  // Ensure minimum vertical gap so the name stays above the number
-  const minGap = ns.font_size + nus.font_size * 0.8;
-  const adjustedNumY = Math.max(baseNumY, baseNameY + minGap);
-
-  // Apply shared vertical offset (moves both together)
-  const nameBaselineY = baseNameY + vertOffset;
-  const numBaselineY = adjustedNumY + vertOffset;
-  const numRotation = undefined;
+  // Apply shared horizontal offset (moves both together)
+  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
+  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
 
   // Text wrapping for long names
   const ARC_WIDTH = 150;
