@@ -18,11 +18,11 @@ const DEFAULT_NUMBER_STYLE = {
 };
 
 // Offsets to map designer (jersey back) positions → artwork (front) positions.
-// Designer values are calibrated for the jersey back image; the front artwork
-// has a different design layout so we shift the name/number into the center area.
-const VERT_OFFSET_NAME = 30;    // push name down into chest-center zone
-const VERT_OFFSET_NUMBER = 12; // push number down below name
-const HORIZ_OFFSET = 38;       // center horizontally (designer default 12 → 50)
+// The artwork has a different design layout than the jersey back preview,
+// so we shift the name/number up and to the right from the designer values.
+const VERT_OFFSET_NAME = 15;    // shift name up from designer value
+const VERT_OFFSET_NUMBER = 0;   // shift number up from designer value
+const HORIZ_OFFSET = 50;        // shift right from designer value
 
 function buildPath(cx, y, archPct, flagPct) {
   const archOffset = 22 * archPct;
