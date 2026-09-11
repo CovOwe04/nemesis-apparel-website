@@ -75,7 +75,7 @@ export default function ArtworkNameOverlay({
   const vbHeight = 400;
   const vbWidth = Math.round(400 * aspectRatio);
   const cx = vbWidth / 2;
-  const FONT_SCALE = staticDisplay ? 4 / 3 : 1;
+  const FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * 1.15;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;
