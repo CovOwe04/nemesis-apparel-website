@@ -65,7 +65,7 @@ export default function OrderManager() {
                 <button onClick={() => setExpanded(isOpen ? null : o.id)}
                   className="w-full flex items-center gap-4 p-4 hover:bg-steel/20 transition-colors text-left">
                   <div className={`mono-label px-3 py-1 border rounded-[6px] shrink-0 ${STATUS_STYLES[o.status] || ''}`}>
-                    {o.status.toUpperCase()}
+                    {o.status === 'pending_approval' ? 'PENDING APPROVAL' : o.status.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-heading text-fog text-sm truncate">{o.customer_name} — ${o.total}</div>
@@ -80,7 +80,7 @@ export default function OrderManager() {
                     onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
                     className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
                   >
-                    <Eye size={12} /> View Design
+                    <Eye size={12} /> View & Approve Design
                   </button>
                 </button>
 
@@ -109,14 +109,6 @@ export default function OrderManager() {
                       ))}
                     </div>
 
-                    {o.status === 'pending_approval' && (
-                      <button
-                        onClick={() => setReviewOrder(o)}
-                        className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] text-xs"
-                      >
-                        <Eye size={14} /> Review & Approve
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
