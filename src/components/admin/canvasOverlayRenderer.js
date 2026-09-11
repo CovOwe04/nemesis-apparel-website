@@ -314,8 +314,11 @@ export async function renderOverlayToBlob({
     const cx = viewBoxW / 2;
 
     nameBaselineY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
+    // Separate tunable constant for the gap so it can be adjusted independently
+    // from the font size. Lower GAP_SCALE = tighter name/number spacing.
+    const GAP_SCALE = 1.25;
     const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * viewBoxH;
-    numBaselineY = nameBaselineY + designerGap * 1.25 * RES_SCALE;
+    numBaselineY = nameBaselineY + designerGap * GAP_SCALE * RES_SCALE;
 
     const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
     const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
