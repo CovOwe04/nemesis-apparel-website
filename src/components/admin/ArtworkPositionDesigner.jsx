@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Upload } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
+import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
 
 const PIECES = [
   { key: 'artwork_front', label: 'FRONT' },
@@ -55,6 +55,7 @@ export default function ArtworkPositionDesigner({
 
   const horizOffset = artworkPosition?.horiz_offset ?? 55;
   const vertOffset = artworkPosition?.vert_offset ?? -5;
+  const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
 
   const uploadToMerchize = async () => {
     if (!jerseyId) {
@@ -112,12 +113,7 @@ export default function ArtworkPositionDesigner({
         let renderedUrl = '';
         if (renderRef.current) {
           try {
-            const canvas = await html2canvas(renderRef.current, {
-              useCORS: true,
-              backgroundColor: null,
-              scale: 2,
-            });
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            const blob = await renderArtworkToBlob(renderRef.current, url, renderW, renderH, customFontUrl, customFontName, fontFam);
             if (blob) {
               const file = new File([blob], `artwork-${pieceKey}-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
               const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });

@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
+import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -177,15 +178,11 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // Capture
+        // Capture using native SVG-to-canvas for proper font/textPath rendering
         if (renderRef.current) {
           try {
-            const canvas = await html2canvas(renderRef.current, {
-              useCORS: true,
-              backgroundColor: null,
-              scale: 2,
-            });
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            const artworkFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
+            const blob = await renderArtworkToBlob(renderRef.current, artworkFront, renderW, renderH, customFontUrl, customFontName, artworkFontFam);
             if (blob) {
               const file = new File([blob], `artwork-front-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
               const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
@@ -281,25 +278,23 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                     className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                {vmi.skus && Object.keys(vmi.skus).length > 0 && (
-                  <div>
-                    <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {sortSizes(Object.entries(vmi.skus)).map(([size, sku]) => (
-                        <div key={size}>
-                          <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
-                          <input
-                            type="text"
-                            value={sku || ''}
-                            onChange={(e) => updateSku(i, size, e.target.value)}
-                            disabled={generating}
-                            className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                <div>
+                  <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {SIZE_ORDER.map((size) => (
+                      <div key={size}>
+                        <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
+                        <input
+                          type="text"
+                          value={vmi.skus?.[size] || ''}
+                          onChange={(e) => updateSku(i, size, e.target.value)}
+                          disabled={generating}
+                          className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
