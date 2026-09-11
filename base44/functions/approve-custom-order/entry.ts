@@ -1,17 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { createCustomProduct, createMerchizeOrder } from '../../shared/merchize.ts';
+import { requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
   try {
     const body = await req.json();
     const { orderId, compositedArtwork, compositedDisplay, passcode } = body;
 
-    // Validate admin passcode (guest-only app — no real auth session)
-    const adminPasscode = secrets.get('ADMIN_PASSCODE') || '';
-    if (!passcode || passcode !== adminPasscode) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = requireAdminPasscode(req, passcode);
+    if (denied) return denied;
 
     const base44 = createClientFromRequest(req);
     if (!orderId) {

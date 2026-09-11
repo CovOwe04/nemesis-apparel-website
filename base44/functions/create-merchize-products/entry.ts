@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
+import { isSafeImageUrl } from '../../shared/security.ts';
 
 const SIZES = [
   { name: 'XS', value: 'xs' },
@@ -169,6 +170,7 @@ export default async function(req) {
           try {
             const formData = new FormData();
             for (const [piece, url] of artworkEntries) {
+              if (!isSafeImageUrl(url)) continue;
               const imgRes = await fetch(url);
               if (!imgRes.ok) continue;
               const blob = await imgRes.blob();
@@ -213,6 +215,7 @@ export default async function(req) {
           const imageBlobs = [];
           for (const imgUrl of productImages) {
             try {
+              if (!isSafeImageUrl(imgUrl)) continue;
               const imgRes = await fetch(imgUrl);
               if (!imgRes.ok) continue;
               const blob = await imgRes.blob();

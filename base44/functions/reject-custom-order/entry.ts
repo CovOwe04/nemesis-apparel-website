@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
+import { requireAdminPasscode } from '../../shared/security.ts';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
 
@@ -42,11 +43,8 @@ export default async function (req) {
     const body = await req.json();
     const { orderId, reason, passcode } = body;
 
-    // Validate admin passcode (guest-only app — no real auth session)
-    const adminPasscode = secrets.get('ADMIN_PASSCODE') || '';
-    if (!passcode || passcode !== adminPasscode) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denied = requireAdminPasscode(req, passcode);
+    if (denied) return denied;
 
     const base44 = createClientFromRequest(req);
     if (!orderId) {

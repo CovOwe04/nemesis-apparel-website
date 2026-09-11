@@ -1,5 +1,7 @@
 // Shared Merchize API helpers for custom product + order creation
 
+import { isSafeImageUrl } from './security.ts';
+
 interface CreateCustomProductParams {
   baseUrl: string;
   token: string;
@@ -104,6 +106,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     try {
       const formData = new FormData();
       for (const [piece, url] of artworkEntries) {
+        if (!isSafeImageUrl(url)) continue;
         const imgRes = await fetch(url);
         if (!imgRes.ok) continue;
         const blob = await imgRes.blob();
@@ -141,6 +144,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     try {
       const formData = new FormData();
       for (const imgUrl of productImages) {
+        if (!isSafeImageUrl(imgUrl)) continue;
         const imgRes = await fetch(imgUrl);
         if (!imgRes.ok) continue;
         const blob = await imgRes.blob();

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
+import { isSafeImageUrl } from '../../shared/security.ts';
 
 export default async function(req) {
   try {
@@ -59,6 +60,7 @@ export default async function(req) {
           const formData = new FormData();
           for (const [piece, url] of artworkEntries) {
             try {
+              if (!isSafeImageUrl(url)) continue;
               const imgRes = await fetch(url);
               if (!imgRes.ok) continue;
               const blob = await imgRes.blob();
