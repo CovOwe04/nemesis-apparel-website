@@ -36,6 +36,12 @@ export default function ArtworkPositionDesigner({
   const [uploadError, setUploadError] = useState('');
   const renderRef = useRef(null);
   const [currentRender, setCurrentRender] = useState(null);
+  const [selectedComboIdx, setSelectedComboIdx] = useState(0);
+
+  const validCombos = (combos || []).filter((c) => c.name || c.number);
+  const previewCombo = validCombos[Math.min(selectedComboIdx, Math.max(0, validCombos.length - 1))] || null;
+  const previewName = previewCombo?.name || PREVIEW_NAME;
+  const previewNumber = previewCombo?.number || PREVIEW_NUMBER;
 
   const artworkUrl = colors.find((c) => c[selectedPiece])?.[selectedPiece] || '';
 
@@ -166,8 +172,8 @@ export default function ArtworkPositionDesigner({
           <div className="relative w-full bg-card rounded-[4px] overflow-hidden" style={{ aspectRatio }}>
             <ArtworkNameOverlay
               artworkUrl={artworkUrl}
-              customName={PREVIEW_NAME}
-              customNumber={PREVIEW_NUMBER}
+              customName={enableName ? previewName : ''}
+              customNumber={enableNumber ? previewNumber : ''}
               nameStyle={nameStyle}
               numberStyle={numberStyle}
               customFontUrl={customFontUrl}
@@ -182,6 +188,16 @@ export default function ArtworkPositionDesigner({
           </div>
         ) : (
           <p className="mono-label text-fog/30 py-8 text-center">No artwork for this piece.</p>
+        )}
+        {validCombos.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap">
+            {validCombos.map((combo, i) => (
+              <button key={i} type="button" onClick={() => setSelectedComboIdx(i)}
+                className={`mono-label px-2 py-1 border rounded-[2px] text-[0.6rem] transition-colors ${selectedComboIdx === i ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+                {combo.name || '—'} {combo.number || ''}
+              </button>
+            ))}
+          </div>
         )}
       </div>
       <div className="space-y-3">
