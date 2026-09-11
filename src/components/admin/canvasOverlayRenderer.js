@@ -312,11 +312,12 @@ export async function renderOverlayToBlob({
     nameRiseCenterX = cx;
     numRiseCenterX = cx;
   } else if (staticDisplay) {
-    viewBoxW = 400;
+    const staticAspect = renderW / renderH || 1;
+    viewBoxW = Math.round(400 * staticAspect);
     viewBoxH = 400;
     fontScale = 4 / 3;
     warpScale = 4 / 3;
-    arcWidth = 200;
+    arcWidth = viewBoxW / 2;
 
     namePathCenterX = viewBoxW * (ns.horiz_pos / 100);
     numPathCenterX = viewBoxW * (nus.horiz_pos / 100);

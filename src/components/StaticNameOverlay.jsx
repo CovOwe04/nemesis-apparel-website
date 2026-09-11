@@ -1,4 +1,4 @@
-import { useId, useEffect } from 'react';
+import { useId, useEffect, useState } from 'react';
 import { Image } from '@/components/ui/image';
 
 const DEFAULT_NAME_STYLE = {
@@ -57,29 +57,42 @@ export default function StaticNameOverlay({
     document.head.appendChild(style);
   }, [customFontUrl, customFontName]);
 
+  const [imgAspect, setImgAspect] = useState(1);
+  useEffect(() => {
+    if (!image) return;
+    const img = new Image();
+    img.onload = () => setImgAspect(img.naturalWidth / img.naturalHeight || 1);
+    img.onerror = () => setImgAspect(1);
+    img.src = image;
+  }, [image]);
+
   const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
   const displayName = (customName || '').toUpperCase() || (showNamePlaceholder ? 'YOUR NAME' : '');
   const displayNumber = customNumber || (showNumberPlaceholder ? '00' : '');
   const ls = letterSpacing ? letterSpacing / 10 : 0;
 
+  // ViewBox matches image aspect ratio so text positions map correctly
+  // to the actual image — not just the square container
+  const VB_WIDTH = Math.round(400 * imgAspect);
+  const VB_HEIGHT = 400;
+
   // Same Y formulas as IdentityNameOverlay (both use 400h)
   const nameArchPct = ns.arch / 100;
   const nameFlagPct = ns.flag / 100;
-  const nameBaselineY = (ns.vert_pos / 100) * 400;
-  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} 200 ${nameBaselineY})` : undefined;
+  const nameBaselineY = (ns.vert_pos / 100) * VB_HEIGHT;
+  const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${VB_WIDTH / 2} ${nameBaselineY})` : undefined;
 
   const numArchPct = nus.arch / 100;
   const numFlagPct = nus.flag / 100;
-  const numBaselineY = (nus.vert_pos / 100) * 400;
-  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} 200 ${numBaselineY})` : undefined;
+  const numBaselineY = (nus.vert_pos / 100) * VB_HEIGHT;
+  const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${VB_WIDTH / 2} ${numBaselineY})` : undefined;
 
-  // Path center X based on horiz_pos (maps 0-100 to 25%-75% of viewBox width)
-  const VB_WIDTH = 400;
+  // Path center X based on horiz_pos
   const namePathCenterX = VB_WIDTH * (ns.horiz_pos / 100);
   const numPathCenterX = VB_WIDTH * (nus.horiz_pos / 100);
 
-  // Text wrapping for long names (path width is 200 in 400w viewBox)
-  const ARC_WIDTH = 200;
+  // Text wrapping for long names (scales with viewBox width)
+  const ARC_WIDTH = VB_WIDTH / 2;
   const charFactor = 0.7;
   const scaledNameSize = ns.font_size * FONT_SCALE;
   const words = displayName.split(' ').filter(Boolean);
@@ -109,7 +122,7 @@ export default function StaticNameOverlay({
         <Image src={image} alt="jersey" fittingType="fit" className="w-full h-full" />
       )}
       {(displayName || displayNumber) && (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
           {displayName && (
             <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
               {lines.map((line, i) => (
