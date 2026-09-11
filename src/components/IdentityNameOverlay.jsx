@@ -102,7 +102,7 @@ export default function IdentityNameOverlay({
       )}
       {displayName && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid meet">
-          <g transform={nameRotation}>
+          <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
             {lines.map((line, i) => (
               <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
             ))}
@@ -117,14 +117,14 @@ export default function IdentityNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${ns.horiz_pos}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
             </text>
           </g>
           {displayNumber && (
-            <g transform={numRotation}>
+            <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
@@ -134,7 +134,7 @@ export default function IdentityNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness : 0}
                 paintOrder="stroke fill"
                 >
-                <textPath href={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${nus.horiz_pos}%`} textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>

@@ -111,7 +111,7 @@ export default function ArtworkNameOverlay({
       <img src={artworkUrl} alt="artwork" crossOrigin="anonymous" className="w-full h-full object-contain" />
       {displayName && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${vbWidth} ${vbHeight}`} preserveAspectRatio="xMidYMid meet">
-          <g transform={nameRotation}>
+          <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
             {lines.map((line, i) => (
               <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(cx, startBase + i * lineHeight, nameArchPct, nameFlagPct)} fill="none" stroke="none" />
             ))}
@@ -126,14 +126,14 @@ export default function ArtworkNameOverlay({
               style={{ textTransform: 'uppercase' }}
             >
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} startOffset={`${nameHorizPos}%`} textAnchor="middle">
+                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset={`${nameHorizPos}%`} textAnchor="middle">
                   {line}
                 </textPath>
               ))}
             </text>
           </g>
           {displayNumber && (
-            <g transform={numRotation}>
+            <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(cx, numBaselineY, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}
@@ -143,7 +143,7 @@ export default function ArtworkNameOverlay({
                 strokeWidth={nus.outline ? nus.outline_thickness : 0}
                 paintOrder="stroke fill"
               >
-                <textPath href={`#${uid}-num`} startOffset={`${numHorizPos}%`} textAnchor="middle">
+                <textPath href={`#${uid}-num`} xlinkHref={`#${uid}-num`} startOffset={`${numHorizPos}%`} textAnchor="middle">
                   {displayNumber}
                 </textPath>
               </text>
