@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Zap, AlertTriangle } from 'lucide-react';
+import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 import { renderArtworkToBlob } from '@/components/admin/renderArtworkCanvas';
@@ -42,6 +42,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
   const [showConfirm, setShowConfirm] = useState(false);
   const [currentRender, setCurrentRender] = useState(null);
   const [renderProgress, setRenderProgress] = useState('');
+  const [expanded, setExpanded] = useState(null);
   const renderRef = useRef(null);
 
   const allVariants = generateVariants(colors, combos);
@@ -262,39 +263,54 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             const vmi = syncedIds[i];
             const label = [v.color_name, v.combo_name, v.combo_number].filter(Boolean).join(' · ');
             return (
-              <div key={i} className="border border-steel rounded-[4px] p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="mono-label text-fog/40 text-[0.6rem]">{label}</span>
-                  {vmi.manually_set && <span className="mono-label text-[0.55rem] text-kinetic">MANUAL</span>}
-                </div>
-                <div>
-                  <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">TITLE</span>
-                  <input
-                    type="text"
-                    value={vmi.title || ''}
-                    onChange={(e) => updateTitle(i, e.target.value)}
-                    disabled={generating}
-                    placeholder="Auto-filled on generate"
-                    className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {SIZE_ORDER.map((size) => (
-                      <div key={size}>
-                        <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
-                        <input
-                          type="text"
-                          value={vmi.skus?.[size] || ''}
-                          onChange={(e) => updateSku(i, size, e.target.value)}
-                          disabled={generating}
-                          className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
+              <div key={i} className="border border-steel rounded-[4px]">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(expanded === i ? null : i)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    {expanded === i ? <ChevronDown size={12} className="text-fog/50" /> : <ChevronRight size={12} className="text-fog/50" />}
+                    <span className="mono-label text-fog/40 text-[0.6rem]">{label}</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {vmi.merchize_product_id
+                      ? <span className="mono-label text-[0.55rem] text-kinetic">{vmi.manually_set ? 'MANUAL' : 'READY'}</span>
+                      : <span className="mono-label text-[0.55rem] text-fog/30">PENDING</span>}
+                  </span>
+                </button>
+                {expanded === i && (
+                  <div className="px-3 pb-3 space-y-2 border-t border-steel pt-2">
+                    <div>
+                      <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">TITLE</span>
+                      <input
+                        type="text"
+                        value={vmi.title || ''}
+                        onChange={(e) => updateTitle(i, e.target.value)}
+                        disabled={generating}
+                        placeholder="Auto-filled on generate"
+                        className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1.5 text-xs placeholder:text-black/30 focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <span className="mono-label text-fog/30 text-[0.55rem] block mb-1">SKUs</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {SIZE_ORDER.map((size) => (
+                          <div key={size}>
+                            <span className="mono-label text-fog/40 text-[0.55rem] block mb-0.5">{size}</span>
+                            <input
+                              type="text"
+                              value={vmi.skus?.[size] || ''}
+                              onChange={(e) => updateSku(i, size, e.target.value)}
+                              disabled={generating}
+                              className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs focus:border-kinetic outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
