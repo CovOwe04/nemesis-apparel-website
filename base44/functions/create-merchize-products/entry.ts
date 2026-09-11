@@ -189,12 +189,50 @@ export default async function(req) {
           }
         }
 
+        // Upload display images (mockups) to each variant
+        let variantImagesUploaded = 0;
+        if (Object.keys(variantIds).length > 0 && productImages.length > 0) {
+          // Pre-fetch all display images as blobs once
+          const imageBlobs = [];
+          for (const imgUrl of productImages) {
+            try {
+              const imgRes = await fetch(imgUrl);
+              if (!imgRes.ok) continue;
+              const blob = await imgRes.blob();
+              const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
+              imageBlobs.push({ blob, ext });
+            } catch (err) {
+              console.error(`Failed to fetch display image ${imgUrl}:`, err.message);
+            }
+          }
+          for (const variantId of Object.values(variantIds)) {
+            try {
+              const formData = new FormData();
+              for (const { blob, ext } of imageBlobs) {
+                formData.append('images', blob, `image.${ext}`);
+              }
+              if ([...formData.keys()].length > 0) {
+                const variantImgRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}` },
+                  body: formData,
+                });
+                const variantImgData = await variantImgRes.json();
+                if (variantImgData.success) variantImagesUploaded++;
+              }
+            } catch (err) {
+              console.error(`Failed to upload image to variant ${variantId}:`, err.message);
+            }
+          }
+        }
+
         results.push({
           color_name, combo_name, combo_number,
           merchize_product_id: productId,
           variant_ids: variantIds,
           skus,
           artwork_uploaded: artworkUploaded,
+          variant_images_uploaded: variantImagesUploaded,
           success: true,
         });
       } catch (err) {
