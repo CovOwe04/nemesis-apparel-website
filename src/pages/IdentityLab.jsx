@@ -424,11 +424,11 @@ export default function IdentityLab() {
                   <label className="mono-label text-fog/50 block mb-1.5">LETTER SPACING</label>
                   <div className="grid grid-cols-5 gap-1">
                     {[
-                      { label: 'Least', value: -50 },
-                      { label: 'Less', value: -25 },
+                      { label: 'Least', value: -20 },
+                      { label: 'Less', value: -10 },
                       { label: 'None', value: 0 },
-                      { label: 'More', value: 25 },
-                      { label: 'Most', value: 50 },
+                      { label: 'More', value: 10 },
+                      { label: 'Most', value: 20 },
                     ].map((opt) => (
                       <button
                         key={opt.value}
