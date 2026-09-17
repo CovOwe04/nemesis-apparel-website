@@ -314,11 +314,9 @@ export async function renderOverlayToBlob({
     const cx = viewBoxW / 2;
 
     nameBaselineY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
-    // Separate tunable constant for the gap so it can be adjusted independently
-    // from the font size. Lower GAP_SCALE = tighter name/number spacing.
-    const GAP_SCALE = 0.7;
-    const designerGap = ((nus.vert_pos - ns.vert_pos) / 100) * viewBoxH;
-    numBaselineY = nameBaselineY + designerGap * GAP_SCALE * RES_SCALE;
+    // Number position is independent of name position — each vert_pos controls
+    // only its own element, so moving one never shifts the other.
+    numBaselineY = (nus.vert_pos / 100) * viewBoxH + vertOffset;
 
     const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
     const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
