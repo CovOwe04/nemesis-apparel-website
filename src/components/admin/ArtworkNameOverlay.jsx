@@ -3,15 +3,12 @@ import { FONTS } from '@/lib/fonts';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: 85, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: 85, vert_pos: 50, font_size: 35
 };
-
-const DEFAULT_HORIZ_OFFSET = 55;
-const DEFAULT_VERT_OFFSET = -5;
 
 // Adobe-style warp:
 //  ARCH (Arc):  cubic bezier, control points lifted → upward bow (spans text width only)
@@ -40,8 +37,6 @@ export default function ArtworkNameOverlay({
   aspectRatio = 1,
   enableName = true,
   enableNumber = true,
-  horizOffset = DEFAULT_HORIZ_OFFSET,
-  vertOffset = DEFAULT_VERT_OFFSET,
   staticDisplay = false,
 }) {
   const uid = useId().replace(/:/g, '');
@@ -96,19 +91,16 @@ export default function ArtworkNameOverlay({
   const numArchPct = nus.arch / 100;
   const numFlagPct = nus.flag / 100;
 
-  const nameBaselineY = (ns.vert_pos / 100) * vbHeight + vertOffset;
+  const nameBaselineY = (ns.vert_pos / 100) * vbHeight;
   // Number position is independent of name position — each vert_pos controls
   // only its own element, so moving one never shifts the other.
-  const numBaselineY = (nus.vert_pos / 100) * vbHeight + vertOffset;
+  const numBaselineY = (nus.vert_pos / 100) * vbHeight;
 
   const nameRotation = ns.rise !== 0 ? `rotate(${-ns.rise} ${cx} ${nameBaselineY})` : undefined;
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
 
-  // Apply shared horizontal offset (moves both together)
-  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + 55));
-  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + 55));
-  const namePathCenterX = vbWidth * (nameHorizPos / 100);
-  const numPathCenterX = vbWidth * (numHorizPos / 100);
+  const namePathCenterX = vbWidth * (Math.min(95, Math.max(5, ns.horiz_pos)) / 100);
+  const numPathCenterX = vbWidth * (Math.min(95, Math.max(5, nus.horiz_pos)) / 100);
 
   // Text wrapping for long names (scaled to match Identity Lab visual size)
   const ARC_WIDTH = 150 * FONT_SCALE;

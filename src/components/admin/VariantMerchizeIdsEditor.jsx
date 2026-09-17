@@ -184,7 +184,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             enableNumber,
             staticDisplay: isStaticArtwork,
             isArtwork: true,
-            artworkPosition,
             aspectRatio: naturalW / naturalH,
             renderW,
             renderH,

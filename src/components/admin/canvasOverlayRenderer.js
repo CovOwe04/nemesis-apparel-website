@@ -8,11 +8,11 @@
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: 85, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: 85, vert_pos: 50, font_size: 35
 };
 
 const CHAR_FACTOR = 0.7;
@@ -224,7 +224,6 @@ export async function renderOverlayToBlob({
   enableNumber = true,
   staticDisplay = false,
   isArtwork = false,
-  artworkPosition = {},
   aspectRatio = 1,
   renderW,
   renderH,
@@ -289,9 +288,6 @@ export async function renderOverlayToBlob({
   let nameRiseCenterX, numRiseCenterX;
 
   if (isArtwork) {
-    const horizOffset = 55; // locked — horizontal position is not adjustable
-    const vertOffset = artworkPosition?.vert_offset ?? -5;
-
     // Measure the actual artwork image so the viewBox maps 1:1 to its pixels.
     // This makes the design scale proportionally with the image's true size.
     const actualAspect = img.naturalWidth && img.naturalHeight
@@ -313,15 +309,13 @@ export async function renderOverlayToBlob({
 
     const cx = viewBoxW / 2;
 
-    nameBaselineY = (ns.vert_pos / 100) * viewBoxH + vertOffset;
+    nameBaselineY = (ns.vert_pos / 100) * viewBoxH;
     // Number position is independent of name position — each vert_pos controls
     // only its own element, so moving one never shifts the other.
-    numBaselineY = (nus.vert_pos / 100) * viewBoxH + vertOffset;
+    numBaselineY = (nus.vert_pos / 100) * viewBoxH;
 
-    const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
-    const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
-    namePathCenterX = viewBoxW * (nameHorizPos / 100);
-    numPathCenterX = viewBoxW * (numHorizPos / 100);
+    namePathCenterX = viewBoxW * (Math.min(95, Math.max(5, ns.horiz_pos)) / 100);
+    numPathCenterX = viewBoxW * (Math.min(95, Math.max(5, nus.horiz_pos)) / 100);
 
     nameRiseCenterX = cx;
     numRiseCenterX = cx;

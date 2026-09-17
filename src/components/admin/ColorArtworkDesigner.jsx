@@ -90,7 +90,6 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
                   aspectRatio={1}
                   enableName={form.enable_name}
                   enableNumber={form.enable_number}
-                  vertOffset={form.artwork_position?.vert_offset ?? -5}
                   staticDisplay={staticDisplay}
                 />
               </div>

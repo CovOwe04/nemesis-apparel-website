@@ -5,7 +5,7 @@ import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
 import ColorArtworkDesigner from '@/components/admin/ColorArtworkDesigner';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
-import { resolveNameStyle, resolveNumberStyle, LOCKED_HORIZ_OFFSET } from '@/lib/jerseyStyle';
+import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
 import { FONTS } from '@/lib/fonts';
 
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
@@ -59,7 +59,6 @@ export default function DesignerPanel({
       const fontFam = form.custom_font_name
         ? `'${form.custom_font_name}', 'Archivo Black', sans-serif`
         : (FONTS.find((f) => f.id === form.font_id) || FONTS[0]).family;
-      const vertOffset = form.artwork_position?.vert_offset ?? -5;
 
       for (let i = 0; i < renderTargets.length; i++) {
         const { color, comboName, comboNumber } = renderTargets[i];
@@ -92,7 +91,6 @@ export default function DesignerPanel({
             customFontUrl: form.custom_font_url, customFontName: form.custom_font_name,
             enableName: form.enable_name, enableNumber: form.enable_number,
             staticDisplay, isArtwork: true,
-            artworkPosition: { horiz_offset: LOCKED_HORIZ_OFFSET, vert_offset: vertOffset },
             aspectRatio: naturalW / naturalH, renderW, renderH,
           });
           if (blob) {

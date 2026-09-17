@@ -36,8 +36,6 @@ export default function ComboImageRenderer({
         aspectRatio={aspectRatio}
         enableName={enableName}
         enableNumber={enableNumber}
-        horizOffset={artworkPosition?.horiz_offset ?? 55}
-        vertOffset={artworkPosition?.vert_offset ?? -5}
         staticDisplay={staticDisplay}
       />
     );
