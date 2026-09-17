@@ -1,12 +1,5 @@
 import { useId, useEffect, useState } from 'react';
-
-export const FONTS = [
-  { id: 'block', label: 'BLOCK', family: "'Archivo Black', sans-serif" },
-  { id: 'condensed', label: 'CONDENSED', family: "'Anton', sans-serif" },
-  { id: 'athletic', label: 'ATHLETIC', family: "'Oswald', sans-serif" },
-  { id: 'tech', label: 'TECH', family: "'Space Grotesk', sans-serif" },
-  { id: 'clean', label: 'CLEAN', family: "'Inter', sans-serif" },
-];
+import { FONTS } from '@/lib/fonts';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,

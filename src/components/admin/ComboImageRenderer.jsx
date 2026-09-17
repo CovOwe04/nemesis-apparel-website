@@ -14,6 +14,7 @@ export default function ComboImageRenderer({
   numberStyle,
   customFontUrl,
   customFontName,
+  fontId = 'block',
   staticDisplay,
   isArtwork = false,
   aspectRatio = 1,
@@ -31,6 +32,7 @@ export default function ComboImageRenderer({
         numberStyle={numberStyle}
         customFontUrl={customFontUrl}
         customFontName={customFontName}
+        fontId={fontId}
         aspectRatio={aspectRatio}
         enableName={enableName}
         enableNumber={enableNumber}
@@ -61,6 +63,7 @@ export default function ComboImageRenderer({
       back_image={imageUrl}
       customName={enableName ? customName : ''}
       customNumber={enableNumber ? customNumber : ''}
+      fontId={fontId}
       nameStyle={nameStyle}
       numberStyle={numberStyle}
       customFontUrl={customFontUrl}

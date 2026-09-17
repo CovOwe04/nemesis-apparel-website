@@ -91,6 +91,7 @@ export default function IdentityLab() {
     if (available.length > 0 && !available.includes(shirtSize)) {
       setShirtSize(available[0]);
     }
+    if (jersey.font_id) setFontId(jersey.font_id);
   }, [jersey]);
 
   if (loading) {
@@ -294,6 +295,28 @@ export default function IdentityLab() {
                     className="mono-label px-3 py-1.5 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
                   >
                     {combo.name || combo.number || `COMBO ${i + 1}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* FONT */}
+          {canCustomize && !jersey.static_display && !jersey.custom_font_url && (
+            <div>
+              <div className="mono-label text-fog/50 mb-1.5">FONT</div>
+              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto scrollbar-hide">
+                {FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFontId(f.id)}
+                    className={`px-3 py-1.5 border rounded-[4px] text-xs transition-colors ${
+                      fontId === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog hover:border-fog/30'
+                    }`}
+                    style={{ fontFamily: f.family }}
+                  >
+                    {f.label}
                   </button>
                 ))}
               </div>

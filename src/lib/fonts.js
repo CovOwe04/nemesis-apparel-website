@@ -1,0 +1,24 @@
+// Shared font list for the Identity Lab, admin designer, and artwork renderer.
+// 20 fonts — 19 Google Fonts + Jersey M54 (cdnfonts).
+export const FONTS = [
+  { id: 'block', label: 'BLOCK', family: "'Archivo Black', sans-serif" },
+  { id: 'condensed', label: 'CONDENSED', family: "'Anton', sans-serif" },
+  { id: 'athletic', label: 'ATHLETIC', family: "'Oswald', sans-serif" },
+  { id: 'tech', label: 'TECH', family: "'Space Grotesk', sans-serif" },
+  { id: 'clean', label: 'CLEAN', family: "'Inter', sans-serif" },
+  { id: 'bebas', label: 'BEBAS', family: "'Bebas Neue', sans-serif" },
+  { id: 'teko', label: 'TEKO', family: "'Teko', sans-serif" },
+  { id: 'saira-cond', label: 'SAIRA COND', family: "'Saira Condensed', sans-serif" },
+  { id: 'rajdhani', label: 'RAJDHANI', family: "'Rajdhani', sans-serif" },
+  { id: 'russo', label: 'RUSSO', family: "'Russo One', sans-serif" },
+  { id: 'mont', label: 'MONT', family: "'Montserrat', sans-serif" },
+  { id: 'barlow', label: 'BARLOW', family: "'Barlow Condensed', sans-serif" },
+  { id: 'staatliches', label: 'STAATLICHES', family: "'Staatliches', cursive" },
+  { id: 'fjalla', label: 'FJALLA', family: "'Fjalla One', sans-serif" },
+  { id: 'alfa', label: 'ALFA SLAB', family: "'Alfa Slab One', cursive" },
+  { id: 'bungee', label: 'BUNGEE', family: "'Bungee', cursive" },
+  { id: 'marker', label: 'MARKER', family: "'Permanent Marker', cursive" },
+  { id: 'jersey', label: 'JERSEY M54', family: "'Jersey M54', cursive" },
+  { id: 'roboto-cond', label: 'ROBOTO COND', family: "'Roboto Condensed', sans-serif" },
+  { id: 'saira', label: 'SAIRA', family: "'Saira', sans-serif" },
+];

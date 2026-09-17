@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Menu, X } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 function Logo() {
   return (
@@ -68,6 +69,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link
               to="/cart"
               className="btn-solid relative gap-2 px-3 py-2"

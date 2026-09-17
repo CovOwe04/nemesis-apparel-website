@@ -10,6 +10,7 @@ import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
 import ArtworkPositionDesigner from '@/components/admin/ArtworkPositionDesigner';
+import { FONTS } from '@/lib/fonts';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -28,7 +29,7 @@ const EMPTY_FORM = {
   enable_number: true,
   name_style: { ...DEFAULT_NAME_STYLE },
   number_style: { ...DEFAULT_NUMBER_STYLE },
-  custom_font_url: '', custom_font_name: '',
+  custom_font_url: '', custom_font_name: '', font_id: 'block',
   static_display: false,
   is_private: false, private_access_code: '',
   available_from: '', available_until: '',
@@ -326,6 +327,7 @@ export default function JerseyEditor() {
                     numberStyle={form.number_style}
                     customFontUrl={form.custom_font_url}
                     customFontName={form.custom_font_name}
+                    fontId={form.font_id}
                     enableName={form.enable_name}
                     enableNumber={form.enable_number}
                     artworkPosition={form.artwork_position}
@@ -343,6 +345,7 @@ export default function JerseyEditor() {
                   numberStyle={form.number_style}
                   customFontUrl={form.custom_font_url}
                   customFontName={form.custom_font_name}
+                  fontId={form.font_id}
                   enableName={form.enable_name}
                   enableNumber={form.enable_number}
                   staticDisplay={staticDisplay} />
@@ -351,6 +354,20 @@ export default function JerseyEditor() {
                 <div className="p-4 space-y-2">
                   <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
                 onChange={({ url, name }) => {setField('custom_font_url', url);setField('custom_font_name', name);}} />
+                  {!form.custom_font_url && (
+                    <div>
+                      <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
+                        {FONTS.map((f) => (
+                          <button key={f.id} type="button" onClick={() => setField('font_id', f.id)}
+                            className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${form.font_id === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
+                            style={{ fontFamily: f.family }}>
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {form.enable_name || form.enable_number ?
                 <>
@@ -447,6 +464,7 @@ export default function JerseyEditor() {
               numberStyle={form.number_style}
               customFontUrl={form.custom_font_url}
               customFontName={form.custom_font_name}
+              fontId={form.font_id}
               enableName={form.enable_name}
               enableNumber={form.enable_number}
               artworkPosition={form.artwork_position}

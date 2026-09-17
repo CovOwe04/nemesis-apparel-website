@@ -275,6 +275,11 @@
       "default": "",
       "title": "Custom Font Name"
     },
+    "font_id": {
+      "type": "string",
+      "default": "block",
+      "title": "Default Font"
+    },
     "is_private": {
       "type": "boolean",
       "default": false,

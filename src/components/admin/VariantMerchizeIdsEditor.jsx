@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { FONTS } from '@/lib/fonts';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -32,7 +33,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, enableName, enableNumber, artworkPosition }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, fontId, enableName, enableNumber, artworkPosition }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -85,7 +86,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setGenerating(true);
     setError('');
     try {
-      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
+      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : (FONTS.find((f) => f.id === fontId) || FONTS[0]).family;
 
       // Step 1: Render display images for variants with name/number combos.
       // Uses direct Canvas 2D rendering (not html2canvas / SVG-to-image) so

@@ -4,6 +4,13 @@ import { X, Check, Loader2, Mail, User, Shirt, Palette } from 'lucide-react';
 import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { FONTS } from '@/lib/fonts';
+
+const resolveFontFam = (jersey) => {
+  if (jersey.custom_font_name) return `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`;
+  const f = FONTS.find((x) => x.id === jersey.font_id) || FONTS[0];
+  return f.family;
+};
 
 export default function DesignReviewModal({ order, onClose, onAction }) {
   const [jerseys, setJerseys] = useState({});
@@ -39,9 +46,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
       // custom Merchize product gets the same 3D preview + print file.
       const compositedArtwork = {};
       const compositedDisplay = {};
-      const fontFam = (jersey) => jersey.custom_font_name
-        ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
-        : "'Archivo Black', sans-serif";
+      const fontFam = resolveFontFam;
 
       for (let i = 0; i < customItems.length; i++) {
         const item = customItems[i];
@@ -253,6 +258,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             numberStyle={jersey.number_style}
                             customFontUrl={jersey.custom_font_url}
                             customFontName={jersey.custom_font_name}
+                            fontId={jersey.font_id}
                             staticDisplay={isStatic}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}
@@ -279,6 +285,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             numberStyle={jersey.number_style}
                             customFontUrl={jersey.custom_font_url}
                             customFontName={jersey.custom_font_name}
+                            fontId={jersey.font_id}
                             aspectRatio={1}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}

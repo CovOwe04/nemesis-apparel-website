@@ -10,6 +10,7 @@ export default function TextWarpPreview({
   numberStyle = {},
   customFontUrl = '',
   customFontName = '',
+  fontId = 'block',
   enableName = true,
   enableNumber = true,
   staticDisplay = false,
@@ -37,6 +38,7 @@ export default function TextWarpPreview({
       back_image={imageUrl}
       customName={enableName ? 'YOUR NAME' : ''}
       customNumber={enableNumber ? '00' : ''}
+      fontId={fontId}
       nameStyle={nameStyle}
       numberStyle={numberStyle}
       customFontUrl={customFontUrl}

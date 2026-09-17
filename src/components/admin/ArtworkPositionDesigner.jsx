@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Upload } from 'lucide-react';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { FONTS } from '@/lib/fonts';
 
 const PIECES = [
   { key: 'artwork_front', label: 'FRONT' },
@@ -21,6 +22,7 @@ export default function ArtworkPositionDesigner({
   numberStyle,
   customFontUrl,
   customFontName,
+  fontId = 'block',
   enableName,
   enableNumber,
   artworkPosition,
@@ -53,7 +55,7 @@ export default function ArtworkPositionDesigner({
 
   const horizOffset = artworkPosition?.horiz_offset ?? 55;
   const vertOffset = artworkPosition?.vert_offset ?? -5;
-  const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
+  const fontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : (FONTS.find((f) => f.id === fontId) || FONTS[0]).family;
 
   const uploadToMerchize = async () => {
     if (!jerseyId) {
@@ -137,12 +139,14 @@ export default function ArtworkPositionDesigner({
 
         if (renderedUrl) {
           setUploadStatus(`Uploading ${label} to Merchize…`);
+          const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
           const res = await base44.functions.invoke('upload-merchize-artwork', {
             jerseyId,
             color_name: color.name || 'Default',
             combo_name: comboName,
             combo_number: comboNumber,
             artwork: { [pieceKey]: renderedUrl },
+            passcode,
           });
           if (res.data?.error) {
             setUploadError(`${label}: ${res.data.error}`);
@@ -183,6 +187,7 @@ export default function ArtworkPositionDesigner({
               numberStyle={numberStyle}
               customFontUrl={customFontUrl}
               customFontName={customFontName}
+              fontId={fontId}
               aspectRatio={aspectRatio}
               enableName={enableName}
               enableNumber={enableNumber}
