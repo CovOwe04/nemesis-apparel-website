@@ -190,4 +190,38 @@
     margin: 0;
   }
   .no-spinner { -moz-appearance: textfield; appearance: textfield; }
+
+  /* Vertical range slider (writing-mode approach) */
+  .vertical-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .vertical-slider::-webkit-slider-runnable-track {
+    background: hsl(var(--steel));
+    height: 2px;
+    border-radius: 0;
+  }
+  .vertical-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    width: 6px;
+    background: hsl(var(--kinetic));
+    margin-top: -8px;
+    border-radius: 0;
+  }
+  .vertical-slider::-moz-range-track {
+    background: hsl(var(--steel));
+    height: 2px;
+    border-radius: 0;
+  }
+  .vertical-slider::-moz-range-thumb {
+    height: 18px;
+    width: 6px;
+    background: hsl(var(--kinetic));
+    border: none;
+    border-radius: 0;
+  }
 }

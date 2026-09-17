@@ -64,7 +64,7 @@ export default function ProductManager() {
       {loadingList ? (
         <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-28 bg-steel animate-pulse rounded-[6px]" />)}</div>
       ) : jerseys.length === 0 ? (
-        <p className="mono-label text-fog/40">NO JERSEYS IN INVENTORY.</p>
+        <p className="mono-label text-fog/40">NO LISTINGS IN INVENTORY.</p>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="jersey-list">

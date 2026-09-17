@@ -3,14 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Plus, Save, ArrowLeft } from 'lucide-react';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
-import TextWarpPreview from '@/components/admin/TextWarpPreview';
-import FontUploader from '@/components/admin/FontUploader';
 import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
-import ArtworkPositionDesigner from '@/components/admin/ArtworkPositionDesigner';
-import { FONTS } from '@/lib/fonts';
+import DesignerPanel from '@/components/admin/DesignerPanel';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -55,20 +52,6 @@ function Section({ title, children }) {
     <div className="border border-steel rounded-[6px] p-5">
       <div className="mono-label text-kinetic mb-4">{title}</div>
       <div className="space-y-4">{children}</div>
-    </div>);
-
-}
-
-function PropRow({ label, value, min, max, step = 0.1, onChange }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">{label}</span>
-      <input type="range" min={min} max={max} step={step} value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="flex-1 min-w-0" />
-      <input type="number" min={min} max={max} step={step} value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="w-12 bg-white text-black border border-steel rounded-[4px] px-1.5 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
     </div>);
 
 }
@@ -118,7 +101,7 @@ export default function JerseyEditor() {
       setLoading(false);
     }).catch(() => {
       setLoading(false);
-      alert('Jersey not found.');
+      alert('Listing not found.');
       navigate('/nexus-control');
     });
   }, [jerseyId]);
@@ -228,7 +211,7 @@ export default function JerseyEditor() {
             <ArrowLeft size={20} />
           </Link>
           <h1 className="font-heading text-xl uppercase text-fog">
-            {jerseyId ? 'Edit Jersey' : 'Add New Jersey'}
+            {jerseyId ? 'Edit Listing' : 'Add New Listing'}
           </h1>
         </div>
       </div>
@@ -238,7 +221,7 @@ export default function JerseyEditor() {
         <form onSubmit={submit} className="space-y-5">
           <Section title="BASIC INFORMATION">
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><label className={labelCls}>JERSEY NAME</label>
+              <div><label className={labelCls}>LISTING NAME</label>
                 <input value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="e.g. Nemesis Blackout" className={inputCls} />
               </div>
               <div><label className={labelCls}>TEAM</label>
@@ -298,106 +281,16 @@ export default function JerseyEditor() {
           </Section>
 
           {form.enable_customization &&
-          <div className="border border-steel rounded-[6px] overflow-hidden">
-              <div className="mono-label text-kinetic px-5 py-3 border-b border-steel">DESIGNER</div>
-              <div className="px-4 pt-4 flex gap-2 flex-wrap">
-                {form.enable_name &&
-                  <button type="button" onClick={() => setDesignerTab('name')}
-                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'name' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                    NAME
-                  </button>
-                }
-                {form.enable_number &&
-                  <button type="button" onClick={() => setDesignerTab('number')}
-                    className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'number' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                    NUMBER
-                  </button>
-                }
-                <button type="button" onClick={() => setDesignerTab('artwork')}
-                  className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'artwork' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
-                  ARTWORK
-                </button>
-              </div>
-              {designerTab === 'artwork' ? (
-                <div className="p-4">
-                  <ArtworkPositionDesigner
-                    colors={form.colors}
-                    combos={form.name_number_combos}
-                    nameStyle={form.name_style}
-                    numberStyle={form.number_style}
-                    customFontUrl={form.custom_font_url}
-                    customFontName={form.custom_font_name}
-                    fontId={form.font_id}
-                    enableName={form.enable_name}
-                    enableNumber={form.enable_number}
-                    artworkPosition={form.artwork_position}
-                    onChange={(pos) => setField('artwork_position', pos)}
-                    jerseyId={jerseyId}
-                    staticDisplay={staticDisplay}
-                  />
-                </div>
-              ) : (
-              <div className="grid lg:grid-cols-2">
-                <div className="bg-void p-4 border-b lg:border-b-0 lg:border-r border-steel">
-                  <TextWarpPreview
-                  imageUrl={form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url}
-                  nameStyle={form.name_style}
-                  numberStyle={form.number_style}
-                  customFontUrl={form.custom_font_url}
-                  customFontName={form.custom_font_name}
-                  fontId={form.font_id}
-                  enableName={form.enable_name}
-                  enableNumber={form.enable_number}
-                  staticDisplay={staticDisplay} />
-                
-                </div>
-                <div className="p-4 space-y-2">
-                  <FontUploader fontUrl={form.custom_font_url} fontName={form.custom_font_name}
-                onChange={({ url, name }) => {setField('custom_font_url', url);setField('custom_font_name', name);}} />
-                  {!form.custom_font_url && (
-                    <div>
-                      <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
-                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
-                        {FONTS.map((f) => (
-                          <button key={f.id} type="button" onClick={() => setField('font_id', f.id)}
-                            className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${form.font_id === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
-                            style={{ fontFamily: f.family }}>
-                            {f.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {form.enable_name || form.enable_number ?
-                <>
-                      <div className="flex items-center gap-3">
-                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">TEXT COLOR</span>
-                        <input type="color" value={currentStyle.color} onChange={(e) => setStyle('color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
-                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE COLOR</span>
-                        <input type="color" value={currentStyle.outline_color} onChange={(e) => setStyle('outline_color', e.target.value)} className="w-8 h-8 bg-white border border-steel rounded-[4px] cursor-pointer" />
-                      </div>
-                      <Toggle checked={currentStyle.outline} onChange={(v) => setStyle('outline', v)} label="ENABLE TEXT OUTLINE" />
-                      <div className="flex items-center gap-2">
-                        <span className="mono-label text-fog/50 w-20 shrink-0 text-[0.65rem]">OUTLINE THICKNESS</span>
-                        <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
-                    onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
-                    className="w-16 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
-                      </div>
-                      <PropRow label="FONT SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
-                      <PropRow label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
-                      <PropRow label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
-                      <PropRow label="FLAG" value={currentStyle.flag} min={-50} max={50} onChange={(v) => setStyle('flag', v)} />
-                      <PropRow label="HORIZ POS" value={currentStyle.horiz_pos} min={0} max={100} onChange={(v) => setStyle('horiz_pos', v)} />
-                      <PropRow label="VERT POS" value={currentStyle.vert_pos} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
-                    </> :
-
-                <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
-                }
-                </div>
-              </div>
-              )}
-            </div>
+            <DesignerPanel
+              form={form}
+              setField={setField}
+              setStyle={setStyle}
+              currentStyle={currentStyle}
+              designerTab={designerTab}
+              setDesignerTab={setDesignerTab}
+              staticDisplay={staticDisplay}
+              jerseyId={jerseyId}
+            />
           }
 
           <Section title="ACCESS & PUBLISHING">
@@ -490,7 +383,7 @@ export default function JerseyEditor() {
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving}
             className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
-              {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update jersey'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add to arsenal'}</>}
+              {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update listing'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add to arsenal'}</>}
             </button>
             <Link to="/nexus-control" className="mono-label text-fog/50 hover:text-kinetic transition-colors px-4 py-3">
               CANCEL
