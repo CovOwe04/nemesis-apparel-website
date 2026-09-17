@@ -7,7 +7,12 @@ import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
   return (
     <div className="space-y-1">
-      <span className="mono-label text-fog/50 text-[0.55rem] block">{label}</span>
+      <div className="flex items-center justify-between">
+        <span className="mono-label text-fog/50 text-[0.55rem]">{label}</span>
+        <input type="number" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-14 bg-white text-black border border-steel rounded-[4px] px-1.5 py-0.5 text-xs text-center focus:border-kinetic outline-none" />
+      </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full" />
@@ -25,7 +30,7 @@ function ColorSwatch({ label, color, onChange }) {
   );
 }
 
-export default function ColorArtworkDesigner({ color, colorIndex, form, updateColor, combos, staticDisplay }) {
+export default function ColorArtworkDesigner({ color, colorIndex, form, updateColor, setField, combos, staticDisplay }) {
   const [expanded, setExpanded] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,7 +77,7 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
           {/* Front artwork upload (drag & drop) or preview */}
           {artworkUrl ? (
             <div className="relative group">
-              <div className="aspect-square bg-void border border-steel rounded-[4px] overflow-hidden">
+              <div className="h-52 bg-void border border-steel rounded-[4px] overflow-hidden">
                 <ArtworkNameOverlay
                   artworkUrl={artworkUrl}
                   customName={form.enable_name ? previewName : ''}
@@ -100,7 +105,7 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
               onDragLeave={() => setDragging(false)}
               onDrop={(e) => { e.preventDefault(); setDragging(false); handleUpload(e.dataTransfer.files?.[0]); }}
               onClick={() => fileRef.current?.click()}
-              className={`aspect-square border border-dashed rounded-[4px] flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${dragging ? 'border-kinetic text-kinetic bg-kinetic/5' : 'border-steel text-fog/30 hover:border-kinetic hover:text-fog/60'}`}>
+              className={`h-52 border border-dashed rounded-[4px] flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${dragging ? 'border-kinetic text-kinetic bg-kinetic/5' : 'border-steel text-fog/30 hover:border-kinetic hover:text-fog/60'}`}>
               {uploading ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} />}
               <span className="mono-label text-[0.55rem]">{uploading ? 'UPLOADING…' : 'DROP FRONT ARTWORK OR CLICK'}</span>
               <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
@@ -108,31 +113,40 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
             </div>
           )}
 
-          {/* Name controls */}
-          {form.enable_name && (
-            <div className="space-y-2 border border-steel rounded-[4px] p-2.5">
-              <div className="mono-label text-kinetic text-[0.55rem]">NAME</div>
-              <HorizontalSlider label="VERT POS" value={nameStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('name_style', 'vert_pos', v)} />
-              <div className="flex items-center gap-3">
-                <ColorSwatch label="FILL" color={nameStyle.color} onChange={(v) => setColorStyle('name_style', 'color', v)} />
-                <ColorSwatch label="STROKE" color={nameStyle.outline_color} onChange={(v) => setColorStyle('name_style', 'outline_color', v)} />
-              </div>
-              <HorizontalSlider label="THICKNESS" value={nameStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('name_style', 'outline_thickness', v)} />
+          {/* Combined controls: Position Offset, Name, Number */}
+          <div className="space-y-3 border border-steel rounded-[4px] p-2.5">
+            {/* Position Offset (shared) */}
+            <div className="space-y-2 border-b border-steel pb-2.5">
+              <div className="mono-label text-kinetic text-[0.55rem]">POSITION OFFSET</div>
+              <HorizontalSlider label="VERT OFFSET" value={form.artwork_position?.vert_offset ?? -5} min={-100} max={100} onChange={(v) => setField('artwork_position', { ...form.artwork_position, vert_offset: v })} />
             </div>
-          )}
 
-          {/* Number controls */}
-          {form.enable_number && (
-            <div className="space-y-2 border border-steel rounded-[4px] p-2.5">
-              <div className="mono-label text-kinetic text-[0.55rem]">NUMBER</div>
-              <HorizontalSlider label="VERT POS" value={numberStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('number_style', 'vert_pos', v)} />
-              <div className="flex items-center gap-3">
-                <ColorSwatch label="FILL" color={numberStyle.color} onChange={(v) => setColorStyle('number_style', 'color', v)} />
-                <ColorSwatch label="STROKE" color={numberStyle.outline_color} onChange={(v) => setColorStyle('number_style', 'outline_color', v)} />
+            {/* Name controls */}
+            {form.enable_name && (
+              <div className="space-y-2 border-b border-steel pb-2.5">
+                <div className="mono-label text-kinetic text-[0.55rem]">NAME</div>
+                <HorizontalSlider label="VERT POS" value={nameStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('name_style', 'vert_pos', v)} />
+                <div className="flex items-center gap-3">
+                  <ColorSwatch label="FILL" color={nameStyle.color} onChange={(v) => setColorStyle('name_style', 'color', v)} />
+                  <ColorSwatch label="STROKE" color={nameStyle.outline_color} onChange={(v) => setColorStyle('name_style', 'outline_color', v)} />
+                </div>
+                <HorizontalSlider label="THICKNESS" value={nameStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('name_style', 'outline_thickness', v)} />
               </div>
-              <HorizontalSlider label="THICKNESS" value={numberStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('number_style', 'outline_thickness', v)} />
-            </div>
-          )}
+            )}
+
+            {/* Number controls */}
+            {form.enable_number && (
+              <div className="space-y-2">
+                <div className="mono-label text-kinetic text-[0.55rem]">NUMBER</div>
+                <HorizontalSlider label="VERT POS" value={numberStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('number_style', 'vert_pos', v)} />
+                <div className="flex items-center gap-3">
+                  <ColorSwatch label="FILL" color={numberStyle.color} onChange={(v) => setColorStyle('number_style', 'color', v)} />
+                  <ColorSwatch label="STROKE" color={numberStyle.outline_color} onChange={(v) => setColorStyle('number_style', 'outline_color', v)} />
+                </div>
+                <HorizontalSlider label="THICKNESS" value={numberStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('number_style', 'outline_thickness', v)} />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -147,18 +147,12 @@ export default function DesignerPanel({
 
       {designerTab === 'artwork' ? (
         <div className="p-4 space-y-4">
-          {/* Shared vertical offset */}
-          <div className="border border-steel rounded-[4px] p-3 space-y-2">
-            <div className="mono-label text-kinetic text-[0.6rem]">POSITION OFFSET</div>
-            <HorizontalSlider label="VERT OFFSET" value={form.artwork_position?.vert_offset ?? -5} min={-100} max={100} onChange={(v) => setField('artwork_position', { ...form.artwork_position, vert_offset: v })} />
-          </div>
-
           {/* Per-color artwork sections */}
           {form.colors.length === 0 ? (
             <p className="mono-label text-fog/30 py-4 text-center">Add colors first to edit artwork.</p>
           ) : (
             form.colors.map((color, ci) => (
-              <ColorArtworkDesigner key={ci} color={color} colorIndex={ci} form={form} updateColor={updateColor} combos={form.name_number_combos} staticDisplay={staticDisplay} />
+              <ColorArtworkDesigner key={ci} color={color} colorIndex={ci} form={form} updateColor={updateColor} setField={setField} combos={form.name_number_combos} staticDisplay={staticDisplay} />
             ))
           )}
 
