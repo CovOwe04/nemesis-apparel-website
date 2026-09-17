@@ -113,14 +113,8 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
             </div>
           )}
 
-          {/* Combined controls: Position Offset, Name, Number */}
+          {/* Combined controls: Name, Number */}
           <div className="space-y-3 border border-steel rounded-[4px] p-2.5">
-            {/* Position Offset (shared) */}
-            <div className="space-y-2 border-b border-steel pb-2.5">
-              <div className="mono-label text-kinetic text-[0.55rem]">POSITION OFFSET</div>
-              <HorizontalSlider label="VERT OFFSET" value={form.artwork_position?.vert_offset ?? -5} min={-100} max={100} onChange={(v) => setField('artwork_position', { ...form.artwork_position, vert_offset: v })} />
-            </div>
-
             {/* Name controls */}
             {form.enable_name && (
               <div className="space-y-2 border-b border-steel pb-2.5">
