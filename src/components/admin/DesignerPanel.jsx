@@ -11,7 +11,12 @@ import { FONTS } from '@/lib/fonts';
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
   return (
     <div className="space-y-1">
-      <span className="mono-label text-fog/50 text-[0.55rem] block">{label}</span>
+      <div className="flex items-center justify-between">
+        <span className="mono-label text-fog/50 text-[0.55rem]">{label}</span>
+        <input type="number" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-16 bg-white text-black border border-steel rounded-[4px] px-1.5 py-0.5 text-xs text-center focus:border-kinetic outline-none" />
+      </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full" />
