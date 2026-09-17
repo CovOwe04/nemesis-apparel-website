@@ -1,21 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { isSafeImageUrl } from '../../shared/security.ts';
+import { requireAdminPasscode, isSafeImageUrl } from '../../shared/security.ts';
 
 export default async function(req) {
   try {
-    const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    const body = await req.json().catch(() => ({}));
 
-    const body = await req.json();
+    // Guest-only app: authenticate via admin passcode (not base44.auth.me)
+    const denied = requireAdminPasscode(req, body.passcode);
+    if (denied) return denied;
+
+    const base44 = createClientFromRequest(req);
     const { jerseyId, color_name, artwork, combo_name, combo_number } = body;
 
     if (!jerseyId || !color_name) {

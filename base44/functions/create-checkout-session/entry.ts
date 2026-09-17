@@ -69,6 +69,7 @@ export default async function(req) {
       if (!jersey) {
         return Response.json({ error: `Invalid or unavailable item: ${item.name || 'unknown'}` }, { status: 400 });
       }
+      const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
       verifiedItems.push({
         ...item,
         price: jersey.price,
@@ -76,6 +77,10 @@ export default async function(req) {
         team: jersey.team || '',
         front_image: jersey.front_image || item.front_image,
         back_image: jersey.back_image || item.back_image,
+        artwork_front: colorObj?.artwork_front || jersey.artwork_front || '',
+        artwork_back: colorObj?.artwork_back || jersey.artwork_back || '',
+        artwork_sleeve: colorObj?.artwork_sleeve || jersey.artwork_sleeve || '',
+        artwork_hood: colorObj?.artwork_hood || jersey.artwork_hood || '',
       });
     }
 

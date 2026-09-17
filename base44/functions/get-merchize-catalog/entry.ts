@@ -1,21 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
+import { requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function(req) {
   try {
-    // Admin-only: verify caller is an authenticated admin user
-    const base44 = createClientFromRequest(req);
-    let user;
-    try {
-      user = await base44.auth.me();
-    } catch {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     const body = await req.json().catch(() => ({}));
+
+    // Guest-only app: authenticate via admin passcode (not base44.auth.me)
+    const denied = requireAdminPasscode(req, body.passcode);
+    if (denied) return denied;
+
     const search = (body.search || '').trim();
     const page = Number(body.page) || 1;
 

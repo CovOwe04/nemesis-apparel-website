@@ -21,9 +21,11 @@ export default function MerchizeCatalogPicker({ onSelect, onClose }) {
   const fetchCatalog = useCallback(async (searchTerm, pageNum) => {
     setLoading(true);
     try {
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('get-merchize-catalog', {
         search: searchTerm,
         page: pageNum,
+        passcode,
       });
       if (res.data?.products) {
         if (pageNum === 1) setProducts(res.data.products);

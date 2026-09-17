@@ -197,6 +197,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       setRenderProgress('');
 
       // Step 2: Call create-merchize-products with rendered images and artwork
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('create-merchize-products', {
         jerseyId,
         variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
@@ -205,6 +206,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         colorArtwork,
         renderedImages,
         renderedArtwork,
+        passcode,
       });
       if (res.data?.error) {
         setError(res.data.error);

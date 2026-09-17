@@ -15,6 +15,7 @@ import NexusControl from './pages/NexusControl';
 import JerseyEditor from './pages/JerseyEditor';
 import DesignLab from './pages/DesignLab';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import { CartProvider } from '@/lib/CartContext';
 
 const AuthenticatedApp = () => {
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/design-lab" element={<DesignLab />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      <Footer />
     </div>
   );
 };

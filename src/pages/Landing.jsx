@@ -8,7 +8,6 @@ import InfoStrip from '@/components/InfoStrip';
 import WeGetItDone from '@/components/WeGetItDone';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import CustomerOpinion from '@/components/CustomerOpinion';
-import Footer from '@/components/Footer';
 import SectionDivider from '@/components/SectionDivider';
 
 const HERO_URL =
@@ -183,8 +182,6 @@ export default function Landing() {
       {/* CUSTOMER OPINION */}
       <CustomerOpinion />
 
-      {/* FOOTER */}
-      <Footer />
     </div>);
 
 }

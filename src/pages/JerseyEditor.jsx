@@ -84,6 +84,9 @@ export default function JerseyEditor() {
   const [loading, setLoading] = useState(!!jerseyId);
   const [designerTab, setDesignerTab] = useState('name');
   const [showMerchizePicker, setShowMerchizePicker] = useState(false);
+  const [pendingGenerateId, setPendingGenerateId] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
 
   useEffect(() => {
     if (!jerseyId) return;
@@ -146,52 +149,65 @@ export default function JerseyEditor() {
       const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
       const firstColorWithImages = form.colors.find((c) => c.images?.length > 0);
       const payload = { ...form, front_image, back_image, images, price: Number(form.price), static_display: (firstColorWithImages?.images?.length || 0) <= 1 };
+      let savedId;
       if (jerseyId) {
         await base44.entities.Jersey.update(jerseyId, payload);
+        savedId = jerseyId;
       } else {
         const created = await base44.entities.Jersey.create(payload);
-        // Auto-generate Merchize products for new jersey with variants
-        const colors = form.colors.length > 0 ? form.colors : [{ name: 'Default' }];
-        const combos = form.name_number_combos || [];
-        const variants = [];
-        if (combos.length > 0) {
-          for (const color of colors) {
-            for (const combo of combos) {
-              variants.push({ color_name: color.name || 'Default', combo_name: combo.name || '', combo_number: combo.number || '' });
-            }
-          }
-        } else {
-          for (const color of colors) {
-            variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
-          }
-        }
-        if (variants.length > 0) {
-          try {
-            const res = await base44.functions.invoke('create-merchize-products', { jerseyId: created.id, variants });
-            if (res.data?.error) {
-              console.error('Auto-generate Merchize products skipped:', res.data.error);
-            } else {
-              const results = res.data?.results || [];
-              const variantIds = results.filter((r) => r.success).map((r) => ({
-                color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
-                merchize_product_id: r.merchize_product_id, manually_set: false,
-                variant_ids: r.variant_ids || {},
-                skus: r.skus || {},
-              }));
-              if (variantIds.length > 0) {
-                await base44.entities.Jersey.update(created.id, { variant_merchize_ids: variantIds });
-              }
-            }
-          } catch (err) {
-            console.error('Auto-generate Merchize products failed:', err);
-          }
-        }
+        savedId = created.id;
       }
-      navigate('/nexus-control');
+      setPendingGenerateId(savedId);
     } catch (err) {
       alert('Save failed: ' + (err?.message || 'unknown error'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const runGenerate = async () => {
+    setGenerating(true);
+    setGenError('');
+    try {
+      const colors = form.colors.length > 0 ? form.colors : [{ name: 'Default' }];
+      const combos = form.name_number_combos || [];
+      const variants = [];
+      if (combos.length > 0) {
+        for (const color of colors) {
+          for (const combo of combos) {
+            variants.push({ color_name: color.name || 'Default', combo_name: combo.name || '', combo_number: combo.number || '' });
+          }
+        }
+      } else {
+        for (const color of colors) {
+          variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
+        }
+      }
+      if (variants.length > 0) {
+        const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+        const res = await base44.functions.invoke('create-merchize-products', {
+          jerseyId: pendingGenerateId,
+          variants,
+          passcode,
+          merchize_product_id: form.merchize_product_id,
+          merchize_variants: form.merchize_variants,
+        });
+        if (res.data?.error) { setGenError(res.data.error); return; }
+        const results = res.data?.results || [];
+        const variantIds = results.filter((r) => r.success).map((r) => ({
+          color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
+          merchize_product_id: r.merchize_product_id, manually_set: false,
+          variant_ids: r.variant_ids || {}, skus: r.skus || {},
+        }));
+        if (variantIds.length > 0) {
+          await base44.entities.Jersey.update(pendingGenerateId, { variant_merchize_ids: variantIds });
+        }
+      }
+      navigate('/nexus-control');
+    } catch (err) {
+      setGenError(err?.message || 'Generation failed');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -387,7 +403,7 @@ export default function JerseyEditor() {
 
           <Section title="MERCHIZE FULFILLMENT">
             <div>
-              <label className={labelCls}>MERCHIZE PRODUCT ID</label>
+              <label className={labelCls}>CATALOG PRODUCT ID</label>
               <div className="flex gap-2">
                 <input value={form.merchize_product_title || ''} onChange={(e) => setField('merchize_product_title', e.target.value)}
                 placeholder="Use Browse to select a product" className={inputCls} />
@@ -464,6 +480,28 @@ export default function JerseyEditor() {
           </div>
         </form>
       </div>
+
+      {pendingGenerateId && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
+            <div className="font-heading text-fog text-sm uppercase">Generate products in Merchize?</div>
+            <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
+              Create Merchize products for this listing's variants now, or skip and generate later from the editor.
+            </p>
+            {genError && <p className="mono-label text-kinetic text-[0.65rem]">{genError}</p>}
+            <div className="flex gap-2 pt-2">
+              <button type="button" onClick={runGenerate} disabled={generating}
+                className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
+                {generating ? 'Generating…' : 'Generate'}
+              </button>
+              <button type="button" onClick={() => navigate('/nexus-control')}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs">
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>);
 
 }
