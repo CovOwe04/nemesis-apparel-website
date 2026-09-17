@@ -238,6 +238,15 @@ export default function JerseyEditor() {
                 <input type="number" min="0" value={form.price} onChange={(e) => setField('price', e.target.value)} placeholder="64" className={inputCls} />
               </div>
             </div>
+            <div><label className={labelCls}>NET PAYMENT TERMS</label>
+              <select value={form.net_terms} onChange={(e) => setField('net_terms', e.target.value)} className={inputCls}>
+                <option value="">None (Pay at checkout)</option>
+                <option value="net_15">Net 15</option>
+                <option value="net_30">Net 30</option>
+                <option value="net_60">Net 60</option>
+                <option value="net_90">Net 90</option>
+              </select>
+            </div>
             <div><label className={labelCls}>DESCRIPTION</label>
               <textarea value={form.description} onChange={(e) => setField('description', e.target.value)} rows={2} placeholder="Short description…" className={`${inputCls} resize-none`} />
             </div>
