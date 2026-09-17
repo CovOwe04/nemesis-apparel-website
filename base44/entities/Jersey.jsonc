@@ -258,7 +258,7 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 30
+          "default": 70
         },
         "vert_pos": {
           "type": "number",
