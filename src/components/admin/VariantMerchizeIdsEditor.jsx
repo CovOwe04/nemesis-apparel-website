@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { FONTS } from '@/lib/fonts';
+import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -97,6 +98,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const v = needsRender[i];
         setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
         const colorObj = (colors || []).find((c) => c.name === v.color_name);
+        const resolvedNameStyle = resolveNameStyle({ name_style: nameStyle }, colorObj);
+        const resolvedNumberStyle = resolveNumberStyle({ number_style: numberStyle }, colorObj);
         const images = colorObj?.images || [];
         if (images.length === 0) continue;
         const isStatic = images.length <= 1;
@@ -113,8 +116,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             imageFit: 'cover',
             customName: v.combo_name,
             customNumber: v.combo_number,
-            nameStyle,
-            numberStyle,
+            nameStyle: resolvedNameStyle,
+            numberStyle: resolvedNumberStyle,
             fontFam: displayFontFam,
             customFontUrl,
             customFontName,
@@ -142,6 +145,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const v = needsRender[i];
         setRenderProgress(`Compositing artwork ${i + 1}/${needsRender.length}…`);
         const colorObj = (colors || []).find((c) => c.name === v.color_name);
+        const resolvedNameStyle = resolveNameStyle({ name_style: nameStyle }, colorObj);
+        const resolvedNumberStyle = resolveNumberStyle({ number_style: numberStyle }, colorObj);
         const artworkFront = colorObj?.artwork_front || '';
         if (!artworkFront) continue;
 
@@ -170,8 +175,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
             imageFit: 'contain',
             customName: v.combo_name,
             customNumber: v.combo_number,
-            nameStyle,
-            numberStyle,
+            nameStyle: resolvedNameStyle,
+            numberStyle: resolvedNumberStyle,
             fontFam: artworkFontFam,
             customFontUrl,
             customFontName,

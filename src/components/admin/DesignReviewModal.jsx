@@ -5,6 +5,7 @@ import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { FONTS } from '@/lib/fonts';
+import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
 
 const resolveFontFam = (jersey) => {
   if (jersey.custom_font_name) return `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`;
@@ -55,6 +56,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
         const images = colorObj?.images || [];
         const isStatic = images.length <= 1;
+        const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
+        const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
         const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
         const fam = fontFam(jersey);
 
@@ -70,8 +73,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               imageFit: 'cover',
               customName: item.customName,
               customNumber: item.customNumber,
-              nameStyle: jersey.name_style,
-              numberStyle: jersey.number_style,
+              nameStyle: resolvedNameStyle,
+              numberStyle: resolvedNumberStyle,
               fontFam: fam,
               customFontUrl: jersey.custom_font_url,
               customFontName: jersey.custom_font_name,
@@ -117,8 +120,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               imageFit: 'contain',
               customName: item.customName,
               customNumber: item.customNumber,
-              nameStyle: jersey.name_style,
-              numberStyle: jersey.number_style,
+              nameStyle: resolvedNameStyle,
+              numberStyle: resolvedNumberStyle,
               fontFam: fam,
               customFontUrl: jersey.custom_font_url,
               customFontName: jersey.custom_font_name,
@@ -223,6 +226,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               const fontFam = jersey?.custom_font_name
                 ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
                 : "'Archivo Black', sans-serif";
+              const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
+              const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
 
               return (
                 <div key={i} className="border border-steel rounded-[6px] p-4">
@@ -254,8 +259,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             imageUrl={displayImageUrl}
                             customName={item.customName}
                             customNumber={item.customNumber}
-                            nameStyle={jersey.name_style}
-                            numberStyle={jersey.number_style}
+                            nameStyle={resolvedNameStyle}
+                            numberStyle={resolvedNumberStyle}
                             customFontUrl={jersey.custom_font_url}
                             customFontName={jersey.custom_font_name}
                             fontId={jersey.font_id}
@@ -281,8 +286,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             artworkUrl={artworkUrl}
                             customName={item.customName}
                             customNumber={item.customNumber}
-                            nameStyle={jersey.name_style}
-                            numberStyle={jersey.number_style}
+                            nameStyle={resolvedNameStyle}
+                            numberStyle={resolvedNumberStyle}
                             customFontUrl={jersey.custom_font_url}
                             customFontName={jersey.custom_font_name}
                             fontId={jersey.font_id}

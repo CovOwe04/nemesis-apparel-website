@@ -1,119 +1,120 @@
-import { useRef, useCallback } from 'react';
+import { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Loader2, Upload } from 'lucide-react';
 import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
-import ArtworkPositionDesigner from '@/components/admin/ArtworkPositionDesigner';
+import ColorArtworkDesigner from '@/components/admin/ColorArtworkDesigner';
+import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { resolveNameStyle, resolveNumberStyle, LOCKED_HORIZ_OFFSET } from '@/lib/jerseyStyle';
 import { FONTS } from '@/lib/fonts';
 
-// Vertical range slider — min at bottom, max at top.
-function VerticalSlider({ label, value, min, max, step = 0.1, onChange }) {
+function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
   return (
-    <div className="flex flex-col items-center gap-1.5 shrink-0">
-      <div className="h-24 flex items-center justify-center">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="vertical-slider"
-          style={{ writingMode: 'vertical-lr', direction: 'rtl', width: '6px', height: '96px' }}
-        />
-      </div>
-      <span className="mono-label text-fog/50 text-[0.55rem] text-center leading-tight">{label}</span>
+    <div className="space-y-1">
+      <span className="mono-label text-fog/50 text-[0.55rem] block">{label}</span>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full" />
     </div>
-  );
-}
-
-// 2D draggable pad for horizontal + vertical position.
-function PositionPad({ horizPos, vertPos, onChange }) {
-  const padRef = useRef(null);
-  const draggingRef = useRef(false);
-
-  const updateFromEvent = useCallback((clientX, clientY) => {
-    const rect = padRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-    onChange({ horiz_pos: Math.round(x * 10) / 10, vert_pos: Math.round(y * 10) / 10 });
-  }, [onChange]);
-
-  const onPointerDown = (e) => {
-    draggingRef.current = true;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    updateFromEvent(e.clientX, e.clientY);
-  };
-  const onPointerMove = (e) => {
-    if (draggingRef.current) updateFromEvent(e.clientX, e.clientY);
-  };
-  const onPointerUp = (e) => {
-    draggingRef.current = false;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <div
-        ref={padRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className="relative w-full aspect-square bg-void border border-steel rounded-[4px] cursor-crosshair touch-none overflow-hidden"
-      >
-        {/* Grid lines */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-steel/40" />
-        <div className="absolute top-1/2 left-0 right-0 h-px bg-steel/40" />
-        {/* Position dot */}
-        <div
-          className="absolute w-3 h-3 bg-kinetic rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_0_2px_hsl(var(--void))]"
-          style={{ left: `${horizPos}%`, top: `${vertPos}%` }}
-        />
-      </div>
-      <div className="flex justify-between mono-label text-fog/40 text-[0.55rem]">
-        <span>H {horizPos.toFixed(0)}</span>
-        <span>V {vertPos.toFixed(0)}</span>
-      </div>
-    </div>
-  );
-}
-
-function ColorSwatch({ label, color, onChange }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <input
-        type="color"
-        value={color}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-9 h-9 bg-white border border-steel rounded-[4px] cursor-pointer"
-      />
-      <span className="mono-label text-fog/50 text-[0.55rem]">{label}</span>
-    </div>
-  );
-}
-
-function Toggle({ checked, onChange, label }) {
-  return (
-    <button type="button" onClick={() => onChange(!checked)}
-      className={`btn-solid flex items-center justify-between w-full px-3 py-2 ${checked ? '' : 'btn-dark-hover'}`}>
-      <span className="mono-label text-[0.6rem]">{label}</span>
-      <span className={`relative w-9 h-5 transition-colors rounded-[4px] ${checked ? 'bg-kinetic' : 'bg-steel'}`}>
-        <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-void rounded-[3px] transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
-      </span>
-    </button>
   );
 }
 
 export default function DesignerPanel({
-  form,
-  setField,
-  setStyle,
-  currentStyle,
-  designerTab,
-  setDesignerTab,
-  staticDisplay,
-  jerseyId,
+  form, setField, setStyle, currentStyle, designerTab, setDesignerTab, staticDisplay, jerseyId,
 }) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadError, setUploadError] = useState('');
+
   const previewImageUrl = form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url;
+
+  const updateColor = (index, updates) => {
+    setField('colors', form.colors.map((c, i) => (i === index ? { ...c, ...updates } : c)));
+  };
+
+  const uploadToMerchize = async () => {
+    if (!jerseyId) { setUploadError('Save the jersey first.'); return; }
+    setUploading(true);
+    setUploadError('');
+    setUploadStatus('');
+    try {
+      const colorsWithArtwork = form.colors.filter((c) => c.artwork_front);
+      const validCombos = (form.name_number_combos || []).filter((c) => c.name || c.number);
+      const renderTargets = [];
+      for (const color of colorsWithArtwork) {
+        if (validCombos.length > 0) {
+          for (const combo of validCombos) {
+            renderTargets.push({ color, comboName: combo.name || '', comboNumber: combo.number || '' });
+          }
+        } else {
+          renderTargets.push({ color, comboName: '', comboNumber: '' });
+        }
+      }
+
+      const fontFam = form.custom_font_name
+        ? `'${form.custom_font_name}', 'Archivo Black', sans-serif`
+        : (FONTS.find((f) => f.id === form.font_id) || FONTS[0]).family;
+      const vertOffset = form.artwork_position?.vert_offset ?? -5;
+
+      for (let i = 0; i < renderTargets.length; i++) {
+        const { color, comboName, comboNumber } = renderTargets[i];
+        const url = color.artwork_front;
+        const label = [color.name || 'Default', comboName, comboNumber].filter(Boolean).join(' · ');
+        setUploadStatus(`Rendering ${label} (${i + 1}/${renderTargets.length})…`);
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = url;
+        await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; setTimeout(resolve, 5000); });
+        const naturalW = img.naturalWidth || 1200;
+        const naturalH = img.naturalHeight || 1200;
+        const maxDim = 1200;
+        const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
+        const renderW = Math.round(naturalW * sz);
+        const renderH = Math.round(naturalH * sz);
+
+        const nameStyle = resolveNameStyle(form, color);
+        const numberStyle = resolveNumberStyle(form, color);
+        const renderName = comboName || 'YOUR NAME';
+        const renderNumber = comboNumber || '00';
+
+        let renderedUrl = '';
+        try {
+          const blob = await renderOverlayToBlob({
+            imageUrl: url, imageFit: 'contain',
+            customName: renderName, customNumber: renderNumber,
+            nameStyle, numberStyle, fontFam,
+            customFontUrl: form.custom_font_url, customFontName: form.custom_font_name,
+            enableName: form.enable_name, enableNumber: form.enable_number,
+            staticDisplay, isArtwork: true,
+            artworkPosition: { horiz_offset: LOCKED_HORIZ_OFFSET, vert_offset: vertOffset },
+            aspectRatio: naturalW / naturalH, renderW, renderH,
+          });
+          if (blob) {
+            const file = new File([blob], `artwork-front-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
+            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            renderedUrl = file_url;
+          }
+        } catch (err) { console.error('Render failed:', err); }
+
+        if (renderedUrl) {
+          setUploadStatus(`Uploading ${label} to Merchize…`);
+          const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+          const res = await base44.functions.invoke('upload-merchize-artwork', {
+            jerseyId, color_name: color.name || 'Default',
+            combo_name: comboName, combo_number: comboNumber,
+            artwork: { front: renderedUrl }, passcode,
+          });
+          if (res.data?.error) setUploadError(`${label}: ${res.data.error}`);
+        }
+      }
+      setUploadStatus('Upload complete!');
+    } catch (err) {
+      setUploadError(err?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="border border-steel rounded-[6px] overflow-hidden">
@@ -140,22 +141,33 @@ export default function DesignerPanel({
       </div>
 
       {designerTab === 'artwork' ? (
-        <div className="p-4">
-          <ArtworkPositionDesigner
-            colors={form.colors}
-            combos={form.name_number_combos}
-            nameStyle={form.name_style}
-            numberStyle={form.number_style}
-            customFontUrl={form.custom_font_url}
-            customFontName={form.custom_font_name}
-            fontId={form.font_id}
-            enableName={form.enable_name}
-            enableNumber={form.enable_number}
-            artworkPosition={form.artwork_position}
-            onChange={(pos) => setField('artwork_position', pos)}
-            jerseyId={jerseyId}
-            staticDisplay={staticDisplay}
-          />
+        <div className="p-4 space-y-4">
+          {/* Shared vertical offset */}
+          <div className="border border-steel rounded-[4px] p-3 space-y-2">
+            <div className="mono-label text-kinetic text-[0.6rem]">POSITION OFFSET</div>
+            <HorizontalSlider label="VERT OFFSET" value={form.artwork_position?.vert_offset ?? -5} min={-100} max={100} onChange={(v) => setField('artwork_position', { ...form.artwork_position, vert_offset: v })} />
+          </div>
+
+          {/* Per-color artwork sections */}
+          {form.colors.length === 0 ? (
+            <p className="mono-label text-fog/30 py-4 text-center">Add colors first to edit artwork.</p>
+          ) : (
+            form.colors.map((color, ci) => (
+              <ColorArtworkDesigner key={ci} color={color} colorIndex={ci} form={form} updateColor={updateColor} combos={form.name_number_combos} staticDisplay={staticDisplay} />
+            ))
+          )}
+
+          {/* Upload to Merchize */}
+          <div className="pt-2 border-t border-steel">
+            <button type="button" onClick={uploadToMerchize} disabled={uploading || !jerseyId}
+              className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
+              {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+              {uploading ? 'Uploading…' : 'Upload All to Merchize'}
+            </button>
+            {uploadStatus && <p className="mono-label text-fog/50 text-[0.65rem] mt-2">{uploadStatus}</p>}
+            {uploadError && <p className="mono-label text-kinetic text-[0.65rem] mt-2">{uploadError}</p>}
+            {!jerseyId && <p className="mono-label text-fog/30 text-[0.65rem] mt-2">Save the jersey first to enable upload.</p>}
+          </div>
         </div>
       ) : (
         <div className="grid lg:grid-cols-2">
@@ -197,49 +209,15 @@ export default function DesignerPanel({
               </div>
             )}
 
+            {/* Warp sliders (horizontal) */}
             {form.enable_name || form.enable_number ? (
-              <>
-                {/* Color designer */}
-                <div className="border border-steel rounded-[4px] p-3 space-y-3">
-                  <div className="mono-label text-kinetic text-[0.6rem]">COLOR</div>
-                  <div className="flex items-start gap-4">
-                    <ColorSwatch label="FILL" color={currentStyle.color} onChange={(v) => setStyle('color', v)} />
-                    <ColorSwatch label="OUTLINE" color={currentStyle.outline_color} onChange={(v) => setStyle('outline_color', v)} />
-                    <div className="flex-1 space-y-2">
-                      <Toggle checked={currentStyle.outline} onChange={(v) => setStyle('outline', v)} label="OUTLINE" />
-                      <div className="flex items-center gap-2">
-                        <span className="mono-label text-fog/50 text-[0.55rem] w-16">THICKNESS</span>
-                        <input type="number" min={0} max={5} step={0.1} value={currentStyle.outline_thickness}
-                          onChange={(e) => setStyle('outline_thickness', Number(e.target.value))}
-                          className="w-14 bg-white text-black border border-steel rounded-[4px] px-2 py-1 text-xs text-center no-spinner focus:border-kinetic outline-none" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Warp sliders (vertical) */}
-                <div className="border border-steel rounded-[4px] p-3">
-                  <div className="mono-label text-kinetic text-[0.6rem] mb-3">WARP</div>
-                  <div className="flex items-end justify-around gap-2">
-                    <VerticalSlider label="SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
-                    <VerticalSlider label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
-                    <VerticalSlider label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
-                    <VerticalSlider label="FLAG" value={currentStyle.flag} min={-50} max={50} onChange={(v) => setStyle('flag', v)} />
-                  </div>
-                </div>
-
-                {/* 2D position pad */}
-                <div className="border border-steel rounded-[4px] p-3">
-                  <div className="mono-label text-kinetic text-[0.6rem] mb-3">POSITION</div>
-                  <div className="max-w-[140px]">
-                    <PositionPad
-                      horizPos={currentStyle.horiz_pos}
-                      vertPos={currentStyle.vert_pos}
-                      onChange={({ horiz_pos, vert_pos }) => { setStyle('horiz_pos', horiz_pos); setStyle('vert_pos', vert_pos); }}
-                    />
-                  </div>
-                </div>
-              </>
+              <div className="border border-steel rounded-[4px] p-3 space-y-3">
+                <div className="mono-label text-kinetic text-[0.6rem]">WARP</div>
+                <HorizontalSlider label="SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
+                <HorizontalSlider label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
+                <HorizontalSlider label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
+                <HorizontalSlider label="FLAG" value={currentStyle.flag} min={-50} max={50} onChange={(v) => setStyle('flag', v)} />
+              </div>
             ) : (
               <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
             )}

@@ -108,8 +108,8 @@ export default function ArtworkNameOverlay({
   const numRotation = nus.rise !== 0 ? `rotate(${-nus.rise} ${cx} ${numBaselineY})` : undefined;
 
   // Apply shared horizontal offset (moves both together)
-  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + horizOffset));
-  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + horizOffset));
+  const nameHorizPos = Math.min(95, Math.max(5, ns.horiz_pos + 55));
+  const numHorizPos = Math.min(95, Math.max(5, nus.horiz_pos + 55));
   const namePathCenterX = vbWidth * (nameHorizPos / 100);
   const numPathCenterX = vbWidth * (numHorizPos / 100);
 

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
+import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -164,8 +165,8 @@ export default function IdentityLab() {
       customName: canCustomizeName && nameOn ? name.toUpperCase() : '',
       customNumber: canCustomizeNumber && numberOn ? number : '',
       fontId: canCustomize ? fontId : '',
-      nameStyle: canCustomize ? (jersey.name_style || null) : null,
-      numberStyle: canCustomize ? (jersey.number_style || null) : null,
+      nameStyle: canCustomize ? resolveNameStyle(jersey, currentColor) : null,
+      numberStyle: canCustomize ? resolveNumberStyle(jersey, currentColor) : null,
       customFontUrl: canCustomize ? (jersey.custom_font_url || '') : '',
       customFontName: canCustomize ? (jersey.custom_font_name || '') : '',
       letterSpacing: canCustomize ? letterSpacing : 0,
@@ -204,8 +205,8 @@ export default function IdentityLab() {
                   image={selectedImage}
                   customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber && numberOn ? number : ''}
-                  nameStyle={jersey.name_style || {}}
-                  numberStyle={jersey.number_style || {}}
+                  nameStyle={resolveNameStyle(jersey, currentColor)}
+                  numberStyle={resolveNumberStyle(jersey, currentColor)}
                   customFontUrl={jersey.custom_font_url || ''}
                   customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}
@@ -219,8 +220,8 @@ export default function IdentityLab() {
                   customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber && numberOn ? number : ''}
                   fontId={fontId}
-                  nameStyle={jersey.name_style || {}}
-                  numberStyle={jersey.number_style || {}}
+                  nameStyle={resolveNameStyle(jersey, currentColor)}
+                  numberStyle={resolveNumberStyle(jersey, currentColor)}
                   customFontUrl={jersey.custom_font_url || ''}
                   customFontName={jersey.custom_font_name || ''}
                   letterSpacing={letterSpacing}

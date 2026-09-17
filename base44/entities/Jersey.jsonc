@@ -90,6 +90,58 @@
           "artwork_hood": {
             "type": "string",
             "default": ""
+          },
+          "name_style": {
+            "type": "object",
+            "properties": {
+              "vert_pos": {
+                "type": "number",
+                "default": 40
+              },
+              "color": {
+                "type": "string",
+                "default": "#F5F5F7"
+              },
+              "outline": {
+                "type": "boolean",
+                "default": true
+              },
+              "outline_color": {
+                "type": "string",
+                "default": "#0A0A0A"
+              },
+              "outline_thickness": {
+                "type": "number",
+                "default": 1.4
+              }
+            },
+            "default": {}
+          },
+          "number_style": {
+            "type": "object",
+            "properties": {
+              "vert_pos": {
+                "type": "number",
+                "default": 50
+              },
+              "color": {
+                "type": "string",
+                "default": "#F5F5F7"
+              },
+              "outline": {
+                "type": "boolean",
+                "default": true
+              },
+              "outline_color": {
+                "type": "string",
+                "default": "#0A0A0A"
+              },
+              "outline_thickness": {
+                "type": "number",
+                "default": 1.4
+              }
+            },
+            "default": {}
           }
         }
       },

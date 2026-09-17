@@ -289,7 +289,7 @@ export async function renderOverlayToBlob({
   let nameRiseCenterX, numRiseCenterX;
 
   if (isArtwork) {
-    const horizOffset = artworkPosition?.horiz_offset ?? 55;
+    const horizOffset = 55; // locked — horizontal position is not adjustable
     const vertOffset = artworkPosition?.vert_offset ?? -5;
 
     // Measure the actual artwork image so the viewBox maps 1:1 to its pixels.
