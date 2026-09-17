@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ShieldCheck, Package, ClipboardList, Tag } from 'lucide-react';
+import { ShieldCheck, Package, ClipboardList, Tag, Users } from 'lucide-react';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
 import ProductManager from '@/components/admin/ProductManager';
 import OrderManager from '@/components/admin/OrderManager';
 import PromoCodeManager from '@/components/admin/PromoCodeManager';
+import ClubsManager from '@/components/admin/ClubsManager';
 
 export default function NexusControl() {
   const { authed, login, logout } = useAdminAuth();
@@ -30,17 +31,21 @@ export default function NexusControl() {
 
       {/* Tabs */}
       <div className="border-b border-steel">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 flex gap-1">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 flex gap-1 overflow-x-auto scrollbar-hide">
           <button onClick={() => setTab('products')}
-            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors ${tab === 'products' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
-            <Package size={16} /> PRODUCTS
+            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors whitespace-nowrap ${tab === 'products' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
+            <Package size={16} /> LISTINGS
+          </button>
+          <button onClick={() => setTab('clubs')}
+            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors whitespace-nowrap ${tab === 'clubs' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
+            <Users size={16} /> CLUBS
           </button>
           <button onClick={() => setTab('orders')}
-            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors ${tab === 'orders' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
+            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors whitespace-nowrap ${tab === 'orders' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
             <ClipboardList size={16} /> ORDERS
           </button>
           <button onClick={() => setTab('promos')}
-            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors ${tab === 'promos' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
+            className={`inline-flex items-center gap-2 px-5 py-4 mono-label border-b-2 transition-colors whitespace-nowrap ${tab === 'promos' ? 'border-kinetic text-kinetic' : 'border-transparent text-fog/50 hover:text-fog'}`}>
             <Tag size={16} /> PROMOS
           </button>
         </div>
@@ -48,7 +53,7 @@ export default function NexusControl() {
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8">
-        {tab === 'products' ? <ProductManager /> : tab === 'orders' ? <OrderManager /> : <PromoCodeManager />}
+        {tab === 'products' ? <ProductManager /> : tab === 'clubs' ? <ClubsManager /> : tab === 'orders' ? <OrderManager /> : <PromoCodeManager />}
       </div>
     </div>
   );

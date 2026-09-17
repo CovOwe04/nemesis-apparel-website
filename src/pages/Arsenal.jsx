@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 
 export default function Arsenal() {
   const [jerseys, setJerseys] = useState([]);
+  const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [accessCode, setAccessCode] = useState('');
@@ -13,28 +14,32 @@ export default function Arsenal() {
     () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
   );
 
+  const clubCode = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('club') || '';
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('nemesis-currency', currency);
   }, [currency]);
 
   useEffect(() => {
     setLoading(true);
-    base44.functions.invoke('get-arsenal-jerseys', { accessCode })
+    base44.functions.invoke('get-arsenal-jerseys', { accessCode, clubCode })
       .then((res) => {
         setJerseys(res.data?.jerseys || []);
+        setClub(res.data?.club || null);
       })
-      .catch(() => setJerseys([]))
+      .catch(() => { setJerseys([]); setClub(null); })
       .finally(() => setLoading(false));
-  }, [accessCode]);
+  }, [accessCode, clubCode]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const now = new Date();
     return jerseys.filter((j) => {
-      // Scheduling: hide if not yet available or expired
       if (j.available_from && new Date(j.available_from) > now) return false;
       if (j.available_until && new Date(j.available_until) < now) return false;
-      // Search query
       if (q && !(j.name || '').toLowerCase().includes(q) && !(j.team || '').toLowerCase().includes(q)) return false;
       return true;
     });
@@ -45,18 +50,15 @@ export default function Arsenal() {
       {/* Header band */}
       <div className="border-b border-steel">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12 sm:py-16">
-          <div className="mono-label text-kinetic mb-3">THE ARSENAL</div>
+          <div className="mono-label text-kinetic mb-3">{club ? `${club.name.toUpperCase()}` : 'THE ARSENAL'}</div>
           <h1 className="font-heading text-4xl sm:text-6xl uppercase leading-[0.9] text-fog">
-            Browse Community Jerseys
+            {club ? club.name : 'Browse Community Jerseys'}
           </h1>
           <p className="mt-4 text-fog/60 max-w-xl">
-            From fan favourites to custom club kits — order your jersey today
+            {club?.description || 'From fan favourites to custom club kits — order your jersey today'}
           </p>
         </div>
       </div>
-
-      {/* Search bar */}
-        
 
       {/* Grid */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-10">
@@ -67,7 +69,7 @@ export default function Arsenal() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search jerseys by name or team"
+              placeholder="Search listings by name or team"
               className="flex-1 bg-transparent text-black placeholder:text-black/40 font-display uppercase tracking-wider text-sm outline-none"
             />
           </div>
@@ -87,25 +89,28 @@ export default function Arsenal() {
           </div>
         </div>
 
-        {/* Club access code */}
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 ml-auto">
-            <input
-              type="text"
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') setAccessCode(codeInput.trim()); }}
-              placeholder="CLUB ACCESS CODE"
-              className="bg-white text-black border border-steel rounded-[6px] px-3 py-2 mono-label placeholder:text-black/40 focus:border-kinetic outline-none w-44"
-            />
-            <button
-              onClick={() => setAccessCode(codeInput.trim())}
-              className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors"
-            >
-              UNLOCK
-            </button>
+        {/* Club access code (only when not viewing a club link) */}
+        {!clubCode && (
+          <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-4 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 ml-auto">
+              <input
+                type="text"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setAccessCode(codeInput.trim()); }}
+                placeholder="CLUB ACCESS CODE"
+                className="bg-white text-black border border-steel rounded-[6px] px-3 py-2 mono-label placeholder:text-black/40 focus:border-kinetic outline-none w-44"
+              />
+              <button
+                onClick={() => setAccessCode(codeInput.trim())}
+                className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors"
+              >
+                UNLOCK
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -114,12 +119,12 @@ export default function Arsenal() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="mono-label text-fog/50">NO JERSEYS MATCH YOUR SEARCH.</p>
+            <p className="mono-label text-fog/50">NO LISTINGS MATCH YOUR SEARCH.</p>
           </div>
         ) : (
           <>
             <div className="mono-label text-fog/40 mb-6">
-              {filtered.length} {filtered.length === 1 ? 'JERSEY' : 'JERSEYS'} AVAILABLE
+              {filtered.length} {filtered.length === 1 ? 'LISTING' : 'LISTINGS'} AVAILABLE
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((j) => (

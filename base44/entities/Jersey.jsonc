@@ -4,7 +4,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "title": "Jersey Name"
+      "title": "Listing Name"
     },
     "team": {
       "type": "string",
@@ -30,6 +30,11 @@
         "Loose"
       ],
       "default": "Regular"
+    },
+    "club_id": {
+      "type": "string",
+      "default": "",
+      "title": "Club ID"
     },
     "net_terms": {
       "type": "string",
@@ -295,12 +300,12 @@
     "merchize_product_id": {
       "type": "string",
       "default": "",
-      "title": "Merchize Product ID"
+      "title": "Catalog Product ID"
     },
     "merchize_product_title": {
       "type": "string",
       "default": "",
-      "title": "Merchize Product Title"
+      "title": "Catalog Product Title"
     },
     "merchize_variants": {
       "type": "object",
@@ -331,7 +336,7 @@
         }
       },
       "default": {},
-      "title": "Merchize Variant SKUs (by size)"
+      "title": "Catalog Variant SKUs (by size)"
     },
     "artwork_front": {
       "type": "string",
@@ -445,7 +450,7 @@
         }
       },
       "default": [],
-      "title": "Per-Variant Merchize Product IDs"
+      "title": "Per-Variant Catalog Product IDs"
     },
     "artwork_position": {
       "type": "object",

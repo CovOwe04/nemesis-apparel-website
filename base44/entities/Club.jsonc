@@ -1,0 +1,73 @@
+{
+  "name": "Club",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Club Name"
+    },
+    "code": {
+      "type": "string",
+      "title": "Club Code"
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "title": "Description"
+    },
+    "net_terms": {
+      "type": "string",
+      "enum": [
+        "",
+        "net_15",
+        "net_30",
+        "net_60",
+        "net_90"
+      ],
+      "default": "",
+      "title": "Net Payment Terms"
+    },
+    "available_from": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Available From"
+    },
+    "available_until": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Available Until"
+    },
+    "jersey_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Associated Listings"
+    }
+  },
+  "required": [
+    "name",
+    "code"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
