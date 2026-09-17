@@ -214,6 +214,7 @@ export default function DesignerPanel({
               <div className="border border-steel rounded-[4px] p-3 space-y-3">
                 <div className="mono-label text-kinetic text-[0.6rem]">WARP</div>
                 <HorizontalSlider label="SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
+                <HorizontalSlider label="VERT POS" value={currentStyle.vert_pos ?? (designerTab === 'name' ? 40 : 50)} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
                 <HorizontalSlider label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
                 <HorizontalSlider label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
                 <HorizontalSlider label="FLAG" value={currentStyle.flag} min={-50} max={50} onChange={(v) => setStyle('flag', v)} />
