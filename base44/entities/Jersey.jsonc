@@ -258,7 +258,7 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 70
+          "default": 80
         },
         "vert_pos": {
           "type": "number",
@@ -304,7 +304,7 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 30
+          "default": 80
         },
         "vert_pos": {
           "type": "number",
@@ -514,7 +514,7 @@
       "properties": {
         "horiz_offset": {
           "type": "number",
-          "default": 55
+          "default": 0
         },
         "vert_offset": {
           "type": "number",
