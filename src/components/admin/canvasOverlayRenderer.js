@@ -5,14 +5,21 @@
 //
 // No SVG serialization, no html2canvas, no textPath — text is drawn
 // character-by-character along the cubic bezier using ctx.fillText.
+import {
+  ARTWORK_NAME_HORIZ_POS,
+  ARTWORK_NUMBER_HORIZ_POS,
+  ARTWORK_NAME_VERT_POS,
+  ARTWORK_NUMBER_VERT_POS,
+  ARTWORK_TEXT_SCALE_ADJUSTMENT,
+} from '@/lib/jerseyStyle';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 100, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: ARTWORK_NAME_HORIZ_POS, vert_pos: ARTWORK_NAME_VERT_POS, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 100, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: ARTWORK_NUMBER_HORIZ_POS, vert_pos: ARTWORK_NUMBER_VERT_POS, font_size: 35
 };
 
 const CHAR_FACTOR = 0.7;
@@ -264,7 +271,7 @@ export async function renderOverlayToBlob({
     if (!document.getElementById(fontId)) {
       const style = document.createElement('style');
       style.id = fontId;
-      style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}') format('truetype'); }`;
+      style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
       document.head.appendChild(style);
     }
   }
@@ -299,9 +306,8 @@ export async function renderOverlayToBlob({
 
     // Scale font proportionally to the artwork width vs the 3D mockup (300 wide),
     // then adjust with a tunable constant so text isn't overly large (matches ArtworkNameOverlay).
-    const ARTWORK_SCALE_ADJUSTMENT = 1.0;
     const RES_SCALE = viewBoxW / 300;
-    const ARTWORK_FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * RES_SCALE * ARTWORK_SCALE_ADJUSTMENT;
+    const ARTWORK_FONT_SCALE = (staticDisplay ? 4 / 3 : 1) * RES_SCALE * ARTWORK_TEXT_SCALE_ADJUSTMENT;
 
     fontScale = ARTWORK_FONT_SCALE;
     warpScale = ARTWORK_FONT_SCALE;
@@ -389,7 +395,6 @@ export async function renderOverlayToBlob({
     const numTextWidth =
       displayNumber.length * numFontSize * CHAR_FACTOR +
       Math.max(0, displayNumber.length - 1) * ls;
-
     ctx.save();
     if (nus.rise !== 0) {
       ctx.translate(numRiseCenterX * scale, numBaselineY * scale);

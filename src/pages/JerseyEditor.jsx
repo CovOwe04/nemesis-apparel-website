@@ -8,18 +8,19 @@ import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';
 import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
 import DesignerPanel from '@/components/admin/DesignerPanel';
+import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS } from '@/lib/jerseyStyle';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30.8, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NAME_HORIZ_POS, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30.8, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NUMBER_HORIZ_POS, vert_pos: 50, font_size: 35
 };
 
 const EMPTY_FORM = {
-  name: '', team: '', category: 'Jersey', fitting: 'Regular', net_terms: '', price: '',
+  name: '', team: '', category: 'Jersey', fitting: 'Regular', price: '',
   description: '', colors: [], name_number_combos: [],
   enable_customization: false,
   enable_name: true,
@@ -315,13 +316,16 @@ export default function JerseyEditor() {
             <div>
               <label className={labelCls}>CATALOG PRODUCT ID</label>
               <div className="flex gap-2">
-                <input value={form.merchize_product_title || ''} onChange={(e) => setField('merchize_product_title', e.target.value)}
-                placeholder="Use Browse to select a product" className={inputCls} />
+                <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
+                placeholder="Paste an existing Merchize product ID or browse" className={inputCls} />
                 <button type="button" onClick={() => setShowMerchizePicker(true)}
                 className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
                   Browse
                 </button>
               </div>
+              {form.merchize_product_title && (
+                <p className="mono-label text-fog/40 mt-2 text-[0.6rem]">SELECTED PRODUCT: {form.merchize_product_title}</p>
+              )}
             </div>
             <div>
               <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
@@ -360,7 +364,6 @@ export default function JerseyEditor() {
               fontId={form.font_id}
               enableName={form.enable_name}
               enableNumber={form.enable_number}
-              artworkPosition={form.artwork_position}
               onPrimaryGenerated={({ merchize_product_id, merchize_product_title, merchize_variants }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_product_title', merchize_product_title || '');
@@ -383,7 +386,7 @@ export default function JerseyEditor() {
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving}
             className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
-              {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update listing'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add to arsenal'}</>}
+              {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update listing'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add listing'}</>}
             </button>
             <Link to="/nexus-control" className="mono-label text-fog/50 hover:text-kinetic transition-colors px-4 py-3">
               CANCEL

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 
 const PIECES = [
   { key: 'artwork_front', label: 'FRONT' },
@@ -54,7 +54,7 @@ export default function ArtworkUploader({ artwork, onChange, compact = false, je
     if (!file) return;
     setUploading(key);
     try {
-      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       const updatedArtwork = { ...artwork, [key]: file_url };
       onChange(updatedArtwork);
       syncToMerchize(updatedArtwork);

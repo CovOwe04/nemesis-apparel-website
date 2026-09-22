@@ -5,11 +5,16 @@ import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { FONTS } from '@/lib/fonts';
-import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
+import {
+  resolveNameStyle,
+  resolveNumberStyle,
+  resolveArtworkNameStyle,
+  resolveArtworkNumberStyle,
+} from '@/lib/jerseyStyle';
 
 const resolveFontFam = (jersey) => {
-  if (jersey.custom_font_name) return `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`;
   const f = FONTS.find((x) => x.id === jersey.font_id) || FONTS[0];
+  if (jersey.custom_font_name) return `'${jersey.custom_font_name}', ${f.family}`;
   return f.family;
 };
 
@@ -58,6 +63,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         const isStatic = images.length <= 1;
         const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
         const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
+        const resolvedArtworkNameStyle = resolveArtworkNameStyle(jersey, colorObj);
+        const resolvedArtworkNumberStyle = resolveArtworkNumberStyle(jersey, colorObj);
         const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
         const fam = fontFam(jersey);
 
@@ -87,7 +94,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
             });
             if (dispBlob) {
               const file = new File([dispBlob], `display-${key}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              const { file_url } = await base44.integrations.Core.UploadFile({ file });
               compositedDisplay[key] = file_url;
             }
           } catch (err) {
@@ -120,8 +127,8 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               imageFit: 'contain',
               customName: item.customName,
               customNumber: item.customNumber,
-              nameStyle: resolvedNameStyle,
-              numberStyle: resolvedNumberStyle,
+              nameStyle: resolvedArtworkNameStyle,
+              numberStyle: resolvedArtworkNumberStyle,
               fontFam: fam,
               customFontUrl: jersey.custom_font_url,
               customFontName: jersey.custom_font_name,
@@ -129,14 +136,13 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               enableNumber: jersey.enable_number,
               staticDisplay: isStatic,
               isArtwork: true,
-              artworkPosition: jersey.artwork_position,
               aspectRatio: naturalW / naturalH,
               renderW,
               renderH,
             });
             if (blob) {
               const file = new File([blob], `artwork-${key}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+              const { file_url } = await base44.integrations.Core.UploadFile({ file });
               compositedArtwork[key] = file_url;
             }
           } catch (err) {
@@ -224,10 +230,12 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               const displayImageUrl = (isStatic ? images[0]?.url : images[images.length - 1]?.url) || jersey?.back_image || '';
               const artworkUrl = colorObj?.artwork_front || '';
               const fontFam = jersey?.custom_font_name
-                ? `'${jersey.custom_font_name}', 'Archivo Black', sans-serif`
-                : "'Archivo Black', sans-serif";
+                ? `'${jersey.custom_font_name}', ${(FONTS.find((f) => f.id === jersey.font_id) || FONTS[0]).family}`
+                : (FONTS.find((f) => f.id === jersey?.font_id) || FONTS[0]).family;
               const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
               const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
+              const resolvedArtworkNameStyle = resolveArtworkNameStyle(jersey, colorObj);
+              const resolvedArtworkNumberStyle = resolveArtworkNumberStyle(jersey, colorObj);
 
               return (
                 <div key={i} className="border border-steel rounded-[6px] p-4">
@@ -267,7 +275,6 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             staticDisplay={isStatic}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}
-                            artworkPosition={jersey.artwork_position}
                           />
                         </div>
                       ) : (
@@ -286,16 +293,14 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                             artworkUrl={artworkUrl}
                             customName={item.customName}
                             customNumber={item.customNumber}
-                            nameStyle={resolvedNameStyle}
-                            numberStyle={resolvedNumberStyle}
+                            nameStyle={resolvedArtworkNameStyle}
+                            numberStyle={resolvedArtworkNumberStyle}
                             customFontUrl={jersey.custom_font_url}
                             customFontName={jersey.custom_font_name}
                             fontId={jersey.font_id}
                             aspectRatio={1}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}
-                            horizOffset={jersey.artwork_position?.horiz_offset ?? 55}
-                            vertOffset={jersey.artwork_position?.vert_offset ?? -5}
                             staticDisplay={isStatic}
                           />
                         </div>

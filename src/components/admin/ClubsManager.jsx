@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, Save, X, Copy, Check, Link as LinkIcon, Users } from 'lucide-react';
+import { Trash2, Plus, Save, X, Check, Link as LinkIcon, Users } from 'lucide-react';
 
 const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
 const labelCls = "mono-label text-fog/50 block mb-2";
@@ -11,6 +11,13 @@ function generateCode() {
   let code = '';
   for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
+}
+
+function toLocalDateTimeInput(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
 const EMPTY_CLUB = {
@@ -80,13 +87,15 @@ export default function ClubsManager() {
     if (!form.name || !form.code) { alert('Name and code are required.'); return; }
     setSaving(true);
     try {
-      // Uniqueness check on code
-      const existing = clubs.find((c) => c.code === form.code && c.id !== editing);
+      const code = form.code.trim().toUpperCase();
+      // Check persisted records too, not only the first page already loaded here.
+      const matches = await base44.entities.Club.filter({ code }, '-created_date', 100);
+      const existing = (matches || []).find((c) => c.id !== editing);
       if (existing) { alert('That club code is already in use. Generate a new one.'); setSaving(false); return; }
 
       const payload = {
         name: form.name,
-        code: form.code,
+        code,
         description: form.description || '',
         net_terms: form.net_terms || '',
         available_from: form.available_from || '',
@@ -167,8 +176,19 @@ export default function ClubsManager() {
               <label className={labelCls}>DESCRIPTION</label>
               <textarea value={form.description} onChange={(e) => setField('description', e.target.value)} rows={2} placeholder="Short description shown on the club page…" className={`${inputCls} resize-none`} />
             </div>
+            <div className="mono-label text-fog/50 pt-2">AVAILABLE DATES</div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>AVAILABLE FROM</label>
+                <input type="datetime-local" value={toLocalDateTimeInput(form.available_from)} onChange={(e) => setField('available_from', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>AVAILABLE UNTIL</label>
+                <input type="datetime-local" value={toLocalDateTimeInput(form.available_until)} onChange={(e) => setField('available_until', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
+              </div>
+            </div>
             <div>
-              <label className={labelCls}>PAYMENT TERMS (NET DAYS)</label>
+              <label className={labelCls}>NET DAYS</label>
               <select value={form.net_terms || ''} onChange={(e) => setField('net_terms', e.target.value)} className={inputCls}>
                 <option value="">None — Pay at checkout</option>
                 <option value="net_15">Net 15</option>
@@ -176,16 +196,6 @@ export default function ClubsManager() {
                 <option value="net_60">Net 60</option>
                 <option value="net_90">Net 90</option>
               </select>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>AVAILABLE FROM</label>
-                <input type="datetime-local" value={form.available_from ? form.available_from.slice(0, 16) : ''} onChange={(e) => setField('available_from', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>AVAILABLE UNTIL</label>
-                <input type="datetime-local" value={form.available_until ? form.available_until.slice(0, 16) : ''} onChange={(e) => setField('available_until', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
             </div>
           </div>
 

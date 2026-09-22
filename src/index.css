@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Anton&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Teko:wght@500;600;700&family=Saira+Condensed:wght@600;700;800&family=Rajdhani:wght@600;700&family=Russo+One&family=Montserrat:wght@800;900&family=Barlow+Condensed:wght@600;700;800&family=Staatliches&family=Fjalla+One&family=Alfa+Slab+One&family=Bungee&family=Permanent+Marker&family=Roboto+Condensed:wght@700;900&family=Saira:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Anton&family=Oswald:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Teko:wght@500;600;700&family=Saira+Condensed:wght@600;700;800&family=Rajdhani:wght@600;700&family=Russo+One&family=Montserrat:wght@800;900&family=Barlow+Condensed:wght@600;700;800&family=Staatliches&family=Fjalla+One&family=Alfa+Slab+One&family=Bungee&family=Permanent+Marker&family=Roboto+Condensed:wght@700;900&family=Saira:wght@600;700;800&family=Graduate&display=swap');
 @import url('https://fonts.cdnfonts.com/css/jersey-m54');
 
 @tailwind base;
@@ -7,18 +7,19 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 96%;
+    color-scheme: light;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
-    --popover: 0 0% 96%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
     --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 90%;
+    --secondary: 0 0% 93%;
     --secondary-foreground: 0 0% 0%;
     --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted-foreground: 0 0% 38%;
     --accent: 350 74% 47%;
     --accent-foreground: 0 0% 100%;
     --destructive: 350 74% 47%;
@@ -37,9 +38,9 @@
     --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --kinetic: 350 74% 47%;
-    --void: 0 0% 100%;
-    --fog: 0 0% 0%;
-    --steel: 0 0% 88%;
+    --void: 0 0% 98%;
+    --fog: 0 0% 8%;
+    --steel: 0 0% 90%;
     --sidebar-background: 0 0% 96%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 350 74% 47%;
@@ -51,6 +52,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
     --card: 0 0% 7%;
@@ -97,6 +99,7 @@
 
   body {
     @apply bg-background text-foreground font-body;
+    transition: background-color 180ms ease, color 180ms ease;
   }
 
   ::selection {
@@ -224,4 +227,49 @@
     border: none;
     border-radius: 0;
   }
+}
+
+/* Brand assets are white artwork on transparent backgrounds. In light mode,
+   render the same marks in black so the logo stays legible on pale surfaces. */
+.theme-logo {
+  transition: filter 180ms ease;
+}
+.site-header .theme-logo {
+  filter: none;
+}
+:root:not(.dark) .site-header .theme-logo {
+  filter: none;
+}
+:root .site-header .header-cart,
+.dark .site-header .header-cart {
+  background-color: hsl(0 0% 100%);
+  color: hsl(0 0% 0%);
+}
+:root .site-header .header-cart:hover,
+.dark .site-header .header-cart:hover {
+  background-color: hsl(var(--kinetic));
+  color: hsl(0 0% 100%);
+}
+:root:not(.dark) .theme-logo {
+  filter: brightness(0);
+}
+.footer-pattern {
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: top left;
+  opacity: 0.1;
+}
+.dark .footer-pattern {
+  opacity: 0.42;
+}
+.dark input:not([type="color"]):not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border-color: hsl(var(--border));
+}
+.dark input:not([type="color"]):not([type="range"]):not([type="checkbox"]):not([type="radio"])::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground));
 }

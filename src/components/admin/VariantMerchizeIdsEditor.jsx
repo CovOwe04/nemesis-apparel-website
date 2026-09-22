@@ -3,7 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { FONTS } from '@/lib/fonts';
-import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
+import {
+  resolveNameStyle,
+  resolveNumberStyle,
+  resolveArtworkNameStyle,
+  resolveArtworkNumberStyle,
+} from '@/lib/jerseyStyle';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -34,7 +39,7 @@ function generateVariants(colors, combos) {
   return variants;
 }
 
-export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, fontId, enableName, enableNumber, artworkPosition }) {
+export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, onPrimaryGenerated, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, fontId, enableName, enableNumber }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -130,7 +135,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
           });
           if (blob) {
             const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
             const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
             renderedImages[key] = file_url;
           }
@@ -145,8 +150,8 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const v = needsRender[i];
         setRenderProgress(`Compositing artwork ${i + 1}/${needsRender.length}…`);
         const colorObj = (colors || []).find((c) => c.name === v.color_name);
-        const resolvedNameStyle = resolveNameStyle({ name_style: nameStyle }, colorObj);
-        const resolvedNumberStyle = resolveNumberStyle({ number_style: numberStyle }, colorObj);
+        const resolvedNameStyle = resolveArtworkNameStyle({ name_style: nameStyle }, colorObj);
+        const resolvedNumberStyle = resolveArtworkNumberStyle({ number_style: numberStyle }, colorObj);
         const artworkFront = colorObj?.artwork_front || '';
         if (!artworkFront) continue;
 
@@ -190,7 +195,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
           });
           if (blob) {
             const file = new File([blob], `artwork-front-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
             const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
             renderedArtwork[key] = file_url;
           }

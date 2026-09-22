@@ -105,7 +105,7 @@ export default function IdentityLab() {
   if (!jersey) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-void px-5 text-center">
-        <p className="font-heading text-2xl uppercase text-fog">Jersey not found</p>
+        <p className="font-heading text-2xl uppercase text-fog">Listing not found</p>
         <Link to="/arsenal" className="mono-label text-kinetic">← BACK TO ARSENAL</Link>
       </div>
     );
@@ -144,7 +144,7 @@ export default function IdentityLab() {
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
         if (blob) {
           const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
-          const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
           renderedImage = file_url;
         }
       } catch (err) {
@@ -205,6 +205,7 @@ export default function IdentityLab() {
                   image={selectedImage}
                   customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
                   customNumber={canCustomizeNumber && numberOn ? number : ''}
+                  fontId={fontId}
                   nameStyle={resolveNameStyle(jersey, currentColor)}
                   numberStyle={resolveNumberStyle(jersey, currentColor)}
                   customFontUrl={jersey.custom_font_url || ''}
@@ -255,7 +256,7 @@ export default function IdentityLab() {
             <div className="border border-steel rounded-[6px] p-3 bg-steel/20">
               <p className="mono-label text-kinetic mb-1">IDENTITY LAB ADVISORY</p>
               <p className="text-fog/60 text-xs leading-snug">
-                Use the lab to print your own name on the back of your jersey. Names are applied
+                Use the lab to personalize this listing. Names are applied
                 exactly as entered, please ensure spelling is correct before submitting.
               </p>
             </div>

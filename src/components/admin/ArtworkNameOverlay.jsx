@@ -1,13 +1,20 @@
 import { useId, useEffect, useState } from 'react';
 import { FONTS } from '@/lib/fonts';
+import {
+  ARTWORK_NAME_HORIZ_POS,
+  ARTWORK_NUMBER_HORIZ_POS,
+  ARTWORK_NAME_VERT_POS,
+  ARTWORK_NUMBER_VERT_POS,
+  ARTWORK_TEXT_SCALE_ADJUSTMENT,
+} from '@/lib/jerseyStyle';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 150, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: ARTWORK_NAME_HORIZ_POS, vert_pos: ARTWORK_NAME_VERT_POS, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 150, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: ARTWORK_NUMBER_HORIZ_POS, vert_pos: ARTWORK_NUMBER_VERT_POS, font_size: 35
 };
 
 // Adobe-style warp:
@@ -50,7 +57,7 @@ export default function ArtworkNameOverlay({
     if (document.getElementById(id)) return;
     const style = document.createElement('style');
     style.id = id;
-    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}') format('truetype'); }`;
+    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
     document.head.appendChild(style);
   }, [customFontUrl, customFontName]);
 
@@ -80,10 +87,9 @@ export default function ArtworkNameOverlay({
   const cx = vbWidth / 2;
   // Scale font proportionally to the artwork's width vs the 3D mockup (300 wide),
   // then adjust with a tunable constant so the text isn't overly large.
-  // Lower ARTWORK_SCALE_ADJUSTMENT = smaller text. 1.0 ≈ matches 3D mockup size.
-  const ARTWORK_SCALE_ADJUSTMENT = 0.7;
+  // Keep this in sync with the Canvas renderer used by Upload All to Merchize.
   const RES_SCALE = vbWidth / 300;
-  const FONT_SCALE = (staticDisplay ? (4 / 3) : 1) * RES_SCALE * ARTWORK_SCALE_ADJUSTMENT;
+  const FONT_SCALE = (staticDisplay ? (4 / 3) : 1) * RES_SCALE * ARTWORK_TEXT_SCALE_ADJUSTMENT;
 
   // Same formulas as IdentityNameOverlay, plus shared offsets that move both together
   const nameArchPct = ns.arch / 100;

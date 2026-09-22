@@ -1,0 +1,16 @@
+{
+  "name": "Font",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "title": "Font Name" },
+    "file_url": { "type": "string", "title": "Font File URL" },
+    "checksum": { "type": "string", "title": "Font SHA-256" }
+  },
+  "required": ["name", "file_url", "checksum"],
+  "rls": {
+    "create": { "user_condition": { "role": "admin" } },
+    "read": null,
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

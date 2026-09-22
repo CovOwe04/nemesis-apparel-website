@@ -5,7 +5,7 @@ import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
 import ColorArtworkDesigner from '@/components/admin/ColorArtworkDesigner';
 import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
-import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
+import { resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { FONTS } from '@/lib/fonts';
 
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
@@ -77,8 +77,8 @@ export default function DesignerPanel({
         const renderW = Math.round(naturalW * sz);
         const renderH = Math.round(naturalH * sz);
 
-        const nameStyle = resolveNameStyle(form, color);
-        const numberStyle = resolveNumberStyle(form, color);
+        const nameStyle = resolveArtworkNameStyle(form, color);
+        const numberStyle = resolveArtworkNumberStyle(form, color);
         const renderName = comboName || 'YOUR NAME';
         const renderNumber = comboNumber || '00';
 
@@ -95,7 +95,7 @@ export default function DesignerPanel({
           });
           if (blob) {
             const file = new File([blob], `artwork-front-${color.name || 'default'}-${comboName || 'base'}-${comboNumber || ''}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
             renderedUrl = file_url;
           }
         } catch (err) { console.error('Render failed:', err); }
@@ -195,8 +195,12 @@ export default function DesignerPanel({
               <div>
                 <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
-                  {FONTS.map((f) => (
-                    <button key={f.id} type="button" onClick={() => setField('font_id', f.id)}
+                    {FONTS.map((f) => (
+                    <button key={f.id} type="button" onClick={() => {
+                      setField('font_id', f.id);
+                      setField('custom_font_url', '');
+                      setField('custom_font_name', '');
+                    }}
                       className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${form.font_id === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
                       style={{ fontFamily: f.family }}>
                       {f.label}

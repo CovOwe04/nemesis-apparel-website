@@ -35,7 +35,7 @@ export default function Landing() {
   return (
     <div className="bg-void">
       {/* HERO */}
-      <section className="relative h-[92vh] min-h-[600px] overflow-hidden">
+      <section className="hero-dark relative h-[92vh] min-h-[600px] overflow-hidden bg-black">
         <img
           src={HERO_URL}
           alt="Athlete celebrating mid-rally"
@@ -46,14 +46,14 @@ export default function Landing() {
           className="absolute inset-0"
           style={{
             background:
-            'linear-gradient(to bottom, rgba(120,120,120,0.28) 0%, rgba(120,120,120,0.14) 40%, rgba(120,120,120,0.5) 100%)'
+              'linear-gradient(to bottom, rgba(120,120,120,0.28) 0%, rgba(120,120,120,0.14) 40%, rgba(120,120,120,0.5) 100%)'
           }} />
         
         <div
           className="absolute inset-0"
           style={{
             background:
-            'linear-gradient(to right, rgba(130,130,130,0.4) 0%, rgba(130,130,130,0.2) 45%, rgba(130,130,130,0.06) 100%)'
+              'linear-gradient(to right, rgba(130,130,130,0.4) 0%, rgba(130,130,130,0.2) 45%, rgba(130,130,130,0.06) 100%)'
           }} />
         
 
@@ -73,13 +73,13 @@ export default function Landing() {
                 alt="Nemesis Apparel"
                 className="w-24 sm:w-36 lg:w-44 shrink-0" />
               
-              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tight text-[hsl(var(--background))]">
+              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl uppercase leading-[0.9] tracking-tight text-black">
                 For players
                 <br />
                 <span className="text-kinetic">beginner</span> to pro
               </h1>
             </div>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[hsl(var(--background))]">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-black">
               Nemesis Apparel builds jerseys for the modern competitor —
               breathable, intimidating, and built to move. Browse the arsenal, then
               stamp your identity on the back in the Lab.
@@ -120,7 +120,7 @@ export default function Landing() {
                 <span className="h-px w-10 bg-kinetic" /> ARSENAL
               </div>
               <h2 className="font-heading text-3xl sm:text-5xl uppercase leading-[0.95] text-fog">
-                Featured jerseys
+                Featured listings
               </h2>
             </div>
             <Link

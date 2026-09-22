@@ -4,7 +4,6 @@ import JerseyTemplate, { PATTERNS, TEMPLATE_URL, BACK_TEMPLATE_URL } from '@/com
 import AssetUploader from '@/components/designlab/AssetUploader';
 import CanvasStage from '@/components/designlab/CanvasStage';
 import { useDesignState } from '@/components/designlab/useDesignState';
-import { REGION_TO_PATTERN } from '@/components/designlab/geometry';
 import { ArrowLeft, Check, Trash2 } from 'lucide-react';
 
 const MATERIALS = ['Polyester', 'Performance Mesh', 'Cotton', 'Silk', 'Tri-Blend'];

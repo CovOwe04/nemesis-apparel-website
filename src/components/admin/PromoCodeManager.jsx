@@ -8,12 +8,26 @@ const EMPTY_PROMO = {
   min_order_value: 0, max_redemptions: 0, max_discount_value: 0,
 };
 
+/** @typedef {{
+ * code: string;
+ * description: string;
+ * discount_type: string;
+ * discount_value: number | string;
+ * jersey_id: string;
+ * active: boolean;
+ * start_date: string;
+ * end_date: string;
+ * min_order_value: number | string;
+ * max_redemptions: number | string;
+ * max_discount_value: number | string;
+ * }} PromoForm */
+
 export default function PromoCodeManager() {
   const [promos, setPromos] = useState([]);
   const [jerseys, setJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(EMPTY_PROMO);
+  const [form, setForm] = useState(/** @type {PromoForm} */ (EMPTY_PROMO));
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {

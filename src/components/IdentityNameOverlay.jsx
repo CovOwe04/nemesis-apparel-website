@@ -1,16 +1,17 @@
 import { useId, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 import { FONTS } from '@/lib/fonts';
+import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS } from '@/lib/jerseyStyle';
 
 export { FONTS };
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NAME_HORIZ_POS, vert_pos: 40, font_size: 8
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: 30, vert_pos: 50, font_size: 35
+  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NUMBER_HORIZ_POS, vert_pos: 50, font_size: 35
 };
 
 // Adobe-style warp:
@@ -53,7 +54,7 @@ export default function IdentityNameOverlay({
     if (document.getElementById(id)) return;
     const style = document.createElement('style');
     style.id = id;
-    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}') format('truetype'); }`;
+    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
     document.head.appendChild(style);
   }, [customFontUrl, customFontName]);
 

@@ -10,7 +10,7 @@ function Logo() {
       <img
         src="https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/4872430e2_Asset43x.png"
         alt="Nemesis Apparel"
-        className="h-9 w-auto"
+        className="theme-logo h-9 w-auto"
       />
     </Link>
   );
@@ -44,13 +44,16 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-void/95 backdrop-blur-sm transition-shadow ${
-        scrolled ? 'shadow-[0_1px_0_0_#2D2D2D]' : 'border-b border-steel/60'
+      className={`site-header sticky top-0 z-50 bg-black text-white backdrop-blur-sm transition-shadow ${
+        scrolled ? 'shadow-[0_1px_0_0_hsl(var(--border))]' : 'border-b border-steel/60'
       }`}
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Logo />
+          <div className="flex items-center gap-2">
+            <Logo />
+            <ThemeToggle />
+          </div>
 
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
@@ -60,7 +63,7 @@ export default function Header() {
                 className={`px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider transition-colors ${
                   isActive(item.path)
                     ? 'text-kinetic'
-                    : 'text-fog/70 hover:text-fog'
+                    : 'text-white/75 hover:text-white'
                 }`}
               >
                 {item.label}
@@ -69,10 +72,9 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <Link
               to="/cart"
-              className="btn-solid relative gap-2 px-3 py-2"
+              className="header-cart btn-solid relative gap-2 px-3 py-2"
               aria-label={`Cart, ${count} items`}
             >
               <ShoppingBag size={18} />
@@ -84,7 +86,7 @@ export default function Header() {
               )}
             </Link>
             <button
-              className="md:hidden p-2 text-fog hover:text-kinetic transition-colors rounded-[6px]"
+              className="md:hidden p-2 text-white/80 hover:text-kinetic transition-colors rounded-[6px]"
               onClick={() => setOpen((o) => !o)}
               aria-label="Toggle menu"
             >
@@ -99,14 +101,14 @@ export default function Header() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden border-t border-steel bg-void">
+        <div className="md:hidden border-t border-white/15 bg-black">
           <nav className="px-5 py-3 flex flex-col">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className={`py-3 font-display text-sm font-semibold uppercase tracking-wider border-b border-steel/50 ${
-                  isActive(item.path) ? 'text-kinetic' : 'text-fog/80'
+                    isActive(item.path) ? 'text-kinetic' : 'text-white/80'
                 }`}
               >
                 {item.label}

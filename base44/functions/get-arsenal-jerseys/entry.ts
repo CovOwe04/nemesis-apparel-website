@@ -5,7 +5,7 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const accessCode = (body?.accessCode || '').trim();
-    const clubCode = (body?.clubCode || '').trim();
+    const clubCode = (body?.clubCode || '').trim().toUpperCase();
 
     // If a club code is provided, look up the club and filter to its listings
     let club = null;
@@ -16,19 +16,35 @@ export default async function(req) {
         10
       );
       club = (clubs || [])[0] || null;
+      // A malformed or expired share link must never fall back to the full catalog.
+      if (!club) return Response.json({ jerseys: [], club: null });
+    }
+
+    const now = Date.now();
+    const clubIsAvailable = !club || (
+      (!club.available_from || new Date(club.available_from).getTime() <= now) &&
+      (!club.available_until || new Date(club.available_until).getTime() >= now)
+    );
+    if (!clubIsAvailable) {
+      return Response.json({
+        jerseys: [],
+        club: { name: club.name, description: club.description || '' },
+      });
     }
 
     const allJerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
 
+    const clubListingIds = new Set(club?.jersey_ids || []);
     let jerseys = (allJerseys || []).filter((j) => {
       if (!j.is_private) return true;
+      // A valid club link is also the access credential for its own listings.
+      if (clubListingIds.has(j.id)) return true;
       return j.private_access_code && j.private_access_code === accessCode;
     });
 
     // Club filtering: only show listings associated with this club
     if (club) {
-      const idSet = new Set(club.jersey_ids || []);
-      jerseys = jerseys.filter((j) => idSet.has(j.id));
+      jerseys = jerseys.filter((j) => clubListingIds.has(j.id));
     }
 
     jerseys = jerseys

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, Loader2, X, ChevronDown, ChevronRight } from 'lucide-react';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
-import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
+import { resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
   return (
@@ -37,14 +37,14 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
   const fileRef = useRef(null);
 
   const artworkUrl = color.artwork_front || '';
-  const nameStyle = resolveNameStyle(form, color);
-  const numberStyle = resolveNumberStyle(form, color);
+  const nameStyle = resolveArtworkNameStyle(form, color);
+  const numberStyle = resolveArtworkNumberStyle(form, color);
 
   const handleUpload = async (file) => {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       updateColor(colorIndex, { artwork_front: file_url });
     } catch (err) {
       alert('Upload failed: ' + (err?.message || 'unknown error'));
@@ -57,6 +57,7 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
     const current = color[styleType] || {};
     updateColor(colorIndex, { [styleType]: { ...current, [field]: value } });
   };
+  const setArtworkVertPos = (key, value) => updateColor(colorIndex, { [key]: value });
 
   const validCombos = (combos || []).filter((c) => c.name || c.number);
   const previewName = validCombos[0]?.name || 'YOUR NAME';
@@ -118,7 +119,7 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
             {form.enable_name && (
               <div className="space-y-2 border-b border-steel pb-2.5">
                 <div className="mono-label text-kinetic text-[0.55rem]">NAME</div>
-                <HorizontalSlider label="VERT POS" value={nameStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('name_style', 'vert_pos', v)} />
+                <HorizontalSlider label="VERT POS" value={nameStyle.vert_pos} min={0} max={100} onChange={(v) => setArtworkVertPos('artwork_name_vert_pos', v)} />
                 <div className="flex items-center gap-3">
                   <ColorSwatch label="FILL" color={nameStyle.color} onChange={(v) => setColorStyle('name_style', 'color', v)} />
                   <ColorSwatch label="STROKE" color={nameStyle.outline_color} onChange={(v) => setColorStyle('name_style', 'outline_color', v)} />
@@ -131,7 +132,7 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
             {form.enable_number && (
               <div className="space-y-2">
                 <div className="mono-label text-kinetic text-[0.55rem]">NUMBER</div>
-                <HorizontalSlider label="VERT POS" value={numberStyle.vert_pos} min={0} max={100} onChange={(v) => setColorStyle('number_style', 'vert_pos', v)} />
+                <HorizontalSlider label="VERT POS" value={numberStyle.vert_pos} min={0} max={100} onChange={(v) => setArtworkVertPos('artwork_number_vert_pos', v)} />
                 <div className="flex items-center gap-3">
                   <ColorSwatch label="FILL" color={numberStyle.color} onChange={(v) => setColorStyle('number_style', 'color', v)} />
                   <ColorSwatch label="STROKE" color={numberStyle.outline_color} onChange={(v) => setColorStyle('number_style', 'outline_color', v)} />

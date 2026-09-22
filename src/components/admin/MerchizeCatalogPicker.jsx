@@ -17,9 +17,11 @@ export default function MerchizeCatalogPicker({ onSelect, onClose }) {
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
+  const [error, setError] = useState('');
 
   const fetchCatalog = useCallback(async (searchTerm, pageNum) => {
     setLoading(true);
+    setError('');
     try {
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('get-merchize-catalog', {
@@ -32,9 +34,14 @@ export default function MerchizeCatalogPicker({ onSelect, onClose }) {
         else setProducts((prev) => [...prev, ...res.data.products]);
         setHasMore(res.data.hasMore);
         setTotal(res.data.total);
+      } else {
+        setProducts([]);
+        setError(res.data?.error || 'Merchize did not return any catalog data.');
       }
     } catch (err) {
       console.error('Catalog fetch error:', err);
+      setProducts([]);
+      setError(err?.response?.data?.error || err?.message || 'Could not load the Merchize catalog.');
     } finally {
       setLoading(false);
     }
@@ -95,13 +102,18 @@ export default function MerchizeCatalogPicker({ onSelect, onClose }) {
         </div>
 
         {/* Product list */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+          <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+          {error && (
+            <div className="border border-kinetic/50 bg-kinetic/5 rounded-[6px] p-3 text-fog text-sm" role="alert">
+              {error}
+            </div>
+          )}
           {loading && products.length === 0 && (
             <div className="flex items-center justify-center py-12 text-fog/40">
               <Loader2 size={24} className="animate-spin" />
             </div>
           )}
-          {!loading && products.length === 0 && (
+          {!loading && !error && products.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-fog/40">
               <Package size={32} className="mb-2" />
               <p className="mono-label">No products found</p>

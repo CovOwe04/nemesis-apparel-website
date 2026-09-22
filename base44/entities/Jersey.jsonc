@@ -36,18 +36,6 @@
       "default": "",
       "title": "Club ID"
     },
-    "net_terms": {
-      "type": "string",
-      "enum": [
-        "",
-        "net_15",
-        "net_30",
-        "net_60",
-        "net_90"
-      ],
-      "default": "",
-      "title": "Net Payment Terms"
-    },
     "price": {
       "type": "number",
       "title": "Price (USD)"
@@ -78,6 +66,14 @@
           "artwork_front": {
             "type": "string",
             "default": ""
+          },
+          "artwork_name_vert_pos": {
+            "type": "number",
+            "default": 32
+          },
+          "artwork_number_vert_pos": {
+            "type": "number",
+            "default": 52
           },
           "artwork_back": {
             "type": "string",
@@ -258,7 +254,7 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 50
+          "default": 30.8
         },
         "vert_pos": {
           "type": "number",
@@ -304,7 +300,7 @@
         },
         "horiz_pos": {
           "type": "number",
-          "default": 50
+          "default": 30.8
         },
         "vert_pos": {
           "type": "number",

@@ -52,7 +52,7 @@ export default function Arsenal() {
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-12 sm:py-16">
           <div className="mono-label text-kinetic mb-3">{club ? `${club.name.toUpperCase()}` : 'THE ARSENAL'}</div>
           <h1 className="font-heading text-4xl sm:text-6xl uppercase leading-[0.9] text-fog">
-            {club ? club.name : 'Browse Community Jerseys'}
+            {club ? club.name : 'Browse Community Listings'}
           </h1>
           <p className="mt-4 text-fog/60 max-w-xl">
             {club?.description || 'From fan favourites to custom club kits — order your jersey today'}

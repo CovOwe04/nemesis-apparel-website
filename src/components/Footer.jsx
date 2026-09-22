@@ -8,17 +8,17 @@ const BG_PATTERN_URL =
 
 export default function Footer() {
   return (
-    <footer className="relative bg-black flex flex-col items-center text-center px-5 py-10 overflow-hidden">
+    <footer className="relative bg-background text-foreground border-t border-border flex flex-col items-center text-center px-5 py-10 overflow-hidden">
       {/* Cropped background at 100% size */}
       <div
-        className="absolute inset-0"
+        className="footer-pattern absolute inset-0"
         style={{
           backgroundImage: `url(${BG_PATTERN_URL})`,
           backgroundSize: '100%',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'top left',
-          opacity: 0.5,
         }}
+        aria-hidden="true"
       />
       <div className="relative z-10 flex flex-col items-center">
         <img
@@ -26,10 +26,10 @@ export default function Footer() {
           alt="Nemesis Apparel"
           width={120}
           height={64}
-          className="h-16 w-auto mb-4"
+          className="theme-logo h-16 w-auto mb-4"
           loading="eager"
           decoding="async"
-          fetchpriority="high"
+          fetchPriority="high"
         />
         <p className="text-fog/90 text-sm mb-5">
           Jerseys don't have to be a headache

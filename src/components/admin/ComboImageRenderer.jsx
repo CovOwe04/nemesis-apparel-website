@@ -20,7 +20,6 @@ export default function ComboImageRenderer({
   aspectRatio = 1,
   enableName = true,
   enableNumber = true,
-  artworkPosition,
 }) {
   if (isArtwork) {
     return (
@@ -47,6 +46,7 @@ export default function ComboImageRenderer({
         image={imageUrl}
         customName={enableName ? customName : ''}
         customNumber={enableNumber ? customNumber : ''}
+        fontId={fontId}
         nameStyle={nameStyle}
         numberStyle={numberStyle}
         customFontUrl={customFontUrl}

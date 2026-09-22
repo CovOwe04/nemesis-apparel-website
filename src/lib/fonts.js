@@ -1,5 +1,5 @@
 // Shared font list for the Identity Lab, admin designer, and artwork renderer.
-// 20 fonts — 19 Google Fonts + Jersey M54 (cdnfonts).
+// 20 Google Fonts + Jersey M54 (cdnfonts).
 export const FONTS = [
   { id: 'block', label: 'BLOCK', family: "'Archivo Black', sans-serif" },
   { id: 'condensed', label: 'CONDENSED', family: "'Anton', sans-serif" },
@@ -21,4 +21,5 @@ export const FONTS = [
   { id: 'jersey', label: 'JERSEY M54', family: "'Jersey M54', cursive" },
   { id: 'roboto-cond', label: 'ROBOTO COND', family: "'Roboto Condensed', sans-serif" },
   { id: 'saira', label: 'SAIRA', family: "'Saira', sans-serif" },
+  { id: 'graduate', label: 'GRADUATE', family: "'Graduate', serif" },
 ];

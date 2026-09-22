@@ -23,6 +23,7 @@ export default function TextWarpPreview({
         image={imageUrl}
         customName={enableName ? 'YOUR NAME' : ''}
         customNumber={enableNumber ? '00' : ''}
+        fontId={fontId}
         nameStyle={nameStyle}
         numberStyle={numberStyle}
         customFontUrl={customFontUrl}
