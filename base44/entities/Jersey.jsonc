@@ -514,11 +514,11 @@
       "properties": {
         "horiz_offset": {
           "type": "number",
-          "default": 20
+          "default": 55
         },
         "vert_offset": {
           "type": "number",
-          "default": -5
+          "default": 0
         }
       },
       "default": {},
