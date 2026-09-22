@@ -514,7 +514,7 @@
       "properties": {
         "horiz_offset": {
           "type": "number",
-          "default": 0
+          "default": 20
         },
         "vert_offset": {
           "type": "number",
