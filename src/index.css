@@ -259,6 +259,12 @@
   background-position: top left;
   opacity: 0.1;
 }
+.site-footer,
+.site-footer::before,
+.site-footer::after,
+.site-footer .footer-pattern {
+  border-radius: 0 !important;
+}
 .dark .footer-pattern {
   opacity: 0.42;
 }
