@@ -17,9 +17,9 @@ export default function Footer() {
         className="footer-pattern absolute inset-0"
         style={{
           backgroundImage: `url(${BG_PATTERN_URL})`,
-          backgroundSize: '100%',
+          backgroundSize: 'calc(100% + 32px)',
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'top left',
+          backgroundPosition: '-16px -16px',
         }}
         aria-hidden="true"
       />

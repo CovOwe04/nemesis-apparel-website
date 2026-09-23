@@ -264,6 +264,13 @@
 .site-footer::after,
 .site-footer .footer-pattern {
   border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+footer.site-footer {
+  border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
 }
 .dark .footer-pattern {
   opacity: 0.42;
