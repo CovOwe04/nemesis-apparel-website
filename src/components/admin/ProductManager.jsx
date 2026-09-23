@@ -74,9 +74,6 @@ export default function ProductManager() {
                   const colors = getColors(j);
                   const imgCount = totalImages(j);
                   const comboCount = (j.name_number_combos || []).length;
-                  const now = new Date();
-                  const upcoming = j.available_from && new Date(j.available_from) > now;
-                  const expired = j.available_until && new Date(j.available_until) < now;
                   return (
                     <Draggable key={j.id} draggableId={j.id} index={index}>
                       {(p) => (
@@ -115,8 +112,6 @@ export default function ProductManager() {
                               {j.enable_customization && j.enable_name && <span className="mono-label text-fog/40 text-[0.6rem]">NAME</span>}
                               {j.enable_customization && j.enable_number && <span className="mono-label text-fog/40 text-[0.6rem]">NUM</span>}
                               {j.is_private && <span className="mono-label text-kinetic text-[0.6rem]">PRIVATE</span>}
-                              {upcoming && <span className="mono-label text-fog/40 text-[0.6rem]">SCHEDULED</span>}
-                              {expired && <span className="mono-label text-fog/30 text-[0.6rem]">EXPIRED</span>}
                             </div>
                           </div>
                           <div className="flex flex-col gap-1 shrink-0">

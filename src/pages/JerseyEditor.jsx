@@ -30,7 +30,8 @@ const EMPTY_FORM = {
   custom_font_url: '', custom_font_name: '', font_id: 'block',
   static_display: false,
   is_private: false, private_access_code: '',
-  available_from: '', available_until: '',
+  use_existing_merchize_product: true,
+  merchize_existing_product_id: '', merchize_existing_product_title: '', merchize_existing_variants: {},
   merchize_product_id: '', merchize_product_title: '', merchize_variants: {}, variant_merchize_ids: [],
   artwork_front: '', artwork_back: '', artwork_sleeve: '', artwork_hood: '',
   artwork_position: {}
@@ -68,7 +69,7 @@ export default function JerseyEditor() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!jerseyId);
   const [designerTab, setDesignerTab] = useState('name');
-  const [showMerchizePicker, setShowMerchizePicker] = useState(false);
+  const [showCatalogMerchizePicker, setShowCatalogMerchizePicker] = useState(false);
   const [pendingGenerateId, setPendingGenerateId] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
@@ -94,6 +95,7 @@ export default function JerseyEditor() {
       setForm({
         ...EMPTY_FORM,
         ...j,
+        use_existing_merchize_product: j.use_existing_merchize_product ?? Boolean(j.merchize_existing_product_id),
         colors,
         name_number_combos: combos,
         name_style: { ...DEFAULT_NAME_STYLE, ...(j.name_style || {}) },
@@ -126,6 +128,10 @@ export default function JerseyEditor() {
       alert('Name, team, price, and at least 1 color with images are required.');
       return;
     }
+    if (form.use_existing_merchize_product && !form.merchize_existing_product_id?.trim()) {
+      alert('Enter the Existing Product ID or turn off “Use an existing product” to choose a catalog product.');
+      return;
+    }
     setSaving(true);
     try {
       const firstColorImages = form.colors.find((c) => c.images && c.images.length > 0)?.images || [];
@@ -142,7 +148,8 @@ export default function JerseyEditor() {
         const created = await base44.entities.Jersey.create(payload);
         savedId = created.id;
       }
-      setPendingGenerateId(savedId);
+      if (form.use_existing_merchize_product) navigate('/nexus-control');
+      else setPendingGenerateId(savedId);
     } catch (err) {
       alert('Save failed: ' + (err?.message || 'unknown error'));
     } finally {
@@ -302,84 +309,89 @@ export default function JerseyEditor() {
               placeholder="e.g. CLUB2026" disabled={!form.is_private}
               className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`} />
             </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div><label className={labelCls}>AVAILABLE FROM</label>
-                <input type="datetime-local" value={form.available_from ? form.available_from.slice(0, 16) : ''} onChange={(e) => setField('available_from', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
-              <div><label className={labelCls}>AVAILABLE UNTIL</label>
-                <input type="datetime-local" value={form.available_until ? form.available_until.slice(0, 16) : ''} onChange={(e) => setField('available_until', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
-            </div>
           </Section>
 
           <Section title="MERCHIZE FULFILLMENT">
-            <div>
-              <label className={labelCls}>CATALOG PRODUCT ID</label>
-              <div className="flex gap-2">
-                <input value={form.merchize_product_id || ''} onChange={(e) => setField('merchize_product_id', e.target.value)}
-                placeholder="Paste an existing Merchize product ID or browse" className={inputCls} />
-                <button type="button" onClick={() => setShowMerchizePicker(true)}
-                className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
-                  Browse
-                </button>
-              </div>
-              {form.merchize_product_title && (
-                <p className="mono-label text-fog/40 mt-2 text-[0.6rem]">SELECTED PRODUCT: {form.merchize_product_title}</p>
-              )}
-            </div>
-            <div>
-              <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((size) => (
-                  <div key={size}>
-                    <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
-                    <input value={form.merchize_variants?.[size] || ''}
-                      onChange={(e) => setField('merchize_variants', { ...(form.merchize_variants || {}), [size]: e.target.value })}
-                      placeholder="SKU" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-2 text-xs focus:border-kinetic outline-none" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <VariantMerchizeIdsEditor
-              colors={form.colors}
-              combos={form.name_number_combos}
-              variantMerchizeIds={form.variant_merchize_ids}
-              onChange={(ids) => setField('variant_merchize_ids', ids)}
-              jerseyId={jerseyId}
-              merchizeProductId={form.merchize_product_id}
-              merchizeVariants={form.merchize_variants}
-              colorArtwork={form.colors.reduce((acc, c) => {
-                acc[c.name || 'Default'] = {
-                  front: c.artwork_front || '',
-                  back: c.artwork_back || '',
-                  sleeve: c.artwork_sleeve || '',
-                  hood: c.artwork_hood || '',
-                };
-                return acc;
-              }, {})}
-              nameStyle={form.name_style}
-              numberStyle={form.number_style}
-              customFontUrl={form.custom_font_url}
-              customFontName={form.custom_font_name}
-              fontId={form.font_id}
-              enableName={form.enable_name}
-              enableNumber={form.enable_number}
-              onPrimaryGenerated={({ merchize_product_id, merchize_product_title, merchize_variants }) => {
-                setField('merchize_product_id', merchize_product_id);
-                setField('merchize_product_title', merchize_product_title || '');
-                setField('merchize_variants', merchize_variants);
-              }}
+            <Toggle
+              checked={form.use_existing_merchize_product}
+              onChange={(value) => setField('use_existing_merchize_product', value)}
+              label="USE AN EXISTING PRODUCT"
             />
+
+            {form.use_existing_merchize_product ? (
+              <div>
+                <label className={labelCls}>EXISTING PRODUCT ID</label>
+                <input
+                  type="text"
+                  value={form.merchize_existing_product_id || ''}
+                  onChange={(e) => setField('merchize_existing_product_id', e.target.value)}
+                  placeholder="Enter the Merchize product ID"
+                  className={inputCls}
+                />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className={labelCls}>CATALOG PRODUCT ID</label>
+                  <div className="flex gap-2">
+                    <input value={form.merchize_product_title || ''} readOnly
+                    placeholder="Browse for a catalog product" className={`${inputCls} read-only:cursor-pointer`} aria-label="Selected catalog product title" />
+                    <button type="button" onClick={() => setShowCatalogMerchizePicker(true)}
+                    className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
+                      Browse
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((size) => (
+                      <div key={size}>
+                        <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
+                        <input value={form.merchize_variants?.[size] || ''}
+                          onChange={(e) => setField('merchize_variants', { ...(form.merchize_variants || {}), [size]: e.target.value })}
+                          placeholder="SKU" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-2 text-xs focus:border-kinetic outline-none" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <VariantMerchizeIdsEditor
+                  colors={form.colors}
+                  combos={form.name_number_combos}
+                  variantMerchizeIds={form.variant_merchize_ids}
+                  onChange={(ids) => setField('variant_merchize_ids', ids)}
+                  jerseyId={jerseyId}
+                  merchizeProductId={form.merchize_product_id}
+                  merchizeVariants={form.merchize_variants}
+                  colorArtwork={form.colors.reduce((acc, c) => {
+                    acc[c.name || 'Default'] = {
+                      front: c.artwork_front || '',
+                      back: c.artwork_back || '',
+                      sleeve: c.artwork_sleeve || '',
+                      hood: c.artwork_hood || '',
+                    };
+                    return acc;
+                  }, {})}
+                  nameStyle={form.name_style}
+                  numberStyle={form.number_style}
+                  customFontUrl={form.custom_font_url}
+                  customFontName={form.custom_font_name}
+                  fontId={form.font_id}
+                  enableName={form.enable_name}
+                  enableNumber={form.enable_number}
+                />
+              </>
+            )}
           </Section>
 
-          {showMerchizePicker && (
+          {showCatalogMerchizePicker && !form.use_existing_merchize_product && (
             <MerchizeCatalogPicker
               onSelect={({ merchize_product_id, merchize_variants, productTitle }) => {
                 setField('merchize_product_id', merchize_product_id);
                 setField('merchize_product_title', productTitle || '');
                 setField('merchize_variants', merchize_variants);
               }}
-              onClose={() => setShowMerchizePicker(false)}
+              onClose={() => setShowCatalogMerchizePicker(false)}
             />
           )}
 

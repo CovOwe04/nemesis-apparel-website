@@ -397,13 +397,16 @@ export default function IdentityLab() {
                     <button
                       type="button"
                       onClick={() => setNameOn((v) => !v)}
+                      role="switch"
+                      aria-checked={nameOn}
+                      aria-label="Toggle name customization"
                       className={`flex items-center gap-2 px-4 py-2 border rounded-[6px] transition-colors shrink-0 ${
                         nameOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
                       <span className="mono-label text-[0.65rem]">NAME</span>
-                      <span className={`relative w-9 h-5 rounded-[4px] transition-colors ${nameOn ? 'bg-void' : 'bg-steel'}`}>
-                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${nameOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
+                      <span aria-hidden="true" className={`relative w-9 h-5 rounded-full border transition-colors ${nameOn ? 'bg-white border-white' : 'bg-slate-700 border-slate-500'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full transition-transform shadow-sm ${nameOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-white'}`} />
                       </span>
                     </button>
                   </div>
@@ -430,13 +433,16 @@ export default function IdentityLab() {
                     <button
                       type="button"
                       onClick={() => setNumberOn((v) => !v)}
+                      role="switch"
+                      aria-checked={numberOn}
+                      aria-label="Toggle number customization"
                       className={`flex items-center gap-2 px-4 py-2 border rounded-[6px] transition-colors shrink-0 ${
                         numberOn ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'
                       }`}
                     >
                       <span className="mono-label text-[0.65rem]">NUMBER</span>
-                      <span className={`relative w-9 h-5 rounded-[4px] transition-colors ${numberOn ? 'bg-void' : 'bg-steel'}`}>
-                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-[3px] transition-transform ${numberOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-fog/60'}`} />
+                      <span aria-hidden="true" className={`relative w-9 h-5 rounded-full border transition-colors ${numberOn ? 'bg-white border-white' : 'bg-slate-700 border-slate-500'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full transition-transform shadow-sm ${numberOn ? 'translate-x-4 bg-kinetic' : 'translate-x-0 bg-white'}`} />
                       </span>
                     </button>
                   </div>
@@ -444,7 +450,7 @@ export default function IdentityLab() {
               )}
 
               {/* LETTER SPACING */}
-              {((canCustomizeName && nameOn) || (canCustomizeNumber && numberOn)) && (
+              {canCustomizeName && nameOn && (
                 <div>
                   <label className="mono-label text-fog/50 block mb-1.5">LETTER SPACING</label>
                   <div className="grid grid-cols-5 gap-1">

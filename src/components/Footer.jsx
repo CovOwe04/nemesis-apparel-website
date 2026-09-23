@@ -8,7 +8,7 @@ const BG_PATTERN_URL =
 
 export default function Footer() {
   return (
-    <footer className="relative bg-background text-foreground border-t border-border flex flex-col items-center text-center px-5 py-10 overflow-hidden">
+    <footer className="relative rounded-none bg-background text-foreground flex flex-col items-center text-center px-5 py-10 overflow-hidden">
       {/* Cropped background at 100% size */}
       <div
         className="footer-pattern absolute inset-0"

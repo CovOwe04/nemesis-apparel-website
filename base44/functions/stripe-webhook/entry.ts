@@ -250,13 +250,14 @@ export default async function(req) {
       // Build a merchize item for a standard (non-custom) cart item
       const buildStandardItem = (item) => {
         const jersey = jerseyMap.get(item.jerseyId);
-        if (!jersey?.merchize_product_id) return null;
-        const variantSkus = jersey.merchize_variants || {};
+        const existingProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
+        if (!existingProductId) return null;
+        const variantSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
         const size = item.shirtSize || 'M';
         const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
         if (!merchizeSku) return null;
         return {
-          product_id: jersey.merchize_product_id,
+          product_id: existingProductId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
           merchize_sku: merchizeSku,
           quantity: item.quantity,

@@ -338,22 +338,40 @@
       "default": "",
       "title": "Private Access Code"
     },
-    "available_from": {
-      "type": "string",
-      "format": "date-time",
-      "default": "",
-      "title": "Available From"
-    },
-    "available_until": {
-      "type": "string",
-      "format": "date-time",
-      "default": "",
-      "title": "Available Until"
-    },
     "merchize_product_id": {
       "type": "string",
       "default": "",
       "title": "Catalog Product ID"
+    },
+    "use_existing_merchize_product": {
+      "type": "boolean",
+      "default": true,
+      "title": "Use an existing product"
+    },
+    "merchize_existing_product_id": {
+      "type": "string",
+      "default": "",
+      "title": "Existing Product ID"
+    },
+    "merchize_existing_product_title": {
+      "type": "string",
+      "default": "",
+      "title": "Existing Product Title"
+    },
+    "merchize_existing_variants": {
+      "type": "object",
+      "properties": {
+        "XS": { "type": "string" },
+        "S": { "type": "string" },
+        "M": { "type": "string" },
+        "L": { "type": "string" },
+        "XL": { "type": "string" },
+        "2XL": { "type": "string" },
+        "3XL": { "type": "string" },
+        "4XL": { "type": "string" }
+      },
+      "default": {},
+      "title": "Existing Product SKUs by Size"
     },
     "merchize_product_title": {
       "type": "string",

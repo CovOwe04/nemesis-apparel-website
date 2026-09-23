@@ -36,10 +36,7 @@ export default function Arsenal() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const now = new Date();
     return jerseys.filter((j) => {
-      if (j.available_from && new Date(j.available_from) > now) return false;
-      if (j.available_until && new Date(j.available_until) < now) return false;
       if (q && !(j.name || '').toLowerCase().includes(q) && !(j.team || '').toLowerCase().includes(q)) return false;
       return true;
     });

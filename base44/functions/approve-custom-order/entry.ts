@@ -121,13 +121,14 @@ export default async function (req) {
       } else if (!item.customName && !item.customNumber) {
         // Standard product (non-custom items only)
         const jersey = jerseyMap.get(item.jerseyId);
-        if (!jersey?.merchize_product_id) continue;
-        const variantSkus = jersey.merchize_variants || {};
+        const existingProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
+        if (!existingProductId) continue;
+        const variantSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
         const size = item.shirtSize || 'M';
         const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
         if (!merchizeSku) continue;
         merchizeItems.push({
-          product_id: jersey.merchize_product_id,
+          product_id: existingProductId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
           merchize_sku: merchizeSku,
           quantity: item.quantity,
