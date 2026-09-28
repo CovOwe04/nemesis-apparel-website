@@ -128,7 +128,7 @@ export default function StaticNameOverlay({
       {(displayName || displayNumber) && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
           {displayName && (
-            <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
+            <g data-overlay-name transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
               {lines.map((line, i) => (
                 <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct)} fill="none" stroke="none" />
               ))}
@@ -151,7 +151,7 @@ export default function StaticNameOverlay({
             </g>
           )}
           {displayNumber && (
-            <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
+            <g data-overlay-number transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
                 fontFamily={fontFam}

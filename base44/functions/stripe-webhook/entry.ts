@@ -156,6 +156,10 @@ export default async function(req) {
         console.error('Order not found:', orderId);
         return Response.json({ error: 'Order not found' }, { status: 404 });
       }
+      if (order.merchize_order_id) {
+        console.log(`Merchize order already exists for ${orderId}; skipping duplicate fulfillment.`);
+        return Response.json({ received: true, duplicate: true });
+      }
 
       const cartItems = JSON.parse(order.items_json || '[]');
       const customerName = order.customer_name || '';
@@ -263,7 +267,13 @@ export default async function(req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: jersey.front_image || item.front_image || '',
+          image: item.rendered_image || item.front_image || jersey.front_image || '',
+          order_artwork: {
+            front: item.rendered_artwork_front || item.artwork_front || '',
+            back: item.artwork_back || '',
+            sleeve: item.artwork_sleeve || '',
+            hood: item.artwork_hood || '',
+          },
         };
       };
 
@@ -301,6 +311,12 @@ export default async function(req) {
                 price: item.price,
                 currency: 'USD',
                 image: item.rendered_image || item.front_image || '',
+                order_artwork: {
+                  front: item.rendered_artwork_front || item.artwork_front || '',
+                  back: item.artwork_back || '',
+                  sleeve: item.artwork_sleeve || '',
+                  hood: item.artwork_hood || '',
+                },
               });
             }
             for (const item of cartItems) {
@@ -313,7 +329,14 @@ export default async function(req) {
               const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
                 orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
               });
-              if (merchizeData.success && merchizeData.data?._id) {
+              if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
+                await base44.asServiceRole.entities.Order.update(orderId, {
+                  merchize_order_id: merchizeData.data._id,
+                  status: 'pending_approval',
+                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nArtwork import failed: ${merchizeData.artwork_import.error}\nArtwork attachment needs admin retry.`,
+                });
+                console.error(`Merchize artwork import needs retry for order ${orderId}:`, merchizeData.artwork_import.error);
+              } else if (merchizeData.success && merchizeData.data?._id) {
                 await base44.asServiceRole.entities.Order.update(orderId, {
                   merchize_order_id: merchizeData.data._id,
                   status: 'fulfilled',
@@ -350,7 +373,14 @@ export default async function(req) {
             const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
               orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
             });
-            if (merchizeData.success && merchizeData.data?._id) {
+            if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
+              await base44.asServiceRole.entities.Order.update(orderId, {
+                merchize_order_id: merchizeData.data._id,
+                status: 'pending_approval',
+                admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nArtwork import failed: ${merchizeData.artwork_import.error}\nArtwork attachment needs admin retry.`,
+              });
+              console.error(`Merchize artwork import needs retry for order ${orderId}:`, merchizeData.artwork_import.error);
+            } else if (merchizeData.success && merchizeData.data?._id) {
               await base44.asServiceRole.entities.Order.update(orderId, {
                 merchize_order_id: merchizeData.data._id,
                 status: 'fulfilled',

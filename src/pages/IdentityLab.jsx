@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
-import { resolveNameStyle, resolveNumberStyle } from '@/lib/jerseyStyle';
+import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { resolveNameStyle, resolveNumberStyle, resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -54,6 +55,7 @@ export default function IdentityLab() {
   const [nameOn, setNameOn] = useState(true);
   const [numberOn, setNumberOn] = useState(true);
   const [rendering, setRendering] = useState(false);
+  const [renderError, setRenderError] = useState('');
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -133,22 +135,77 @@ export default function IdentityLab() {
 
   const handleAdd = async () => {
     setRendering(true);
+    setRenderError('');
     let renderedImage = '';
-    if (previewRef.current) {
+    let renderedArtworkFront = '';
+    const renderedName = canCustomizeName && nameOn ? name.toUpperCase() : '';
+    const renderedNumber = canCustomizeNumber && numberOn ? number : '';
+    if (previewRef.current && (renderedName || renderedNumber)) {
       try {
         const canvas = await html2canvas(previewRef.current, {
           useCORS: true,
           backgroundColor: null,
           scale: 2,
+          onclone: (clonedDocument) => {
+            const preview = clonedDocument.querySelector('[data-order-preview]');
+            if (!renderedName) preview?.querySelector('[data-overlay-name]')?.remove();
+            if (!renderedNumber) preview?.querySelector('[data-overlay-number]')?.remove();
+          },
         });
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-        if (blob) {
-          const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          renderedImage = file_url;
-        }
+        if (!blob) throw new Error('Could not encode the rendered preview.');
+        const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        if (!file_url) throw new Error('Could not upload the rendered preview.');
+        renderedImage = file_url;
       } catch (err) {
         console.error('Preview render failed:', err);
+        setRenderError('Could not prepare the exact preview for fulfillment. Please try again.');
+        setRendering(false);
+        return;
+      }
+    }
+    const artworkFront = currentColor?.artwork_front || jersey.artwork_front || '';
+    if (artworkFront && (renderedName || renderedNumber)) {
+      try {
+        const image = new window.Image();
+        image.crossOrigin = 'anonymous';
+        image.src = artworkFront;
+        await new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = () => reject(new Error('Could not load this listing\'s print artwork.'));
+        });
+        const maxDimension = 1200;
+        const factor = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const font = FONTS.find((entry) => entry.id === fontId) || FONTS[0];
+        const fontFam = jersey.custom_font_name ? `'${jersey.custom_font_name}', ${font.family}` : font.family;
+        const artworkBlob = await renderOverlayToBlob({
+          imageUrl: artworkFront,
+          imageFit: 'contain',
+          customName: renderedName,
+          customNumber: renderedNumber,
+          nameStyle: resolveArtworkNameStyle(jersey, currentColor),
+          numberStyle: resolveArtworkNumberStyle(jersey, currentColor),
+          fontFam,
+          customFontUrl: jersey.custom_font_url || '',
+          customFontName: jersey.custom_font_name || '',
+          enableName: canCustomizeName && nameOn,
+          enableNumber: canCustomizeNumber && numberOn,
+          staticDisplay: jersey.static_display,
+          isArtwork: true,
+          aspectRatio: image.naturalWidth / image.naturalHeight,
+          renderW: Math.round(image.naturalWidth * factor),
+          renderH: Math.round(image.naturalHeight * factor),
+        });
+        if (!artworkBlob) throw new Error('Could not render print artwork.');
+        const file = new File([artworkBlob], 'custom-artwork-front.png', { type: 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        renderedArtworkFront = file_url;
+      } catch (err) {
+        console.error('Artwork render failed:', err);
+        setRenderError(err?.message || 'Could not prepare the listing artwork for fulfillment.');
+        setRendering(false);
+        return;
       }
     }
     setRendering(false);
@@ -172,7 +229,8 @@ export default function IdentityLab() {
       letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
-      rendered_image: renderedImage,
+      rendered_image: renderedImage || selectedImage,
+      rendered_artwork_front: renderedArtworkFront,
     };
     if (editId && items.some((i) => i.id === editId)) {
       editItem(editId, payload);
@@ -199,7 +257,7 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div ref={previewRef} className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
+            <div ref={previewRef} data-order-preview className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
               {jersey.static_display ? (
                 <StaticNameOverlay
                   image={selectedImage}
@@ -517,6 +575,7 @@ export default function IdentityLab() {
               )}
             </button>
           </div>
+          {renderError && <p role="alert" className="mono-label text-kinetic text-sm">{renderError}</p>}
         </div>
       </div>
     </div>

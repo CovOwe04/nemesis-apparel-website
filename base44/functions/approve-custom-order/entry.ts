@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProduct, createMerchizeOrder } from '../../shared/merchize.ts';
+import { createCustomProduct, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
 import { requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -40,12 +40,13 @@ export default async function (req) {
     // Step 1: Create custom Merchize products for Identity Lab items.
     // Each custom item gets its own product with only the user's selected size,
     // uploaded with the composited artwork (name/number rendered onto the front artwork).
-    for (const item of cartItems) {
+    for (const item of (order.merchize_order_id ? [] : cartItems)) {
       if (!item.customName && !item.customNumber) continue;
       if (item.custom_merchize_product_id) continue; // already created
 
       const jersey = jerseyMap.get(item.jerseyId);
-      if (!jersey?.merchize_product_id) {
+      const baseProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
+      if (!baseProductId) {
         console.error(`Skipping custom product for ${item.name}: no base Merchize product`);
         continue;
       }
@@ -57,12 +58,11 @@ export default async function (req) {
 
       // Use composited artwork (with name/number) for front, base artwork for other pieces
       const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
-      const compositedFront = compositedArtwork?.[artworkKey];
-      const freshDisplay = compositedDisplay?.[artworkKey];
+      const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
+      const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
 
       const productImages = [];
       if (freshDisplay) productImages.push(freshDisplay);
-      else if (item.rendered_image) productImages.push(item.rendered_image);
       else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
       else if (jersey.front_image) productImages.push(jersey.front_image);
 
@@ -76,7 +76,7 @@ export default async function (req) {
       try {
         const { productId, variantId, sku } = await createCustomProduct({
           baseUrl, token: merchizeToken, apiKey: merchizeKey,
-          baseProductId: jersey.merchize_product_id,
+          baseProductId,
           title: titleParts.join(' - '),
           description: jersey.description || '',
           productImages,
@@ -84,7 +84,7 @@ export default async function (req) {
           colorHex,
           size, sizeValue,
           price: jersey.price,
-          fallbackSku: jersey.merchize_variants?.[size] || '',
+          fallbackSku: jersey.merchize_existing_variants?.[size] || jersey.merchize_variants?.[size] || '',
           artworkUrls,
         });
         item.custom_merchize_product_id = productId;
@@ -116,7 +116,42 @@ export default async function (req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: item.fresh_display_image || item.rendered_image || item.front_image || '',
+          image: item.rendered_image || item.fresh_display_image || item.front_image || '',
+          order_artwork: {
+            front: item.rendered_artwork_front || item.artwork_front || '',
+            back: item.artwork_back || '',
+            sleeve: item.artwork_sleeve || '',
+            hood: item.artwork_hood || '',
+          },
+        });
+      } else if (item.customName || item.customNumber) {
+        const jersey = jerseyMap.get(item.jerseyId);
+        const combo = (jersey?.name_number_combos || []).find((entry) =>
+          (entry.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
+          (entry.number || '') === (item.customNumber || '')
+        );
+        const vmi = (jersey?.variant_merchize_ids || []).find((entry) =>
+          (entry.color_name || 'Default') === (item.colorName || 'Default') &&
+          (entry.combo_name || '').toUpperCase() === (combo?.name || '').toUpperCase() &&
+          (entry.combo_number || '') === (combo?.number || '')
+        );
+        const size = item.shirtSize || 'M';
+        const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
+        if (!vmi?.merchize_product_id || !merchizeSku) continue;
+        merchizeItems.push({
+          product_id: vmi.merchize_product_id,
+          sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+          merchize_sku: merchizeSku,
+          quantity: item.quantity,
+          price: item.price,
+          currency: 'USD',
+          image: item.rendered_image || item.front_image || '',
+          order_artwork: {
+            front: item.rendered_artwork_front || item.artwork_front || '',
+            back: item.artwork_back || '',
+            sleeve: item.artwork_sleeve || '',
+            hood: item.artwork_hood || '',
+          },
         });
       } else if (!item.customName && !item.customNumber) {
         // Standard product (non-custom items only)
@@ -135,6 +170,12 @@ export default async function (req) {
           price: item.price,
           currency: 'USD',
           image: jersey.front_image || item.front_image || '',
+          order_artwork: {
+            front: item.artwork_front || '',
+            back: item.artwork_back || '',
+            sleeve: item.artwork_sleeve || '',
+            hood: item.artwork_hood || '',
+          },
         });
       }
       // Custom items whose product creation failed are skipped — no base fallback.
@@ -148,13 +189,33 @@ export default async function (req) {
       return Response.json({ success: true, message: 'No fulfillable items, marked fulfilled' });
     }
 
-    const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
-      orderId,
-      customerName,
-      customerEmail,
-      shippingAddress,
-      items: merchizeItems,
-    });
+    let merchizeData;
+    if (order.merchize_order_id) {
+      const artworkImport = await importMerchizeOrderArtworks(baseUrl, merchizeToken, {
+        orderId,
+        identifier: 'nemesis-apparel.base44.app',
+        items: merchizeItems,
+      });
+      merchizeData = { success: true, data: { _id: order.merchize_order_id }, artwork_import: artworkImport };
+    } else {
+      merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
+        orderId,
+        customerName,
+        customerEmail,
+        shippingAddress,
+        items: merchizeItems,
+      });
+    }
+
+    if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
+      const note = `Merchize order ${merchizeData.data._id} created, but artwork import needs retry: ${merchizeData.artwork_import.error}`;
+      await base44.asServiceRole.entities.Order.update(orderId, {
+        merchize_order_id: merchizeData.data._id,
+        status: 'pending_approval',
+        admin_notes: `${order.admin_notes || ''}\n${note}`,
+      });
+      return Response.json({ error: note });
+    }
 
     if (merchizeData.success && merchizeData.data?._id) {
       await base44.asServiceRole.entities.Order.update(orderId, {

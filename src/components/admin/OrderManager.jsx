@@ -21,7 +21,9 @@ export default function OrderManager() {
     setLoading(true);
     const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
     base44.functions.invoke('get-admin-orders', { passcode })
-      .then((res) => setOrders((res.data?.orders || []).filter((o) => o.has_custom_names)))
+      .then((res) => setOrders((res.data?.orders || []).filter((o) =>
+        o.has_custom_names || (o.status === 'pending_approval' && o.merchize_order_id)
+      )))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   };
@@ -80,7 +82,7 @@ export default function OrderManager() {
                     onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
                     className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
                   >
-                    <Eye size={12} /> View &amp; Approve Design
+                    <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
                   </button>
                 </div>
 

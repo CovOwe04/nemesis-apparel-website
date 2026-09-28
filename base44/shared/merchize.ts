@@ -173,6 +173,7 @@ export async function createMerchizeOrder(
   opts: { orderId: string; customerName: string; customerEmail: string; shippingAddress: any; items: any[] },
 ) {
   const { orderId, customerName, customerEmail, shippingAddress, items } = opts;
+  const identifier = 'nemesis-apparel.base44.app';
   const merchizeRes = await fetch(`${baseUrl}/order/external/orders/catalog`, {
     method: 'POST',
     headers: {
@@ -182,7 +183,7 @@ export async function createMerchizeOrder(
     },
     body: JSON.stringify({
       order_id: orderId,
-      identifier: 'nemesis-apparel.base44.app',
+      identifier,
       shipping_info: {
         full_name: customerName,
         address_1: shippingAddress.line1 || '',
@@ -194,8 +195,103 @@ export async function createMerchizeOrder(
         email: customerEmail,
         phone: '',
       },
-      items,
+      items: items.map(({ order_artwork, ...item }) => item),
     }),
   });
-  return await merchizeRes.json();
+  const merchizeData = await merchizeRes.json();
+  if (!merchizeRes.ok || !merchizeData.success || !merchizeData.data?._id) return merchizeData;
+
+  const hasArtwork = items.some((item) => item.order_artwork && Object.values(item.order_artwork).some(Boolean));
+  if (!hasArtwork) return { ...merchizeData, artwork_import: { success: true, skipped: true } };
+
+  try {
+    const artworkImport = await importMerchizeOrderArtworks(baseUrl, token, {
+      orderId,
+      identifier,
+      items,
+    });
+    return { ...merchizeData, artwork_import: artworkImport };
+  } catch (error) {
+    console.error('Merchize order artwork import failed:', error.message || error);
+    return {
+      ...merchizeData,
+      artwork_import: { success: false, error: error.message || 'Could not attach artwork to the Merchize order.' },
+    };
+  }
+}
+
+export async function importMerchizeOrderArtworks(
+  baseUrl: string,
+  token: string,
+  opts: { orderId: string; identifier: string; items: any[] },
+) {
+  const { orderId, identifier, items } = opts;
+  const detailUrl = new URL(`${baseUrl}/order/external/orders/order-detail`);
+  detailUrl.searchParams.set('external_number', orderId);
+  detailUrl.searchParams.set('identifier', identifier);
+  const detailRes = await fetch(detailUrl, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const detail = await detailRes.json();
+  if (!detailRes.ok || !detail.success || !Array.isArray(detail.data?.items)) {
+    throw new Error(detail.message || `Could not retrieve Merchize order items (HTTP ${detailRes.status}).`);
+  }
+
+  // Merchize returns order items in the same order as the import request. Use SKU
+  // matching first and position as a fallback for responses with different SKU keys.
+  const inputBySku = new Map();
+  items.forEach((item, index) => {
+    const key = String(item.merchize_sku || '').trim();
+    if (!key) return;
+    const queue = inputBySku.get(key) || [];
+    queue.push(index);
+    inputBySku.set(key, queue);
+  });
+
+  const artworkRequests = [];
+  detail.data.items.forEach((orderItem, index) => {
+    const key = String(orderItem.sku || '').trim();
+    const matchedIndex = inputBySku.get(key)?.shift();
+    const source = items[matchedIndex ?? index];
+    if (!source?.order_artwork) return;
+    const orderItemId = orderItem.id || orderItem._id;
+    if (!orderItemId) throw new Error(`Merchize order item ID is missing for item ${index + 1}.`);
+
+    const artwork = {};
+    for (const side of ['front', 'back', 'sleeve', 'hood']) {
+      const url = source.order_artwork[side];
+      if (url && isSafeImageUrl(url)) artwork[`design_${side}`] = url;
+    }
+    if (Object.keys(artwork).length === 0) return;
+
+    let remaining = Math.max(1, Number(source.quantity) || 1);
+    while (remaining > 0) {
+      const applyForItem = Math.min(remaining, 50);
+      artworkRequests.push({ id: orderItemId, ...artwork, apply_for_item: applyForItem });
+      remaining -= applyForItem;
+    }
+  });
+
+  if (artworkRequests.length === 0) {
+    throw new Error('No usable artwork URLs could be matched to the Merchize order items.');
+  }
+
+  const importRes = await fetch(`${baseUrl}/order/import/artworks`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: artworkRequests }),
+  });
+  const importData = await importRes.json();
+  const failedImporters = (importData.data?.importers || []).filter((importer) =>
+    importer.status === 'failed' || importer.error_message
+  );
+  if (!importRes.ok || !importData.success || (importData.data?.invalid_items || []).length > 0 || failedImporters.length > 0) {
+    throw new Error(failedImporters[0]?.error_message || importData.message || `Merchize rejected artwork import (HTTP ${importRes.status}).`);
+  }
+  const succeeded = Number(importData.data?.succeeded || 0);
+  if (succeeded < artworkRequests.length) {
+    throw new Error(`Merchize imported ${succeeded} of ${artworkRequests.length} artwork sets.`);
+  }
+  return { success: true, succeeded, importers: importData.data?.importers || [] };
 }
