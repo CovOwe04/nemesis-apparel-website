@@ -229,10 +229,18 @@ export default async function(req) {
       const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
       const merchizeKey = secrets.get('MERCHIZE_API_KEY');
 
-      // Fetch jerseys for fulfillment (needed for both custom and standard items)
+      // Fetch the exact listings for this order so an older listing is not
+      // omitted by the entity list limit.
       const jerseyIds = [...new Set(cartItems.map((i) => i.jerseyId).filter(Boolean))];
-      const jerseys = jerseyIds.length > 0 ? await base44.asServiceRole.entities.Jersey.list('-created_date', 100) : [];
-      const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
+      const jerseys = await Promise.all(jerseyIds.map(async (jerseyId) => {
+        try {
+          return await base44.asServiceRole.entities.Jersey.get(jerseyId);
+        } catch (err) {
+          console.error(`Could not load listing ${jerseyId} for order ${orderId}:`, err.message || err);
+          return null;
+        }
+      }));
+      const jerseyMap = new Map(jerseys.filter(Boolean).map((jersey) => [jersey.id, jersey]));
 
       // Check if a custom item matches a preset combo and return the variant mapping
       const findPresetMatch = (item, jersey) => {
@@ -252,13 +260,15 @@ export default async function(req) {
       };
 
       // Build a merchize item for a standard (non-custom) cart item
-      const buildStandardItem = (item) => {
+      const buildStandardItem = (item, { requireExactSize = false } = {}) => {
         const jersey = jerseyMap.get(item.jerseyId);
         const existingProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
         if (!existingProductId) return null;
         const variantSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
         const size = item.shirtSize || 'M';
-        const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
+        const merchizeSku = requireExactSize
+          ? variantSkus[size]
+          : (variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0]);
         if (!merchizeSku) return null;
         return {
           product_id: existingProductId,
@@ -268,6 +278,7 @@ export default async function(req) {
           price: item.price,
           currency: 'USD',
           image: item.rendered_image || item.front_image || jersey.front_image || '',
+          ...(item.customName || item.customNumber ? { requires_custom_artwork_front: true } : {}),
           order_artwork: {
             front: item.rendered_artwork_front || item.artwork_front || '',
             back: item.artwork_back || '',
@@ -278,31 +289,42 @@ export default async function(req) {
       };
 
       if (hasCustom) {
-        // Determine which custom items match presets vs need new products
+        // Use an existing preset product when possible. Otherwise, customized
+        // text can still auto-fulfill on the listing's existing product when
+        // its exact size SKU is configured. Only missing product/SKU mappings
+        // require manual product creation and review.
         const presetMatches = [];
+        const existingProductMatches = [];
         const needsApproval = [];
         for (const item of customItems) {
           const jersey = jerseyMap.get(item.jerseyId);
           const vmi = jersey ? findPresetMatch(item, jersey) : null;
-          if (vmi) presetMatches.push({ item, vmi });
+          const size = item.shirtSize || 'M';
+          const presetSku = vmi?.skus?.[size];
+          if (vmi?.merchize_product_id && presetSku) {
+            presetMatches.push({ item, vmi, merchizeSku: presetSku });
+            continue;
+          }
+
+          const existingProductItem = buildStandardItem(item, { requireExactSize: true });
+          if (existingProductItem) existingProductMatches.push(existingProductItem);
           else needsApproval.push(item);
         }
 
         if (needsApproval.length > 0) {
-          // Some custom items don't match presets — admin must review and create new products
+          // Admin review is reserved for orders that cannot use a configured
+          // Merchize product and exact size SKU.
           await base44.asServiceRole.entities.Order.update(orderId, {
             status: 'pending_approval',
-            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin approval for ${needsApproval.length} custom item(s).`,
+            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nManual review required: ${needsApproval.length} customized item(s) need a Merchize product or exact size SKU.`,
           });
-          console.log(`Order ${orderId} set to pending_approval for ${needsApproval.length} non-preset custom items`);
+          console.log(`Order ${orderId} set to pending_approval for ${needsApproval.length} items without an existing product/size SKU mapping`);
         } else {
-          // All custom items match presets — fulfill directly using preset variant IDs
+          // Every custom item has an existing preset or listing product mapping.
           try {
             const merchizeItems = [];
-            for (const { item, vmi } of presetMatches) {
+            for (const { item, vmi, merchizeSku } of presetMatches) {
               const size = item.shirtSize || 'M';
-              const merchizeSku = vmi.skus?.[size] || vmi.skus?.['M'] || Object.values(vmi.skus || {})[0] || '';
-              if (!merchizeSku) continue;
               merchizeItems.push({
                 product_id: vmi.merchize_product_id,
                 sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
@@ -320,6 +342,7 @@ export default async function(req) {
                 },
               });
             }
+            merchizeItems.push(...existingProductMatches);
             for (const item of cartItems) {
               if (item.customName || item.customNumber || item.isCustomDesign) continue;
               const mItem = buildStandardItem(item);
@@ -341,7 +364,7 @@ export default async function(req) {
                 await base44.asServiceRole.entities.Order.update(orderId, {
                   merchize_order_id: merchizeData.data._id,
                   status: 'fulfilled',
-                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nPreset custom items auto-fulfilled.`,
+                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nCustomized items auto-fulfilled using configured Merchize products.`,
                 });
                 console.log(`Merchize order created (preset): ${merchizeData.data._id}`);
               } else {

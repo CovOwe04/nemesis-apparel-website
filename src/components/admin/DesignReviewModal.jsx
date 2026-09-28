@@ -165,7 +165,13 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         onAction('approved');
       }
     } catch (err) {
-      setError(err?.message || 'Approval failed');
+      setError(
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.data?.error ||
+        err?.message ||
+        'Approval failed',
+      );
     } finally {
       setProcessing(false);
       setProgress('');

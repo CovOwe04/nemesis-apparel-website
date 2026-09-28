@@ -29,9 +29,24 @@ export default async function (req) {
     const customerName = order.customer_name || '';
     const customerEmail = order.customer_email || '';
 
-    // Fetch jerseys
-    const jerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
-    const jerseyMap = new Map(jerseys.map((j) => [j.id, j]));
+    // Fetch the exact listings referenced by this order. A list capped at 100
+    // can omit older listings and leave `jersey` undefined during approval.
+    const jerseyIds = [...new Set(cartItems.map((item) => item.jerseyId).filter(Boolean))];
+    const jerseyRecords = await Promise.all(jerseyIds.map(async (jerseyId) => {
+      try {
+        return await base44.asServiceRole.entities.Jersey.get(jerseyId);
+      } catch (error) {
+        console.error(`Could not load listing ${jerseyId} for order ${orderId}:`, error.message || error);
+        return null;
+      }
+    }));
+    const jerseyMap = new Map(jerseyRecords.filter(Boolean).map((jersey) => [jersey.id, jersey]));
+    const missingListing = cartItems.find((item) => item.jerseyId && !jerseyMap.has(item.jerseyId));
+    if (missingListing) {
+      return Response.json({
+        error: `Could not load the listing for ${missingListing.name || 'this item'}. Refresh the order and try again.`,
+      }, { status: 400 });
+    }
 
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
