@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
 import { Search } from 'lucide-react';
@@ -8,16 +9,15 @@ export default function Arsenal() {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [accessCode, setAccessCode] = useState('');
   const [codeInput, setCodeInput] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [unlocking, setUnlocking] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currency, setCurrency] = useState(
     () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
   );
 
-  const clubCode = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('club') || '';
-  }, []);
+  const clubCode = (searchParams.get('club') || '').trim().toUpperCase();
 
   useEffect(() => {
     localStorage.setItem('nemesis-currency', currency);
@@ -25,14 +25,34 @@ export default function Arsenal() {
 
   useEffect(() => {
     setLoading(true);
-    base44.functions.invoke('get-arsenal-jerseys', { accessCode, clubCode })
+    base44.functions.invoke('get-arsenal-jerseys', { clubCode })
       .then((res) => {
         setJerseys(res.data?.jerseys || []);
         setClub(res.data?.club || null);
       })
       .catch(() => { setJerseys([]); setClub(null); })
       .finally(() => setLoading(false));
-  }, [accessCode, clubCode]);
+  }, [clubCode]);
+
+  const unlockClub = async () => {
+    const code = codeInput.trim().toUpperCase();
+    if (!code || unlocking) return;
+    setUnlocking(true);
+    setCodeError('');
+    try {
+      const res = await base44.functions.invoke('get-arsenal-jerseys', { clubCode: code });
+      if (!res.data?.club) {
+        setCodeError('CLUB CODE NOT FOUND. CHECK THE CODE AND TRY AGAIN.');
+        return;
+      }
+      setSearchParams({ club: code });
+      setCodeInput('');
+    } catch {
+      setCodeError('UNABLE TO CHECK THAT CLUB CODE. PLEASE TRY AGAIN.');
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,18 +113,20 @@ export default function Arsenal() {
               <input
                 type="text"
                 value={codeInput}
-                onChange={(e) => setCodeInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') setAccessCode(codeInput.trim()); }}
+                onChange={(e) => { setCodeInput(e.target.value); setCodeError(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') unlockClub(); }}
                 placeholder="CLUB ACCESS CODE"
                 className="bg-white text-black border border-steel rounded-[6px] px-3 py-2 mono-label placeholder:text-black/40 focus:border-kinetic outline-none w-44"
               />
               <button
-                onClick={() => setAccessCode(codeInput.trim())}
-                className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors"
+                onClick={unlockClub}
+                disabled={unlocking || !codeInput.trim()}
+                className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors disabled:opacity-50"
               >
-                UNLOCK
+                {unlocking ? 'CHECKING…' : 'UNLOCK'}
               </button>
             </div>
+            {codeError && <p role="alert" className="w-full text-right mono-label text-kinetic text-[0.65rem]">{codeError}</p>}
           </div>
         )}
 

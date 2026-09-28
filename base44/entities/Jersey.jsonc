@@ -333,11 +333,6 @@
       "default": false,
       "title": "Private (Club Exclusive)"
     },
-    "private_access_code": {
-      "type": "string",
-      "default": "",
-      "title": "Private Access Code"
-    },
     "merchize_product_id": {
       "type": "string",
       "default": "",

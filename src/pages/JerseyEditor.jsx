@@ -29,7 +29,7 @@ const EMPTY_FORM = {
   number_style: { ...DEFAULT_NUMBER_STYLE },
   custom_font_url: '', custom_font_name: '', font_id: 'block',
   static_display: false,
-  is_private: false, private_access_code: '',
+  is_private: false,
   use_existing_merchize_product: true,
   merchize_existing_product_id: '', merchize_existing_product_title: '', merchize_existing_variants: {},
   merchize_product_id: '', merchize_product_title: '', merchize_variants: {}, variant_merchize_ids: [],
@@ -307,13 +307,7 @@ export default function JerseyEditor() {
           }
 
           <Section title="ACCESS & PUBLISHING">
-            <Toggle checked={form.is_private} onChange={(v) => setField('is_private', v)} label="PRIVATE (CLUB EXCLUSIVE)" />
-            <div>
-              <label className={labelCls}>PRIVATE ACCESS CODE</label>
-              <input value={form.private_access_code} onChange={(e) => setField('private_access_code', e.target.value)}
-              placeholder="e.g. CLUB2026" disabled={!form.is_private}
-              className={`${inputCls} disabled:opacity-40 disabled:cursor-not-allowed`} />
-            </div>
+            <Toggle checked={form.is_private} onChange={(v) => setField('is_private', v)} label="PRIVATE (CLUB LISTING)" />
           </Section>
 
           <Section title="MERCHIZE FULFILLMENT">

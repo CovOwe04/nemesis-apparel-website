@@ -4,7 +4,6 @@ export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const accessCode = (body?.accessCode || '').trim();
     const clubCode = (body?.clubCode || '').trim().toUpperCase();
 
     // If a club code is provided, look up the club and filter to its listings
@@ -35,23 +34,18 @@ export default async function(req) {
     const allJerseys = await base44.asServiceRole.entities.Jersey.list('-created_date', 100);
 
     const clubListingIds = new Set(club?.jersey_ids || []);
-    let jerseys = (allJerseys || []).filter((j) => {
-      if (!j.is_private) return true;
-      // A valid club link is also the access credential for its own listings.
-      if (clubListingIds.has(j.id)) return true;
-      return j.private_access_code && j.private_access_code === accessCode;
+    // Public visitors see public listings. A valid Club link grants access only
+    // to listings explicitly associated with that Club.
+    let jerseys = (allJerseys || []).filter((j) => club
+      ? clubListingIds.has(j.id)
+      : !j.is_private
+    ).map((j) => {
+      // Older records may still contain the retired listing-level code.
+      const { private_access_code, ...safeJersey } = j;
+      return safeJersey;
     });
 
-    // Club filtering: only show listings associated with this club
-    if (club) {
-      jerseys = jerseys.filter((j) => clubListingIds.has(j.id));
-    }
-
     jerseys = jerseys
-      .map((j) => {
-        const { private_access_code, ...rest } = j;
-        return rest;
-      })
       .sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999));
 
     return Response.json({
