@@ -25,7 +25,7 @@
         "net_90"
       ],
       "default": "",
-      "title": "Net Days"
+      "title": "Availability Period"
     },
     "available_from": {
       "type": "string",

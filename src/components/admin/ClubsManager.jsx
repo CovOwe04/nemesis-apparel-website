@@ -13,16 +13,9 @@ function generateCode() {
   return code;
 }
 
-function toLocalDateTimeInput(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-}
-
 const EMPTY_CLUB = {
   name: '', code: '', description: '', net_terms: '',
-  available_from: '', available_until: '', jersey_ids: [],
+  jersey_ids: [],
 };
 
 export default function ClubsManager() {
@@ -88,42 +81,47 @@ export default function ClubsManager() {
     setSaving(true);
     try {
       const code = form.code.trim().toUpperCase();
-      // Check persisted records too, not only the first page already loaded here.
-      const matches = await base44.entities.Club.filter({ code }, '-created_date', 100);
-      const existing = (matches || []).find((c) => c.id !== editing);
-      if (existing) { alert('That club code is already in use. Generate a new one.'); setSaving(false); return; }
+      const previousClub = editing === 'new' ? null : clubs.find((club) => club.id === editing);
+      const selectedDays = Number(form.net_terms.replace('net_', ''));
+      const storedDurationDays = previousClub?.available_from && previousClub?.available_until
+        ? (new Date(previousClub.available_until).getTime() - new Date(previousClub.available_from).getTime()) / (24 * 60 * 60 * 1000)
+        : null;
+      const storedPeriodMatches = !form.net_terms || !selectedDays ||
+        (storedDurationDays !== null && Math.abs(storedDurationDays - selectedDays) < 0.01);
+      const availabilityChanged = editing === 'new' ||
+        previousClub?.net_terms !== form.net_terms ||
+        (Boolean(form.net_terms) && (!previousClub?.available_from || !previousClub?.available_until || !storedPeriodMatches));
+      let availableFrom = previousClub?.available_from || '';
+      let availableUntil = previousClub?.available_until || '';
+      if (!form.net_terms) {
+        availableFrom = '';
+        availableUntil = '';
+      } else if (availabilityChanged) {
+        const start = Date.now();
+        const days = selectedDays;
+        availableFrom = new Date(start).toISOString();
+        availableUntil = Number.isFinite(days) && days > 0
+          ? new Date(start + days * 24 * 60 * 60 * 1000).toISOString()
+          : '';
+      }
 
       const payload = {
         name: form.name,
         code,
         description: form.description || '',
         net_terms: form.net_terms || '',
-        available_from: form.available_from || '',
-        available_until: form.available_until || '',
+        available_from: availableFrom,
+        available_until: availableUntil,
         jersey_ids: form.jersey_ids || [],
       };
 
-      let savedId;
-      if (editing === 'new') {
-        const created = await base44.entities.Club.create(payload);
-        savedId = created.id;
-      } else {
-        await base44.entities.Club.update(editing, payload);
-        savedId = editing;
-      }
-
-      // Sync club_id on every associated jersey, and clear it on removed ones
-      const prevClub = clubs.find((c) => c.id === savedId);
-      const prevIds = new Set(prevClub?.jersey_ids || []);
-      const newIds = new Set(form.jersey_ids || []);
-      const toAdd = [...newIds].filter((id) => !prevIds.has(id));
-      const toRemove = [...prevIds].filter((id) => !newIds.has(id));
-      for (const jid of toAdd) {
-        await base44.entities.Jersey.update(jid, { club_id: savedId }).catch(() => {});
-      }
-      for (const jid of toRemove) {
-        await base44.entities.Jersey.update(jid, { club_id: '' }).catch(() => {});
-      }
+      const result = await base44.functions.invoke('save-club', {
+        clubId: editing === 'new' ? undefined : editing,
+        club: payload,
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (result.data?.error) throw new Error(result.data.error);
+      if (!result.data?.id) throw new Error('Club was saved but no club ID was returned.');
 
       await load();
       cancel();
@@ -136,14 +134,16 @@ export default function ClubsManager() {
 
   const deleteClub = async (id, name) => {
     if (!confirm(`Delete club "${name}"? Its listings will remain but lose their club association.`)) return;
-    const club = clubs.find((c) => c.id === id);
-    if (club?.jersey_ids?.length) {
-      for (const jid of club.jersey_ids) {
-        await base44.entities.Jersey.update(jid, { club_id: '' }).catch(() => {});
-      }
+    try {
+      const result = await base44.functions.invoke('delete-club', {
+        clubId: id,
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (result.data?.error) throw new Error(result.data.error);
+      await load();
+    } catch (err) {
+      alert('Delete failed: ' + (err?.message || 'unknown error'));
     }
-    await base44.entities.Club.delete(id);
-    load();
   };
 
   if (editing) {
@@ -176,25 +176,14 @@ export default function ClubsManager() {
               <label className={labelCls}>DESCRIPTION</label>
               <textarea value={form.description} onChange={(e) => setField('description', e.target.value)} rows={2} placeholder="Short description shown on the club page…" className={`${inputCls} resize-none`} />
             </div>
-            <div className="mono-label text-fog/50 pt-2">AVAILABLE DATES</div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>AVAILABLE FROM</label>
-                <input type="datetime-local" value={toLocalDateTimeInput(form.available_from)} onChange={(e) => setField('available_from', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>AVAILABLE UNTIL</label>
-                <input type="datetime-local" value={toLocalDateTimeInput(form.available_until)} onChange={(e) => setField('available_until', e.target.value ? new Date(e.target.value).toISOString() : '')} className={inputCls} />
-              </div>
-            </div>
             <div>
-              <label className={labelCls}>NET DAYS</label>
+              <label className={labelCls}>AVAILABLE FOR</label>
               <select value={form.net_terms || ''} onChange={(e) => setField('net_terms', e.target.value)} className={inputCls}>
-                <option value="">None — Pay at checkout</option>
-                <option value="net_15">Net 15</option>
-                <option value="net_30">Net 30</option>
-                <option value="net_60">Net 60</option>
-                <option value="net_90">Net 90</option>
+                <option value="">No expiry</option>
+                <option value="net_15">15 days</option>
+                <option value="net_30">30 days</option>
+                <option value="net_60">60 days</option>
+                <option value="net_90">90 days</option>
               </select>
             </div>
           </div>
