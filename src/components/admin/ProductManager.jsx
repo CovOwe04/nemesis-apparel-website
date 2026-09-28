@@ -19,6 +19,9 @@ function totalImages(j) {
 export default function ProductManager() {
   const [jerseys, setJerseys] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const loadJerseys = () => {
     setLoadingList(true);
@@ -47,10 +50,23 @@ export default function ProductManager() {
     }
   };
 
-  const deleteJersey = async (id, name) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    try { await base44.entities.Jersey.delete(id); loadJerseys(); }
-    catch { alert('Delete failed.'); }
+  const deleteJersey = async () => {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const result = await base44.functions.invoke('delete-listing', {
+        jerseyId: pendingDelete.id,
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (result.data?.error) throw new Error(result.data.error);
+      setJerseys((current) => current.filter((jersey) => jersey.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (error) {
+      setDeleteError(error?.response?.data?.error || error?.message || 'Could not delete listing.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -118,7 +134,17 @@ export default function ProductManager() {
                             <Link to={`/nexus-control/editor/${j.id}`} className="btn-solid px-3 py-1.5 mono-label text-xs">
                               Edit
                             </Link>
-                            <button onClick={() => deleteJersey(j.id, j.name)} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors" aria-label={`Delete ${j.name}`}>
+                            <button
+                              onMouseDown={(event) => event.stopPropagation()}
+                              onTouchStart={(event) => event.stopPropagation()}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDeleteError('');
+                                setPendingDelete(j);
+                              }}
+                              className="p-1.5 text-fog/40 hover:text-kinetic transition-colors"
+                              aria-label={`Delete ${j.name}`}
+                            >
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -132,6 +158,41 @@ export default function ProductManager() {
             )}
           </Droppable>
         </DragDropContext>
+      )}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="presentation">
+          <div
+            className="w-full max-w-md space-y-4 rounded-[6px] border border-steel bg-card p-6 text-card-foreground shadow-2xl"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-listing-title"
+            aria-describedby="delete-listing-description"
+          >
+            <h2 id="delete-listing-title" className="font-heading text-lg uppercase text-fog">Delete listing?</h2>
+            <p id="delete-listing-description" className="text-sm text-fog/60">
+              Delete “{pendingDelete.name}”? This cannot be undone.
+            </p>
+            {deleteError && <p className="text-sm text-kinetic" role="alert">{deleteError}</p>}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+                className="mono-label rounded-[6px] border border-steel px-4 py-2 text-fog/70 transition-colors hover:text-fog disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={deleteJersey}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-kinetic px-4 py-2 font-heading uppercase text-void transition-colors hover:bg-fog disabled:opacity-60"
+              >
+                <Trash2 size={15} /> {deleting ? 'Deleting…' : 'Delete listing'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
