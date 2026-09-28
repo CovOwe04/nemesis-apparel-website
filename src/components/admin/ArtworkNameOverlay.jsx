@@ -133,29 +133,31 @@ export default function ArtworkNameOverlay({
   return (
     <div className="relative overflow-hidden w-full h-full">
       <img src={artworkUrl} alt="artwork" crossOrigin="anonymous" className="w-full h-full object-contain" />
-      {displayName && (
+      {(displayName || displayNumber) && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${vbWidth} ${vbHeight}`} preserveAspectRatio="xMidYMid meet">
-          <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
-            {lines.map((line, i) => (
-              <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct, FONT_SCALE)} fill="none" stroke="none" />
-            ))}
-            <text
-              fontFamily={fontFam}
-              fontSize={actualNameFontSize}
-              fill={ns.color}
-              stroke={ns.outline ? ns.outline_color : 'none'}
-              strokeWidth={ns.outline ? ns.outline_thickness * FONT_SCALE : 0}
-              paintOrder="stroke fill"
-              letterSpacing={ls}
-              style={{ textTransform: 'uppercase' }}
-            >
+          {displayName && (
+            <g transform={nameRotation} key={`g-name-${ns.arch}-${ns.flag}-${ns.rise}-${ns.vert_pos}`}>
               {lines.map((line, i) => (
-                <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset="50%" textAnchor="middle">
-                  {line}
-                </textPath>
+                <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct, FONT_SCALE)} fill="none" stroke="none" />
               ))}
-            </text>
-          </g>
+              <text
+                fontFamily={fontFam}
+                fontSize={actualNameFontSize}
+                fill={ns.color}
+                stroke={ns.outline ? ns.outline_color : 'none'}
+                strokeWidth={ns.outline ? ns.outline_thickness * FONT_SCALE : 0}
+                paintOrder="stroke fill"
+                letterSpacing={ls}
+                style={{ textTransform: 'uppercase' }}
+              >
+                {lines.map((line, i) => (
+                  <textPath key={`tp-${i}`} href={`#${uid}-arc-${i}`} xlinkHref={`#${uid}-arc-${i}`} startOffset="50%" textAnchor="middle">
+                    {line}
+                  </textPath>
+                ))}
+              </text>
+            </g>
+          )}
           {displayNumber && (
             <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct, FONT_SCALE)} fill="none" stroke="none" />

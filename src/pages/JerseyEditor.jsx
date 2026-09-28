@@ -140,14 +140,14 @@ export default function JerseyEditor() {
       const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
       const firstColorWithImages = form.colors.find((c) => c.images?.length > 0);
       const payload = { ...form, front_image, back_image, images, price: Number(form.price), static_display: (firstColorWithImages?.images?.length || 0) <= 1 };
-      let savedId;
-      if (jerseyId) {
-        await base44.entities.Jersey.update(jerseyId, payload);
-        savedId = jerseyId;
-      } else {
-        const created = await base44.entities.Jersey.create(payload);
-        savedId = created.id;
-      }
+      const result = await base44.functions.invoke('save-listing', {
+        jerseyId: jerseyId || undefined,
+        listing: payload,
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (result.data?.error) throw new Error(result.data.error);
+      const savedId = result.data?.id || jerseyId;
+      if (!savedId) throw new Error('Listing was saved but no listing ID was returned.');
       if (form.use_existing_merchize_product) navigate('/nexus-control');
       else setPendingGenerateId(savedId);
     } catch (err) {
@@ -192,7 +192,12 @@ export default function JerseyEditor() {
           variant_ids: r.variant_ids || {}, skus: r.skus || {},
         }));
         if (variantIds.length > 0) {
-          await base44.entities.Jersey.update(pendingGenerateId, { variant_merchize_ids: variantIds });
+          const saveResult = await base44.functions.invoke('save-listing', {
+            jerseyId: pendingGenerateId,
+            listing: { variant_merchize_ids: variantIds },
+            passcode,
+          });
+          if (saveResult.data?.error) throw new Error(saveResult.data.error);
         }
       }
       navigate('/nexus-control');
