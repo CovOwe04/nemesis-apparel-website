@@ -174,6 +174,22 @@ export async function createMerchizeOrder(
 ) {
   const { orderId, customerName, customerEmail, shippingAddress, items } = opts;
   const identifier = 'nemesis-apparel.base44.app';
+
+  // Do not create a fulfillment order that cannot carry its print files. The
+  // Merchize order item image is only a preview; print artwork is attached by
+  // the separate /order/import/artworks request below.
+  for (const [index, item] of items.entries()) {
+    if (item.requires_custom_artwork_front && !isSafeImageUrl(item.order_artwork?.front)) {
+      throw new Error(`Personalized front print artwork is missing for order item ${index + 1}.`);
+    }
+    const artworkUrls = Object.values(item.order_artwork || {}).filter(
+      (url) => typeof url === 'string' && isSafeImageUrl(url),
+    );
+    if (artworkUrls.length === 0) {
+      throw new Error(`Print artwork is missing for order item ${index + 1}.`);
+    }
+  }
+
   const merchizeRes = await fetch(`${baseUrl}/order/external/orders/catalog`, {
     method: 'POST',
     headers: {
@@ -195,7 +211,7 @@ export async function createMerchizeOrder(
         email: customerEmail,
         phone: '',
       },
-      items: items.map(({ order_artwork, ...item }) => item),
+      items: items.map(({ order_artwork, requires_custom_artwork_front, ...item }) => item),
     }),
   });
   const merchizeData = await merchizeRes.json();
@@ -229,13 +245,25 @@ export async function importMerchizeOrderArtworks(
   const detailUrl = new URL(`${baseUrl}/order/external/orders/order-detail`);
   detailUrl.searchParams.set('external_number', orderId);
   detailUrl.searchParams.set('identifier', identifier);
-  const detailRes = await fetch(detailUrl, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const detail = await detailRes.json();
-  if (!detailRes.ok || !detail.success || !Array.isArray(detail.data?.items)) {
-    throw new Error(detail.message || `Could not retrieve Merchize order items (HTTP ${detailRes.status}).`);
+  // Merchize can take a moment to expose newly created order items to the
+  // detail endpoint. Retry briefly before treating a missing item list as a
+  // fulfillment failure.
+  let detailRes;
+  let detail;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    detailRes = await fetch(detailUrl, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    detail = await detailRes.json();
+    if (!detailRes.ok || !detail.success) {
+      throw new Error(detail.message || `Could not retrieve Merchize order items (HTTP ${detailRes.status}).`);
+    }
+    if (Array.isArray(detail.data?.items) && detail.data.items.length >= items.length) break;
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+  }
+  if (!Array.isArray(detail.data?.items) || detail.data.items.length < items.length) {
+    throw new Error('Merchize created the order, but its order items are not available yet for artwork attachment. Retry artwork upload from the admin order.');
   }
 
   // Merchize returns order items in the same order as the import request. Use SKU
@@ -254,7 +282,9 @@ export async function importMerchizeOrderArtworks(
     const key = String(orderItem.sku || '').trim();
     const matchedIndex = inputBySku.get(key)?.shift();
     const source = items[matchedIndex ?? index];
-    if (!source?.order_artwork) return;
+    if (!source?.order_artwork) {
+      throw new Error(`Could not match Merchize order item ${index + 1} to its artwork.`);
+    }
     const orderItemId = orderItem.id || orderItem._id;
     if (!orderItemId) throw new Error(`Merchize order item ID is missing for item ${index + 1}.`);
 
@@ -263,7 +293,12 @@ export async function importMerchizeOrderArtworks(
       const url = source.order_artwork[side];
       if (url && isSafeImageUrl(url)) artwork[`design_${side}`] = url;
     }
-    if (Object.keys(artwork).length === 0) return;
+    if (Object.keys(artwork).length === 0) {
+      throw new Error(`No accessible print artwork URL was found for Merchize order item ${index + 1}.`);
+    }
+    if (source.requires_custom_artwork_front && !artwork.design_front) {
+      throw new Error(`Personalized front print artwork is missing for Merchize order item ${index + 1}.`);
+    }
 
     let remaining = Math.max(1, Number(source.quantity) || 1);
     while (remaining > 0) {

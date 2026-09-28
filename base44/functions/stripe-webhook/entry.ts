@@ -311,6 +311,7 @@ export default async function(req) {
                 price: item.price,
                 currency: 'USD',
                 image: item.rendered_image || item.front_image || '',
+                requires_custom_artwork_front: true,
                 order_artwork: {
                   front: item.rendered_artwork_front || item.artwork_front || '',
                   back: item.artwork_back || '',

@@ -37,6 +37,18 @@ export default async function (req) {
     const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
     const merchizeKey = secrets.get('MERCHIZE_API_KEY');
 
+    // Keep the reviewed files on the order items themselves. The fulfillment
+    // order thumbnail is a separate value from the print artwork attached to
+    // each Merchize order line, and retry approvals may skip product creation.
+    for (const item of cartItems) {
+      if (!item.customName && !item.customNumber) continue;
+      const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
+      const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
+      if (compositedFront) item.rendered_artwork_front = compositedFront;
+      const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
+      if (freshDisplay) item.rendered_image = freshDisplay;
+    }
+
     // Step 1: Create custom Merchize products for Identity Lab items.
     // Each custom item gets its own product with only the user's selected size,
     // uploaded with the composited artwork (name/number rendered onto the front artwork).
@@ -117,6 +129,7 @@ export default async function (req) {
           price: item.price,
           currency: 'USD',
           image: item.rendered_image || item.fresh_display_image || item.front_image || '',
+          requires_custom_artwork_front: true,
           order_artwork: {
             front: item.rendered_artwork_front || item.artwork_front || '',
             back: item.artwork_back || '',
@@ -146,6 +159,7 @@ export default async function (req) {
           price: item.price,
           currency: 'USD',
           image: item.rendered_image || item.front_image || '',
+          requires_custom_artwork_front: true,
           order_artwork: {
             front: item.rendered_artwork_front || item.artwork_front || '',
             back: item.artwork_back || '',
