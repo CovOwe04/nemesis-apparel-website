@@ -242,6 +242,49 @@ export default async function(req) {
       }));
       const jerseyMap = new Map(jerseys.filter(Boolean).map((jersey) => [jersey.id, jersey]));
 
+      // Existing-product IDs are entered manually in the listing editor, so
+      // their size SKUs may not be stored alongside the ID. Resolve missing
+      // SKUs from Merchize's existing all-variants endpoint before deciding an
+      // order needs manual review.
+      const sizeSkusByListing = new Map();
+      await Promise.all(jerseyIds.map(async (jerseyId) => {
+        const jersey = jerseyMap.get(jerseyId);
+        if (!jersey) return;
+        const explicitExistingId = jersey.use_existing_merchize_product === false
+          ? ''
+          : jersey.merchize_existing_product_id;
+        const productId = explicitExistingId || jersey.merchize_product_id || '';
+        const configuredSkus = explicitExistingId
+          ? jersey.merchize_existing_variants
+          : jersey.merchize_variants;
+        const sizeSkus = { ...(configuredSkus || {}) };
+        sizeSkusByListing.set(jerseyId, sizeSkus);
+
+        const requiredSizes = cartItems
+          .filter((item) => item.jerseyId === jerseyId)
+          .map((item) => item.shirtSize || 'M');
+        if (!productId || !baseUrl || !merchizeToken || requiredSizes.every((size) => sizeSkus[size])) return;
+
+        try {
+          const variantsRes = await fetch(`${baseUrl}/product/products/${encodeURIComponent(productId)}/all-variants`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${merchizeToken}` },
+          });
+          const variantsData = await variantsRes.json();
+          if (!variantsRes.ok || !variantsData.success || !Array.isArray(variantsData.data)) {
+            throw new Error(variantsData.message || `HTTP ${variantsRes.status}`);
+          }
+          for (const variant of variantsData.data) {
+            const sizeOption = variant.options?.find((option) => option.attribute?.value_type === 'size');
+            const size = String(sizeOption?.name || '').toUpperCase();
+            if (size && variant.sku) sizeSkus[size] = variant.sku;
+          }
+          console.log(`Resolved ${Object.keys(sizeSkus).length} size SKUs for listing ${jerseyId} from Merchize product ${productId}`);
+        } catch (error) {
+          console.error(`Could not resolve Merchize variants for listing ${jerseyId}:`, error.message || error);
+        }
+      }));
+
       // Check if a custom item matches a preset combo and return the variant mapping
       const findPresetMatch = (item, jersey) => {
         const combos = jersey?.name_number_combos || [];
@@ -262,16 +305,19 @@ export default async function(req) {
       // Build a merchize item for a standard (non-custom) cart item
       const buildStandardItem = (item, { requireExactSize = false } = {}) => {
         const jersey = jerseyMap.get(item.jerseyId);
-        const existingProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
-        if (!existingProductId) return null;
-        const variantSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
+        const configuredExistingProductId = jersey?.use_existing_merchize_product === false
+          ? ''
+          : jersey?.merchize_existing_product_id;
+        const productId = configuredExistingProductId || jersey?.merchize_product_id;
+        if (!productId) return null;
+        const variantSkus = sizeSkusByListing.get(item.jerseyId) || {};
         const size = item.shirtSize || 'M';
         const merchizeSku = requireExactSize
           ? variantSkus[size]
           : (variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0]);
         if (!merchizeSku) return null;
         return {
-          product_id: existingProductId,
+          product_id: productId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
           merchize_sku: merchizeSku,
           quantity: item.quantity,

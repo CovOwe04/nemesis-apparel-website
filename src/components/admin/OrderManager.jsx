@@ -13,7 +13,7 @@ const STATUS_STYLES = {
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending_approval');
+  const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
 
@@ -21,9 +21,7 @@ export default function OrderManager() {
     setLoading(true);
     const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
     base44.functions.invoke('get-admin-orders', { passcode })
-      .then((res) => setOrders((res.data?.orders || []).filter((o) =>
-        o.has_custom_names || (o.status === 'pending_approval' && o.merchize_order_id)
-      )))
+      .then((res) => setOrders(res.data?.orders || []))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   };
@@ -38,7 +36,7 @@ export default function OrderManager() {
 
   return (
     <div>
-      {/* Filter tabs — only custom-name orders are shown */}
+      {/* Show all checkouts; only pending-approval orders expose approval actions. */}
       <div className="flex items-center gap-2 mb-6">
         {['pending_approval', 'fulfilled', 'rejected', 'all'].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
@@ -53,7 +51,7 @@ export default function OrderManager() {
       ) : filtered.length === 0 ? (
         <div className="border border-steel rounded-[6px] p-10 text-center">
           <Package size={32} className="text-steel mx-auto mb-3" />
-          <p className="mono-label text-fog/40">NO {filter.toUpperCase()} CUSTOM ORDERS.</p>
+          <p className="mono-label text-fog/40">NO {filter.toUpperCase()} ORDERS.</p>
         </div>
       ) : (
         <div className="space-y-3">
