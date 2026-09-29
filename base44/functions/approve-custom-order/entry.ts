@@ -212,10 +212,10 @@ export default async function (req) {
 
     if (merchizeItems.length === 0) {
       await base44.asServiceRole.entities.Order.update(orderId, {
-        status: 'fulfilled',
-        admin_notes: (order.admin_notes || '') + '\nNo fulfillable items found.',
+        status: 'pending_approval',
+        admin_notes: (order.admin_notes || '') + '\nNo Merchize order was created because no fulfillable items were found.',
       });
-      return Response.json({ success: true, message: 'No fulfillable items, marked fulfilled' });
+      return Response.json({ error: 'No Merchize order was created because no fulfillable items were found.' }, { status: 400 });
     }
 
     let merchizeData;
@@ -240,7 +240,7 @@ export default async function (req) {
       const note = `Merchize order ${merchizeData.data._id} created, but artwork import needs retry: ${merchizeData.artwork_import.error}`;
       await base44.asServiceRole.entities.Order.update(orderId, {
         merchize_order_id: merchizeData.data._id,
-        status: 'pending_approval',
+        status: 'approved',
         admin_notes: `${order.admin_notes || ''}\n${note}`,
       });
       return Response.json({ error: note });
@@ -249,10 +249,10 @@ export default async function (req) {
     if (merchizeData.success && merchizeData.data?._id) {
       await base44.asServiceRole.entities.Order.update(orderId, {
         merchize_order_id: merchizeData.data._id,
-        status: 'fulfilled',
-        admin_notes: (order.admin_notes || '') + `\nApproved & fulfilled via Merchize: ${merchizeData.data._id}`,
+        status: 'approved',
+        admin_notes: (order.admin_notes || '') + `\nMerchize order created: ${merchizeData.data._id}`,
       });
-      console.log(`Order ${orderId} approved and fulfilled: ${merchizeData.data._id}`);
+      console.log(`Merchize order created for ${orderId}: ${merchizeData.data._id}`);
       return Response.json({ success: true, merchize_order_id: merchizeData.data._id });
     } else {
       console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));

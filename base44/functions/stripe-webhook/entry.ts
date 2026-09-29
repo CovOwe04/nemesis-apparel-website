@@ -172,7 +172,7 @@ export default async function(req) {
       // Store payment + shipping info for later fulfillment / refund
       const stripePaymentId = typeof session.payment_intent === 'string' ? session.payment_intent : '';
       await base44.asServiceRole.entities.Order.update(orderId, {
-        status: 'approved',
+        status: 'pending',
         stripe_payment_id: stripePaymentId,
         shipping_address_json: JSON.stringify(shippingAddress),
         admin_notes: `Stripe Session: ${session.id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
@@ -402,15 +402,15 @@ export default async function(req) {
               if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
                 await base44.asServiceRole.entities.Order.update(orderId, {
                   merchize_order_id: merchizeData.data._id,
-                  status: 'pending_approval',
+                  status: 'approved',
                   admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nArtwork import failed: ${merchizeData.artwork_import.error}\nArtwork attachment needs admin retry.`,
                 });
                 console.error(`Merchize artwork import needs retry for order ${orderId}:`, merchizeData.artwork_import.error);
               } else if (merchizeData.success && merchizeData.data?._id) {
                 await base44.asServiceRole.entities.Order.update(orderId, {
                   merchize_order_id: merchizeData.data._id,
-                  status: 'fulfilled',
-                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nCustomized items auto-fulfilled using configured Merchize products.`,
+                  status: 'approved',
+                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nCustomized items created using configured Merchize products.`,
                 });
                 console.log(`Merchize order created (preset): ${merchizeData.data._id}`);
               } else {
@@ -446,14 +446,14 @@ export default async function(req) {
             if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
               await base44.asServiceRole.entities.Order.update(orderId, {
                 merchize_order_id: merchizeData.data._id,
-                status: 'pending_approval',
+                status: 'approved',
                 admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nArtwork import failed: ${merchizeData.artwork_import.error}\nArtwork attachment needs admin retry.`,
               });
               console.error(`Merchize artwork import needs retry for order ${orderId}:`, merchizeData.artwork_import.error);
             } else if (merchizeData.success && merchizeData.data?._id) {
               await base44.asServiceRole.entities.Order.update(orderId, {
                 merchize_order_id: merchizeData.data._id,
-                status: 'fulfilled',
+                status: 'approved',
                 admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
               });
               console.log(`Merchize order created: ${merchizeData.data._id}`);

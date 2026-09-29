@@ -17,6 +17,8 @@ export default function OrderManager() {
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
+  const [syncingOrderId, setSyncingOrderId] = useState('');
+  const [syncMessage, setSyncMessage] = useState(null);
 
   const loadOrders = () => {
     setLoading(true);
@@ -37,13 +39,36 @@ export default function OrderManager() {
     try { return JSON.parse(o.items_json || '[]'); } catch { return []; }
   };
 
+  const syncFulfillment = async (order) => {
+    setSyncingOrderId(order.id);
+    setSyncMessage(null);
+    try {
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const res = await base44.functions.invoke('sync-merchize-order-status', { orderId: order.id, passcode });
+      if (res.data?.error) throw new Error(res.data.error);
+      if (res.data?.status === 'fulfilled') {
+        setSyncMessage({ orderId: order.id, message: 'Merchize confirms this order is fulfilled.' });
+        loadOrders();
+      } else {
+        setSyncMessage({ orderId: order.id, message: `Merchize status: ${res.data?.merchize_status || 'not fulfilled yet'}` });
+      }
+    } catch (err) {
+      setSyncMessage({
+        orderId: order.id,
+        message: err?.response?.data?.error || err?.data?.error || err?.message || 'Could not sync Merchize status.',
+      });
+    } finally {
+      setSyncingOrderId('');
+    }
+  };
+
   const filtered = orders.filter((o) => filter === 'all' ? true : o.status === filter);
 
   return (
     <div>
       {/* Show all checkouts; only pending-approval orders expose approval actions. */}
       <div className="flex items-center gap-2 mb-6">
-        {['pending_approval', 'fulfilled', 'rejected', 'all'].map((s) => (
+        {['pending_approval', 'approved', 'fulfilled', 'rejected', 'all'].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
             className={`mono-label px-4 py-2 border rounded-[6px] transition-colors ${filter === s ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}>
             {s === 'pending_approval' ? 'PENDING' : s.toUpperCase()}
@@ -85,14 +110,28 @@ export default function OrderManager() {
                       <span>{new Date(o.created_date).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  {/* View Design button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
-                    className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] shrink-0"
-                  >
-                    <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {o.status === 'approved' && o.merchize_order_id && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); syncFulfillment(o); }}
+                        disabled={syncingOrderId === o.id}
+                        className="mono-label px-3 py-2 border border-steel text-fog/70 hover:text-fog hover:border-fog/50 rounded-[4px] disabled:opacity-50"
+                      >
+                        {syncingOrderId === o.id ? 'CHECKING…' : 'SYNC STATUS'}
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReviewOrder(o); }}
+                      className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px]"
+                    >
+                      <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
+                    </button>
+                  </div>
                 </div>
+
+                {syncMessage?.orderId === o.id && (
+                  <p className="px-4 pb-3 mono-label text-fog/60" role="status">{syncMessage.message}</p>
+                )}
 
                 {/* Expanded details */}
                 {isOpen && (
