@@ -13,16 +13,21 @@ const STATUS_STYLES = {
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
 
   const loadOrders = () => {
     setLoading(true);
+    setLoadError('');
     const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
     base44.functions.invoke('get-admin-orders', { passcode })
       .then((res) => setOrders(res.data?.orders || []))
-      .catch(() => setOrders([]))
+      .catch((err) => {
+        setOrders([]);
+        setLoadError(err?.response?.data?.error || err?.data?.error || err?.message || 'Could not load orders.');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -48,6 +53,11 @@ export default function OrderManager() {
 
       {loading ? (
         <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 bg-steel animate-pulse rounded-[6px]" />)}</div>
+      ) : loadError ? (
+        <div role="alert" className="border border-kinetic/40 rounded-[6px] p-6 text-center">
+          <p className="mono-label text-kinetic">ORDER LIST FAILED TO LOAD</p>
+          <p className="text-fog/60 text-sm mt-2">{loadError}</p>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="border border-steel rounded-[6px] p-10 text-center">
           <Package size={32} className="text-steel mx-auto mb-3" />
