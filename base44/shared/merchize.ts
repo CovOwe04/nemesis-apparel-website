@@ -106,19 +106,22 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     try {
       const formData = new FormData();
       for (const [piece, url] of artworkEntries) {
-        if (!isSafeImageUrl(url)) continue;
+        if (!isSafeImageUrl(url)) throw new Error(`Unsafe ${piece} artwork URL for custom product ${productId}.`);
         const imgRes = await fetch(url);
-        if (!imgRes.ok) continue;
+        if (!imgRes.ok) throw new Error(`Could not fetch ${piece} artwork for custom product ${productId} (HTTP ${imgRes.status}).`);
         const blob = await imgRes.blob();
         const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
         formData.append(piece, blob, `${piece}.${ext}`);
       }
-      if ([...formData.keys()].length > 0) {
-        await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
+      if ([...formData.keys()].length === 0) throw new Error(`No artwork files were prepared for custom product ${productId}.`);
+      const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const artworkData = await artworkRes.json();
+      if (!artworkRes.ok || !artworkData.success) {
+        throw new Error(artworkData.message || `Artwork upload failed for custom product ${productId} (HTTP ${artworkRes.status}).`);
       }
       // Also set artwork URLs directly on the product (matches Generate button behavior)
       try {
@@ -136,6 +139,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
       }
     } catch (err) {
       console.error(`Failed to upload artwork for custom product ${productId}:`, err.message);
+      throw err;
     }
   }
 
@@ -144,22 +148,26 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     try {
       const formData = new FormData();
       for (const imgUrl of productImages) {
-        if (!isSafeImageUrl(imgUrl)) continue;
+        if (!isSafeImageUrl(imgUrl)) throw new Error('Unsafe customized jersey preview URL.');
         const imgRes = await fetch(imgUrl);
-        if (!imgRes.ok) continue;
+        if (!imgRes.ok) throw new Error(`Could not fetch customized jersey preview (HTTP ${imgRes.status}).`);
         const blob = await imgRes.blob();
         const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
         formData.append('images', blob, `image.${ext}`);
       }
-      if ([...formData.keys()].length > 0) {
-        await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
+      if ([...formData.keys()].length === 0) throw new Error('No customized jersey preview was prepared for upload.');
+      const imageRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const imageData = await imageRes.json();
+      if (!imageRes.ok || !imageData.success) {
+        throw new Error(imageData.message || `Customized jersey preview upload failed (HTTP ${imageRes.status}).`);
       }
     } catch (err) {
       console.error(`Failed to upload image to variant ${variantId}:`, err.message);
+      throw err;
     }
   }
 
@@ -181,6 +189,9 @@ export async function createMerchizeOrder(
   for (const [index, item] of items.entries()) {
     if (item.requires_custom_artwork_front && !isSafeImageUrl(item.order_artwork?.front)) {
       throw new Error(`Personalized front print artwork is missing for order item ${index + 1}.`);
+    }
+    if (item.requires_custom_artwork_front && !isSafeImageUrl(item.image)) {
+      throw new Error(`Customized jersey preview is missing for order item ${index + 1}.`);
     }
     const artworkUrls = Object.values(item.order_artwork || {}).filter(
       (url) => typeof url === 'string' && isSafeImageUrl(url),
@@ -266,22 +277,54 @@ export async function importMerchizeOrderArtworks(
     throw new Error('Merchize created the order, but its order items are not available yet for artwork attachment. Retry artwork upload from the admin order.');
   }
 
-  // Merchize returns order items in the same order as the import request. Use SKU
-  // matching first and position as a fallback for responses with different SKU keys.
+  // Match detail lines by either our seller SKU or Merchize's catalog SKU.
   const inputBySku = new Map();
+  const inputByProductId = new Map();
   items.forEach((item, index) => {
-    const key = String(item.merchize_sku || '').trim();
-    if (!key) return;
-    const queue = inputBySku.get(key) || [];
-    queue.push(index);
-    inputBySku.set(key, queue);
+    for (const value of [item.merchize_sku, item.sku]) {
+      const key = String(value || '').trim();
+      if (!key) continue;
+      const queue = inputBySku.get(key) || [];
+      queue.push(index);
+      inputBySku.set(key, queue);
+    }
+    const productId = String(item.product_id || '').trim();
+    if (productId) {
+      const queue = inputByProductId.get(productId) || [];
+      queue.push(index);
+      inputByProductId.set(productId, queue);
+    }
   });
 
   const artworkRequests = [];
+  const matchedInputs = new Set();
   detail.data.items.forEach((orderItem, index) => {
-    const key = String(orderItem.sku || '').trim();
-    const matchedIndex = inputBySku.get(key)?.shift();
-    const source = items[matchedIndex ?? index];
+    const skuKeys = [orderItem.sku, orderItem.merchize_sku, orderItem.sku_seller, orderItem.seller_sku]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean);
+    let matchedIndex;
+    for (const key of skuKeys) {
+      const queue = inputBySku.get(key);
+      const availableIndex = queue?.findIndex((candidate) => !matchedInputs.has(candidate)) ?? -1;
+      if (availableIndex >= 0) {
+        matchedIndex = queue.splice(availableIndex, 1)[0];
+        break;
+      }
+    }
+    if (matchedIndex === undefined) {
+      const productId = String(orderItem.product_id || orderItem.product?._id || orderItem.product?.id || '').trim();
+      const queue = inputByProductId.get(productId);
+      const availableIndex = queue?.findIndex((candidate) => !matchedInputs.has(candidate)) ?? -1;
+      if (availableIndex >= 0) matchedIndex = queue.splice(availableIndex, 1)[0];
+    }
+    if (matchedIndex === undefined && detail.data.items.length === items.length && !matchedInputs.has(index)) {
+      matchedIndex = index;
+    }
+    if (matchedIndex === undefined) {
+      throw new Error(`Could not match Merchize order item ${index + 1} to the submitted order items.`);
+    }
+    matchedInputs.add(matchedIndex);
+    const source = items[matchedIndex];
     if (!source?.order_artwork) {
       throw new Error(`Could not match Merchize order item ${index + 1} to its artwork.`);
     }

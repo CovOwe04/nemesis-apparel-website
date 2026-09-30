@@ -84,51 +84,53 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
 
         // 2. Render artwork (print file) — same params as Generate in Merchize
         const artworkFront = colorObj?.artwork_front || jersey.artwork_front;
-        if (artworkFront) {
-          setProgress(`Rendering artwork ${i + 1}/${customItems.length}…`);
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
+        if (!artworkFront) throw new Error(`Front print artwork is missing for ${item.name || 'this jersey'}.`);
+        setProgress(`Rendering artwork ${i + 1}/${customItems.length}…`);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Timed out loading front print artwork.')), 10000);
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Could not load front print artwork.'));
+          };
           img.src = artworkFront;
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-            setTimeout(resolve, 5000);
-          });
-          const naturalW = img.naturalWidth || 1200;
-          const naturalH = img.naturalHeight || 1200;
-          const maxDim = 1200;
-          const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
-          const renderW = Math.round(naturalW * sz);
-          const renderH = Math.round(naturalH * sz);
+        });
+        if (!img.naturalWidth || !img.naturalHeight) throw new Error('Front print artwork has no image dimensions.');
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
+        const maxDim = 1200;
+        const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
+        const renderW = Math.round(naturalW * sz);
+        const renderH = Math.round(naturalH * sz);
 
-          try {
-            const blob = await renderOverlayToBlob({
-              imageUrl: artworkFront,
-              imageFit: 'contain',
-              customName: item.customName,
-              customNumber: item.customNumber,
-              nameStyle: resolvedArtworkNameStyle,
-              numberStyle: resolvedArtworkNumberStyle,
-              fontFam: resolveFontFam(jersey),
-              customFontUrl: jersey.custom_font_url,
-              customFontName: jersey.custom_font_name,
-              enableName: jersey.enable_name,
-              enableNumber: jersey.enable_number,
-              staticDisplay: item.static_display ?? jersey.static_display,
-              isArtwork: true,
-              aspectRatio: naturalW / naturalH,
-              renderW,
-              renderH,
-            });
-            if (blob) {
-              const file = new File([blob], `artwork-${key}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadFile({ file });
-              compositedArtwork[key] = file_url;
-            }
-          } catch (err) {
-            console.error('Artwork render failed:', err);
-          }
-        }
+        const blob = await renderOverlayToBlob({
+          imageUrl: artworkFront,
+          imageFit: 'contain',
+          customName: item.customName,
+          customNumber: item.customNumber,
+          nameStyle: resolvedArtworkNameStyle,
+          numberStyle: resolvedArtworkNumberStyle,
+          fontFam: resolveFontFam(jersey),
+          customFontUrl: jersey.custom_font_url,
+          customFontName: jersey.custom_font_name,
+          enableName: jersey.enable_name,
+          enableNumber: jersey.enable_number,
+          staticDisplay: item.static_display ?? jersey.static_display,
+          isArtwork: true,
+          aspectRatio: naturalW / naturalH,
+          renderW,
+          renderH,
+        });
+        if (!blob) throw new Error('Could not render personalized front print artwork.');
+        const file = new File([blob], `artwork-${key}.png`, { type: 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        if (!file_url) throw new Error('Could not upload personalized front print artwork.');
+        compositedArtwork[key] = file_url;
       }
 
       setProgress(order.merchize_order_id ? 'Re-attaching artwork to the Merchize order…' : 'Creating Merchize products & fulfilling…');

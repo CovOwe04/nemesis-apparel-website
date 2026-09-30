@@ -59,7 +59,7 @@ export default async function (req) {
     for (const item of cartItems) {
       if (!item.customName && !item.customNumber && !item.custom_merchize_product_id) continue;
       const artworkKey = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
-      const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
+      const compositedFront = compositedArtwork?.[artworkKey] || item.rendered_artwork_front;
       if (compositedFront) item.rendered_artwork_front = compositedFront;
       if (!isSafeImageUrl(item.rendered_artwork_front)) {
         throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
@@ -92,7 +92,7 @@ export default async function (req) {
 
       // Use composited artwork (with name/number) for front, base artwork for other pieces
       const artworkKey = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
-      const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
+      const compositedFront = compositedArtwork?.[artworkKey] || item.rendered_artwork_front;
       const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
 
       const productImages = [];
@@ -128,6 +128,7 @@ export default async function (req) {
         console.log(`Custom product created: ${productId} for ${item.customName} #${item.customNumber}`);
       } catch (err) {
         console.error(`Failed to create custom product for ${item.name}:`, err.message);
+        throw err;
       }
     }
 

@@ -158,7 +158,7 @@ export default function IdentityLab() {
         renderedImage = file_url;
       } catch (err) {
         console.error('Preview render failed:', err);
-            setRenderError(err?.message || 'Could not prepare the exact preview for fulfillment. Please try again.');
+        setRenderError(err?.message || 'Could not prepare the exact preview for fulfillment. Please try again.');
         setRendering(false);
         return;
       }
@@ -203,6 +203,7 @@ export default function IdentityLab() {
         if (!artworkBlob) throw new Error('Could not render print artwork.');
         const file = new File([artworkBlob], 'custom-artwork-front.png', { type: 'image/png' });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        if (!file_url) throw new Error('Could not upload the personalized print artwork.');
         renderedArtworkFront = file_url;
       } catch (err) {
         console.error('Artwork render failed:', err);
