@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import IdentityNameOverlay, { FONTS } from '@/components/IdentityNameOverlay';
-import StaticNameOverlay from '@/components/StaticNameOverlay';
-import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { FONTS } from '@/lib/fonts';
+import JerseyDisplayPreview from '@/components/JerseyDisplayPreview';
+import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { resolveNameStyle, resolveNumberStyle, resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 
 function getColors(jersey) {
   if (jersey.colors && jersey.colors.length > 0) return jersey.colors;
@@ -56,7 +55,6 @@ export default function IdentityLab() {
   const [numberOn, setNumberOn] = useState(true);
   const [rendering, setRendering] = useState(false);
   const [renderError, setRenderError] = useState('');
-  const previewRef = useRef(null);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -140,19 +138,19 @@ export default function IdentityLab() {
     let renderedArtworkFront = '';
     const renderedName = canCustomizeName && nameOn ? name.toUpperCase() : '';
     const renderedNumber = canCustomizeNumber && numberOn ? number : '';
-    if (previewRef.current && (renderedName || renderedNumber)) {
+    if (renderedName || renderedNumber) {
       try {
-        const canvas = await html2canvas(previewRef.current, {
-          useCORS: true,
-          backgroundColor: null,
-          scale: 2,
-          onclone: (clonedDocument) => {
-            const preview = clonedDocument.querySelector('[data-order-preview]');
-            if (!renderedName) preview?.querySelector('[data-overlay-name]')?.remove();
-            if (!renderedNumber) preview?.querySelector('[data-overlay-number]')?.remove();
-          },
+        const blob = await renderJerseyDisplayToBlob({
+          imageUrl: selectedImage,
+          jersey,
+          color: currentColor,
+          customName: renderedName,
+          customNumber: renderedNumber,
+          fontId,
+          letterSpacing,
+          enableName: canCustomizeName && nameOn,
+          enableNumber: canCustomizeNumber && numberOn,
         });
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
         if (!blob) throw new Error('Could not encode the rendered preview.');
         const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -160,12 +158,17 @@ export default function IdentityLab() {
         renderedImage = file_url;
       } catch (err) {
         console.error('Preview render failed:', err);
-        setRenderError('Could not prepare the exact preview for fulfillment. Please try again.');
+            setRenderError(err?.message || 'Could not prepare the exact preview for fulfillment. Please try again.');
         setRendering(false);
         return;
       }
     }
     const artworkFront = currentColor?.artwork_front || jersey.artwork_front || '';
+    if ((renderedName || renderedNumber) && !artworkFront) {
+      setRenderError('This listing has no front print artwork to personalize.');
+      setRendering(false);
+      return;
+    }
     if (artworkFront && (renderedName || renderedNumber)) {
       try {
         const image = new window.Image();
@@ -229,7 +232,7 @@ export default function IdentityLab() {
       letterSpacing: canCustomize ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
-      rendered_image: renderedImage || selectedImage,
+      rendered_image: renderedName || renderedNumber ? renderedImage : selectedImage,
       rendered_artwork_front: renderedArtworkFront,
     };
     if (editId && items.some((i) => i.id === editId)) {
@@ -257,39 +260,20 @@ export default function IdentityLab() {
         {/* CANVAS */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="relative mx-auto max-w-md">
-            <div ref={previewRef} data-order-preview className={`relative overflow-hidden rounded-[12px] ${jersey.static_display ? 'aspect-square bg-black' : 'aspect-[3/4] bg-steel'}`}>
-              {jersey.static_display ? (
-                <StaticNameOverlay
-                  image={selectedImage}
-                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber && numberOn ? number : ''}
-                  fontId={fontId}
-                  nameStyle={resolveNameStyle(jersey, currentColor)}
-                  numberStyle={resolveNumberStyle(jersey, currentColor)}
-                  customFontUrl={jersey.custom_font_url || ''}
-                  customFontName={jersey.custom_font_name || ''}
-                  letterSpacing={letterSpacing}
-                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
-                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
-                  className="w-full h-full"
-                />
-              ) : (
-                <IdentityNameOverlay
-                  back_image={selectedImage}
-                  customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
-                  customNumber={canCustomizeNumber && numberOn ? number : ''}
-                  fontId={fontId}
-                  nameStyle={resolveNameStyle(jersey, currentColor)}
-                  numberStyle={resolveNumberStyle(jersey, currentColor)}
-                  customFontUrl={jersey.custom_font_url || ''}
-                  customFontName={jersey.custom_font_name || ''}
-                  letterSpacing={letterSpacing}
-                  showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
-                  showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
-                  className="w-full h-full"
-                />
-              )}
-            </div>
+            <JerseyDisplayPreview
+              imageUrl={selectedImage}
+              jersey={jersey}
+              color={currentColor}
+              customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
+              customNumber={canCustomizeNumber && numberOn ? number : ''}
+              fontId={fontId}
+              letterSpacing={letterSpacing}
+              enableName={canCustomizeName && nameOn}
+              enableNumber={canCustomizeNumber && numberOn}
+              showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
+              showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
+              className={`rounded-[12px] ${jersey.static_display ? 'aspect-square' : 'aspect-[3/4]'}`}
+            />
           </div>
           <div className="mt-4 text-center mono-label text-fog/40">
             {canCustomize ? (jersey.static_display ? 'LIVE PREVIEW — LEFT SIDE' : 'LIVE PREVIEW — UPPER BACK') : 'CUSTOMIZATION DISABLED FOR THIS KIT'}

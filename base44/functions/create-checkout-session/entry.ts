@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { getShipRegion, SHIPPING_RATES } from '../../shared/shipping.ts';
+import { isSafeImageUrl } from '../../shared/security.ts';
 
 function getClientIp(req) {
   return req.headers.get('CF-Connecting-IP')
@@ -72,8 +73,11 @@ export default async function(req) {
       if ((item.customName || item.customNumber) && !item.rendered_image) {
         return Response.json({ error: 'A custom listing preview is missing. Please return to the Identity Lab and add it to your cart again.' }, { status: 400 });
       }
-      if ((item.customName || item.customNumber) && !item.rendered_artwork_front) {
+      if ((item.customName || item.customNumber) && !isSafeImageUrl(item.rendered_artwork_front)) {
         return Response.json({ error: 'The personalized print artwork is missing. Please return to the Identity Lab and add this item to your cart again.' }, { status: 400 });
+      }
+      if ((item.customName || item.customNumber) && !isSafeImageUrl(item.rendered_image)) {
+        return Response.json({ error: 'The customized jersey preview is missing. Please return to the Identity Lab and add this item to your cart again.' }, { status: 400 });
       }
       const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
       verifiedItems.push({

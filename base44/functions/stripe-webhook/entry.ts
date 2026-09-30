@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
 import { createMerchizeOrder } from '../../shared/merchize.ts';
+import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
@@ -316,6 +317,13 @@ export default async function(req) {
           ? variantSkus[size]
           : (variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0]);
         if (!merchizeSku) return null;
+        const isPersonalized = Boolean(item.customName || item.customNumber);
+        if (isPersonalized && !isSafeImageUrl(item.rendered_artwork_front)) {
+          throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
+        }
+        if (isPersonalized && !isSafeImageUrl(item.rendered_image)) {
+          throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
+        }
         return {
           product_id: productId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
@@ -323,10 +331,10 @@ export default async function(req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: item.rendered_image || item.front_image || jersey.front_image || '',
-          ...(item.customName || item.customNumber ? { requires_custom_artwork_front: true } : {}),
+          image: isPersonalized ? item.rendered_image : (item.rendered_image || item.front_image || jersey.front_image || ''),
+          ...(isPersonalized ? { requires_custom_artwork_front: true } : {}),
           order_artwork: {
-            front: item.rendered_artwork_front || item.artwork_front || '',
+            front: isPersonalized ? item.rendered_artwork_front : (item.rendered_artwork_front || item.artwork_front || ''),
             back: item.artwork_back || '',
             sleeve: item.artwork_sleeve || '',
             hood: item.artwork_hood || '',
@@ -370,6 +378,12 @@ export default async function(req) {
           try {
             const merchizeItems = [];
             for (const { item, vmi, merchizeSku } of presetMatches) {
+              if (!isSafeImageUrl(item.rendered_artwork_front)) {
+                throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
+              }
+              if (!isSafeImageUrl(item.rendered_image)) {
+                throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
+              }
               const size = item.shirtSize || 'M';
               merchizeItems.push({
                 product_id: vmi.merchize_product_id,
@@ -378,10 +392,10 @@ export default async function(req) {
                 quantity: item.quantity,
                 price: item.price,
                 currency: 'USD',
-                image: item.rendered_image || item.front_image || '',
+                image: item.rendered_image,
                 requires_custom_artwork_front: true,
                 order_artwork: {
-                  front: item.rendered_artwork_front || item.artwork_front || '',
+                  front: item.rendered_artwork_front,
                   back: item.artwork_back || '',
                   sleeve: item.artwork_sleeve || '',
                   hood: item.artwork_hood || '',

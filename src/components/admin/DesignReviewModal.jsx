@@ -1,16 +1,11 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Check, Loader2, Mail, User, Shirt, Palette } from 'lucide-react';
-import ComboImageRenderer from '@/components/admin/ComboImageRenderer';
+import JerseyDisplayPreview from '@/components/JerseyDisplayPreview';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
-import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
+import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { FONTS } from '@/lib/fonts';
-import {
-  resolveNameStyle,
-  resolveNumberStyle,
-  resolveArtworkNameStyle,
-  resolveArtworkNumberStyle,
-} from '@/lib/jerseyStyle';
+import { resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 
 const resolveFontFam = (jersey) => {
   const f = FONTS.find((x) => x.id === jersey.font_id) || FONTS[0];
@@ -52,58 +47,43 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
       // custom Merchize product gets the same 3D preview + print file.
       const compositedArtwork = {};
       const compositedDisplay = {};
-      const fontFam = resolveFontFam;
 
       for (let i = 0; i < customItems.length; i++) {
         const item = customItems[i];
         const jersey = jerseys[item.jerseyId];
-        if (!jersey) continue;
+        if (!jersey) throw new Error(`Could not load the listing for ${item.name || 'this jersey'}.`);
         const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
-        const images = colorObj?.images || [];
-        const isStatic = images.length <= 1;
-        const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
-        const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
         const resolvedArtworkNameStyle = resolveArtworkNameStyle(jersey, colorObj);
         const resolvedArtworkNumberStyle = resolveArtworkNumberStyle(jersey, colorObj);
         const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
-        const fam = fontFam(jersey);
 
         // 1. Render 3D display image (same params as Generate in Merchize)
-        if (images.length > 0) {
-          setProgress(`Rendering display ${i + 1}/${customItems.length}…`);
-          const displayUrl = isStatic ? images[0].url : images[images.length - 1].url;
-          const dispW = isStatic ? 1200 : 900;
-          const dispH = isStatic ? 1200 : 1200;
-          try {
-            const dispBlob = await renderOverlayToBlob({
-              imageUrl: displayUrl,
-              imageFit: 'cover',
-              customName: item.customName,
-              customNumber: item.customNumber,
-              nameStyle: resolvedNameStyle,
-              numberStyle: resolvedNumberStyle,
-              fontFam: fam,
-              customFontUrl: jersey.custom_font_url,
-              customFontName: jersey.custom_font_name,
-              enableName: jersey.enable_name,
-              enableNumber: jersey.enable_number,
-              staticDisplay: isStatic,
-              isArtwork: false,
-              renderW: dispW,
-              renderH: dispH,
-            });
-            if (dispBlob) {
-              const file = new File([dispBlob], `display-${key}.png`, { type: 'image/png' });
-              const { file_url } = await base44.integrations.Core.UploadFile({ file });
-              compositedDisplay[key] = file_url;
-            }
-          } catch (err) {
-            console.error('Display render failed:', err);
-          }
+        const displayUrl = item.front_image;
+        if (!displayUrl) throw new Error(`Customized jersey preview source is missing for ${item.name || 'this jersey'}.`);
+        setProgress(`Rendering display ${i + 1}/${customItems.length}…`);
+        try {
+          const dispBlob = await renderJerseyDisplayToBlob({
+            imageUrl: displayUrl,
+            jersey: { ...jersey, static_display: item.static_display ?? jersey.static_display },
+            color: colorObj,
+            customName: item.customName,
+            customNumber: item.customNumber,
+            fontId: item.fontId || jersey.font_id,
+            letterSpacing: item.letterSpacing || 0,
+            enableName: jersey.enable_name,
+            enableNumber: jersey.enable_number,
+          });
+          if (!dispBlob) throw new Error('Could not encode the customized jersey preview.');
+          const file = new File([dispBlob], `display-${key}.png`, { type: 'image/png' });
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          if (!file_url) throw new Error('Could not upload the customized jersey preview.');
+          compositedDisplay[key] = file_url;
+        } catch (err) {
+          throw new Error(`Could not prepare the customized preview for ${item.name || 'this jersey'}: ${err.message}`);
         }
 
         // 2. Render artwork (print file) — same params as Generate in Merchize
-        const artworkFront = colorObj?.artwork_front;
+        const artworkFront = colorObj?.artwork_front || jersey.artwork_front;
         if (artworkFront) {
           setProgress(`Rendering artwork ${i + 1}/${customItems.length}…`);
           const img = new Image();
@@ -129,12 +109,12 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               customNumber: item.customNumber,
               nameStyle: resolvedArtworkNameStyle,
               numberStyle: resolvedArtworkNumberStyle,
-              fontFam: fam,
+              fontFam: resolveFontFam(jersey),
               customFontUrl: jersey.custom_font_url,
               customFontName: jersey.custom_font_name,
               enableName: jersey.enable_name,
               enableNumber: jersey.enable_number,
-              staticDisplay: isStatic,
+              staticDisplay: item.static_display ?? jersey.static_display,
               isArtwork: true,
               aspectRatio: naturalW / naturalH,
               renderW,
@@ -232,15 +212,9 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
             customItems.map((item, i) => {
               const jersey = jerseys[item.jerseyId];
               const colorObj = (jersey?.colors || []).find((c) => c.name === item.colorName);
-              const images = colorObj?.images || [];
-              const isStatic = images.length <= 1;
-              const displayImageUrl = (isStatic ? images[0]?.url : images[images.length - 1]?.url) || jersey?.back_image || '';
-              const artworkUrl = colorObj?.artwork_front || '';
-              const fontFam = jersey?.custom_font_name
-                ? `'${jersey.custom_font_name}', ${(FONTS.find((f) => f.id === jersey.font_id) || FONTS[0]).family}`
-                : (FONTS.find((f) => f.id === jersey?.font_id) || FONTS[0]).family;
-              const resolvedNameStyle = resolveNameStyle(jersey, colorObj);
-              const resolvedNumberStyle = resolveNumberStyle(jersey, colorObj);
+              const displayImageUrl = item.front_image || '';
+              const isStatic = item.static_display ?? jersey?.static_display;
+              const artworkUrl = colorObj?.artwork_front || jersey?.artwork_front || '';
               const resolvedArtworkNameStyle = resolveArtworkNameStyle(jersey, colorObj);
               const resolvedArtworkNumberStyle = resolveArtworkNumberStyle(jersey, colorObj);
 
@@ -269,17 +243,15 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
                     <div>
                       <div className="mono-label text-fog/40 mb-2 text-[0.6rem]">DISPLAY PREVIEW</div>
                       {displayImageUrl && jersey ? (
-                        <div className="aspect-[3/4] bg-void rounded-[4px] overflow-hidden border border-steel">
-                          <ComboImageRenderer
+                        <div className={`${isStatic ? 'aspect-square' : 'aspect-[3/4]'} bg-void rounded-[4px] overflow-hidden border border-steel`}>
+                          <JerseyDisplayPreview
                             imageUrl={displayImageUrl}
+                            jersey={{ ...jersey, static_display: isStatic }}
+                            color={colorObj}
                             customName={item.customName}
                             customNumber={item.customNumber}
-                            nameStyle={resolvedNameStyle}
-                            numberStyle={resolvedNumberStyle}
-                            customFontUrl={jersey.custom_font_url}
-                            customFontName={jersey.custom_font_name}
-                            fontId={jersey.font_id}
-                            staticDisplay={isStatic}
+                            fontId={item.fontId || jersey.font_id}
+                            letterSpacing={item.letterSpacing || 0}
                             enableName={jersey.enable_name}
                             enableNumber={jersey.enable_number}
                           />

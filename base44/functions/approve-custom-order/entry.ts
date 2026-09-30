@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { createCustomProduct, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
-import { requireAdminPasscode } from '../../shared/security.ts';
+import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
   try {
@@ -57,11 +57,17 @@ export default async function (req) {
     // order thumbnail is a separate value from the print artwork attached to
     // each Merchize order line, and retry approvals may skip product creation.
     for (const item of cartItems) {
-      if (!item.customName && !item.customNumber) continue;
+      if (!item.customName && !item.customNumber && !item.custom_merchize_product_id) continue;
       const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
       const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
       if (compositedFront) item.rendered_artwork_front = compositedFront;
+      if (!isSafeImageUrl(item.rendered_artwork_front)) {
+        throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
+      }
       const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
+      if (!isSafeImageUrl(freshDisplay)) {
+        throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
+      }
       if (freshDisplay) item.rendered_image = freshDisplay;
     }
 
@@ -144,10 +150,10 @@ export default async function (req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: item.rendered_image || item.fresh_display_image || item.front_image || '',
+          image: item.rendered_image,
           requires_custom_artwork_front: true,
           order_artwork: {
-            front: item.rendered_artwork_front || item.artwork_front || '',
+            front: item.rendered_artwork_front,
             back: item.artwork_back || '',
             sleeve: item.artwork_sleeve || '',
             hood: item.artwork_hood || '',
@@ -174,10 +180,10 @@ export default async function (req) {
           quantity: item.quantity,
           price: item.price,
           currency: 'USD',
-          image: item.rendered_image || item.front_image || '',
+          image: item.rendered_image,
           requires_custom_artwork_front: true,
           order_artwork: {
-            front: item.rendered_artwork_front || item.artwork_front || '',
+            front: item.rendered_artwork_front,
             back: item.artwork_back || '',
             sleeve: item.artwork_sleeve || '',
             hood: item.artwork_hood || '',

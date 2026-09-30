@@ -11,7 +11,10 @@ import {
   ARTWORK_NAME_VERT_POS,
   ARTWORK_NUMBER_VERT_POS,
   ARTWORK_TEXT_SCALE_ADJUSTMENT,
+  resolveNameStyle,
+  resolveNumberStyle,
 } from '@/lib/jerseyStyle';
+import { FONTS } from '@/lib/fonts';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -251,11 +254,21 @@ export async function renderOverlayToBlob({
   // 2. Load and draw image
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.src = imageUrl;
-  await new Promise((resolve) => {
-    img.onload = resolve;
-    img.onerror = resolve;
-    setTimeout(resolve, 5000);
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Timed out loading render image.')), 10000);
+    img.onload = () => {
+      clearTimeout(timeout);
+      if (!img.naturalWidth || !img.naturalHeight) {
+        reject(new Error('Render image has no dimensions.'));
+        return;
+      }
+      resolve();
+    };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Could not load render image.'));
+    };
+    img.src = imageUrl;
   });
 
   if (imageFit === 'cover') {
@@ -419,4 +432,44 @@ export async function renderOverlayToBlob({
 
   // 8. Return PNG blob
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+export function renderJerseyDisplayToBlob({
+  imageUrl,
+  jersey,
+  color,
+  customName = '',
+  customNumber = '',
+  fontId = 'block',
+  letterSpacing = 0,
+  enableName = true,
+  enableNumber = true,
+}) {
+  if (!imageUrl) throw new Error('Jersey display image is missing.');
+
+  const staticDisplay = Boolean(jersey?.static_display);
+  const renderW = staticDisplay ? 1200 : 900;
+  const renderH = 1200;
+  const font = FONTS.find((entry) => entry.id === fontId) || FONTS[0];
+  const fontFam = jersey?.custom_font_name
+    ? `'${jersey.custom_font_name}', ${font.family}`
+    : font.family;
+
+  return renderOverlayToBlob({
+    imageUrl,
+    imageFit: staticDisplay ? 'contain' : 'cover',
+    customName,
+    customNumber,
+    nameStyle: resolveNameStyle(jersey, color),
+    numberStyle: resolveNumberStyle(jersey, color),
+    fontFam,
+    customFontUrl: jersey?.custom_font_url || '',
+    customFontName: jersey?.custom_font_name || '',
+    letterSpacing,
+    enableName,
+    enableNumber,
+    staticDisplay,
+    renderW,
+    renderH,
+  });
 }

@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import { renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
-import { FONTS } from '@/lib/fonts';
+import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import {
-  resolveNameStyle,
-  resolveNumberStyle,
   resolveArtworkNameStyle,
   resolveArtworkNumberStyle,
 } from '@/lib/jerseyStyle';
@@ -92,8 +89,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setGenerating(true);
     setError('');
     try {
-      const displayFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : (FONTS.find((f) => f.id === fontId) || FONTS[0]).family;
-
       // Step 1: Render display images for variants with name/number combos.
       // Uses direct Canvas 2D rendering (not html2canvas / SVG-to-image) so
       // text, arch/flag curves, outlines, and fonts match the designer exactly.
@@ -103,35 +98,27 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         const v = needsRender[i];
         setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
         const colorObj = (colors || []).find((c) => c.name === v.color_name);
-        const resolvedNameStyle = resolveNameStyle({ name_style: nameStyle }, colorObj);
-        const resolvedNumberStyle = resolveNumberStyle({ number_style: numberStyle }, colorObj);
         const images = colorObj?.images || [];
         if (images.length === 0) continue;
         const isStatic = images.length <= 1;
         const imageUrl = isStatic ? images[0].url : images[images.length - 1].url;
 
-        // Render dimensions match SVG viewBox aspect ratio for perfect overlay alignment
-        // IdentityNameOverlay viewBox is 300×400 (3:4); StaticNameOverlay is 400×400 (1:1)
-        const renderW = isStatic ? 1200 : 900;
-        const renderH = isStatic ? 1200 : 1200;
-
         try {
-          const blob = await renderOverlayToBlob({
+          const blob = await renderJerseyDisplayToBlob({
             imageUrl,
-            imageFit: 'cover',
+            jersey: {
+              static_display: isStatic,
+              name_style: nameStyle,
+              number_style: numberStyle,
+              custom_font_url: customFontUrl,
+              custom_font_name: customFontName,
+            },
+            color: colorObj,
             customName: v.combo_name,
             customNumber: v.combo_number,
-            nameStyle: resolvedNameStyle,
-            numberStyle: resolvedNumberStyle,
-            fontFam: displayFontFam,
-            customFontUrl,
-            customFontName,
+            fontId,
             enableName,
             enableNumber,
-            staticDisplay: isStatic,
-            isArtwork: false,
-            renderW,
-            renderH,
           });
           if (blob) {
             const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
