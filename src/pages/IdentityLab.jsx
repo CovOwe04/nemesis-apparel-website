@@ -233,6 +233,7 @@ export default function IdentityLab() {
       shirtSize,
       quantity: qty,
       rendered_image: renderedName || renderedNumber ? renderedImage : selectedImage,
+      rendered_image_version: renderedName || renderedNumber ? 'canvas-v1' : '',
       rendered_artwork_front: renderedArtworkFront,
     };
     if (editId && items.some((i) => i.id === editId)) {

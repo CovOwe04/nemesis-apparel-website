@@ -79,6 +79,9 @@ export default async function(req) {
       if ((item.customName || item.customNumber) && !isSafeImageUrl(item.rendered_image)) {
         return Response.json({ error: 'The customized jersey preview is missing. Please return to the Identity Lab and add this item to your cart again.' }, { status: 400 });
       }
+      if ((item.customName || item.customNumber) && item.rendered_image_version !== 'canvas-v1') {
+        return Response.json({ error: 'The customized jersey preview is still being refreshed. Please wait for the cart preview to update, then try again.' }, { status: 400 });
+      }
       const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
       verifiedItems.push({
         ...item,

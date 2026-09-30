@@ -211,7 +211,7 @@ export async function createMerchizeOrder(
         email: customerEmail,
         phone: '',
       },
-      items: items.map(({ order_artwork, requires_custom_artwork_front, ...item }) => item),
+      items: items.map(({ order_artwork, requires_custom_artwork_front, rendered_image_version: _renderedImageVersion, ...item }) => item),
     }),
   });
   const merchizeData = await merchizeRes.json();

@@ -55,7 +55,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
         const resolvedArtworkNameStyle = resolveArtworkNameStyle(jersey, colorObj);
         const resolvedArtworkNumberStyle = resolveArtworkNumberStyle(jersey, colorObj);
-        const key = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
+        const key = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
 
         // 1. Render 3D display image (same params as Generate in Merchize)
         const displayUrl = item.front_image;

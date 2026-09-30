@@ -31,12 +31,24 @@ export function CartProvider({ children }) {
       const matchKey = (i) =>
         i.jerseyId === item.jerseyId &&
         (i.customName || '') === (item.customName || '') &&
+        (i.customNumber || '') === (item.customNumber || '') &&
         (i.font || '') === (item.font || '') &&
+        (i.fontId || '') === (item.fontId || '') &&
+        (i.colorName || '') === (item.colorName || '') &&
         Number(i.size || 0) === Number(item.size || 0) &&
         Number(i.curve || 0) === Number(item.curve || 0) &&
         Number(i.height || 0) === Number(item.height || 0) &&
         (i.shirtSize || '') === (item.shirtSize || '') &&
-        (i.designKey || '') === (item.designKey || '');
+        (i.designKey || '') === (item.designKey || '') &&
+        (i.front_image || '') === (item.front_image || '') &&
+        (i.artwork_front || '') === (item.artwork_front || '') &&
+        Boolean(i.static_display) === Boolean(item.static_display) &&
+        JSON.stringify(i.nameStyle || {}) === JSON.stringify(item.nameStyle || {}) &&
+        JSON.stringify(i.numberStyle || {}) === JSON.stringify(item.numberStyle || {}) &&
+        (i.customFontUrl || '') === (item.customFontUrl || '') &&
+        (i.customFontName || '') === (item.customFontName || '') &&
+        (i.rendered_image_version || '') === (item.rendered_image_version || '') &&
+        Number(i.letterSpacing || 0) === Number(item.letterSpacing || 0);
       const existing = prev.find(matchKey);
       if (existing) {
         return prev.map((i) =>
@@ -63,6 +75,13 @@ export function CartProvider({ children }) {
     );
   }, []);
 
+  const updateItems = useCallback((updates) => {
+    const updatesById = new Map(updates.map(({ id, ...patch }) => [id, patch]));
+    setItems((prev) => prev.map((item) =>
+      updatesById.has(item.id) ? { ...item, ...updatesById.get(item.id) } : item
+    ));
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
   const count = items.reduce((s, i) => s + i.quantity, 0);
@@ -70,7 +89,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, editItem, clearCart, count, total }}
+      value={{ items, addItem, removeItem, updateQuantity, editItem, updateItems, clearCart, count, total }}
     >
       {children}
     </CartContext.Provider>

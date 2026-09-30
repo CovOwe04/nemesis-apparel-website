@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
+import { renderJerseyDisplayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { useCart } from '@/lib/CartContext';
 import { Plus, Minus, Trash2, Pencil, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 
@@ -62,7 +63,7 @@ function formatPrice(priceUsd, currency) {
 }
 
 export default function Cart() {
-  const { items, updateQuantity, removeItem, total, clearCart } = useCart();
+  const { items, updateQuantity, removeItem, updateItems, total, clearCart } = useCart();
   const [ordered, setOrdered] = useState(() => {
     if (typeof window !== 'undefined') {
       return new URLSearchParams(window.location.search).get('status') === 'success';
@@ -73,6 +74,7 @@ export default function Cart() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [renderRefreshError, setRenderRefreshError] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [shippingAddress, setShippingAddress] = useState({
     line1: '', line2: '', city: '', state: '', postalCode: '', country: 'CA'
@@ -92,6 +94,46 @@ export default function Cart() {
       window.history.replaceState({}, '', '/cart');
     }
   }, [clearCart]);
+
+  const stalePersonalizedItems = items.filter((item) =>
+    (item.customName || item.customNumber) && item.rendered_image_version !== 'canvas-v1'
+  );
+
+  useEffect(() => {
+    if (stalePersonalizedItems.length === 0) return;
+    let active = true;
+    setRenderRefreshError('');
+
+    Promise.all(stalePersonalizedItems.map(async (item) => {
+      const blob = await renderJerseyDisplayToBlob({
+        imageUrl: item.front_image || item.back_image,
+        jersey: {
+          static_display: item.static_display,
+          name_style: item.nameStyle || {},
+          number_style: item.numberStyle || {},
+          custom_font_url: item.customFontUrl || '',
+          custom_font_name: item.customFontName || '',
+        },
+        customName: item.customName || '',
+        customNumber: item.customNumber || '',
+        fontId: item.fontId || item.font || 'block',
+        letterSpacing: item.letterSpacing || 0,
+      });
+      if (!blob) throw new Error(`Could not refresh the preview for ${item.name || 'a customized jersey'}.`);
+      const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      if (!file_url) throw new Error(`Could not upload the refreshed preview for ${item.name || 'a customized jersey'}.`);
+      return { id: item.id, rendered_image: file_url, rendered_image_version: 'canvas-v1' };
+    })).then((updates) => {
+      if (active) updateItems(updates);
+    }).catch((error) => {
+      if (active) setRenderRefreshError(error?.message || 'Could not refresh customized cart previews.');
+    });
+
+    return () => { active = false; };
+  }, [items, updateItems]);
+
+  const hasStalePersonalizedRender = stalePersonalizedItems.length > 0;
 
   const currency = shippingAddress.country === 'CA' ? 'CAD' : 'USD';
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
@@ -196,7 +238,7 @@ export default function Cart() {
                   <img
                 src={item.rendered_image}
                 alt={`${item.name} preview`}
-                className="w-24 h-32 sm:w-28 sm:h-36 rounded-[12px] object-contain bg-void"
+                    className={`w-24 sm:w-28 ${item.static_display ? 'aspect-square' : 'aspect-[3/4]'} rounded-[12px] object-fill bg-void`}
               />
                 </Link> : item.isCustomDesign ?
             <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center rounded-[12px]">
@@ -396,14 +438,15 @@ export default function Cart() {
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
+            {renderRefreshError && <p role="alert" className="mono-label text-kinetic mb-3">{renderRefreshError}</p>}
             
 
             <button
               onClick={checkout}
-              disabled={submitting}
+              disabled={submitting || hasStalePersonalizedRender}
               className="btn-solid w-full gap-2 px-6 py-4 font-heading uppercase disabled:opacity-60">
               
-              {submitting ? 'Starting checkout…' : 'Checkout'} <ArrowRight size={18} />
+              {submitting ? 'Starting checkout…' : hasStalePersonalizedRender ? 'Refreshing previews…' : 'Checkout'} <ArrowRight size={18} />
             </button>
             <Link
               to="/arsenal"

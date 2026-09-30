@@ -58,13 +58,13 @@ export default async function (req) {
     // each Merchize order line, and retry approvals may skip product creation.
     for (const item of cartItems) {
       if (!item.customName && !item.customNumber && !item.custom_merchize_product_id) continue;
-      const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
+      const artworkKey = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
       const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
       if (compositedFront) item.rendered_artwork_front = compositedFront;
       if (!isSafeImageUrl(item.rendered_artwork_front)) {
         throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
       }
-      const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
+      const freshDisplay = compositedDisplay?.[artworkKey] || item.rendered_image;
       if (!isSafeImageUrl(freshDisplay)) {
         throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
       }
@@ -91,7 +91,7 @@ export default async function (req) {
       const sizeValue = size.toLowerCase();
 
       // Use composited artwork (with name/number) for front, base artwork for other pieces
-      const artworkKey = `${item.colorName || 'Default'}|${item.customName || ''}|${item.customNumber || ''}`;
+      const artworkKey = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
       const compositedFront = item.rendered_artwork_front || compositedArtwork?.[artworkKey];
       const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
 
