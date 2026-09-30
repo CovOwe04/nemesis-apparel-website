@@ -151,7 +151,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
         }
       }
 
-      setProgress('Creating Merchize products & fulfilling…');
+      setProgress(order.merchize_order_id ? 'Re-attaching artwork to the Merchize order…' : 'Creating Merchize products & fulfilling…');
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('approve-custom-order', {
         orderId: order.id,
@@ -199,6 +199,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
 
   const orderRef = `#${order.id.slice(-8).toUpperCase()}`;
   const canApprove = order.status === 'pending_approval';
+  const canRetryArtwork = order.status === 'approved' && !!order.merchize_order_id && customItems.length > 0;
 
   return (
     <div className="fixed inset-0 bg-void/90 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -359,6 +360,18 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
               >
                 {processing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                 {processing ? 'Processing…' : 'Approve & Fulfill'}
+              </button>
+            </div>
+          ) : canRetryArtwork ? (
+            <div className="flex items-center gap-3">
+              <span className="mono-label text-fog/40 text-xs">STATUS: {order.status.toUpperCase()}</span>
+              <button
+                onClick={handleApprove}
+                disabled={processing}
+                className="inline-flex items-center gap-2 bg-kinetic px-5 py-2.5 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60 text-xs"
+              >
+                {processing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {processing ? 'Retrying…' : 'Retry Artwork Upload'}
               </button>
             </div>
           ) : (

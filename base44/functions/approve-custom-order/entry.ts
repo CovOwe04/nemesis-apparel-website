@@ -20,7 +20,8 @@ export default async function (req) {
     if (!order) {
       return Response.json({ error: 'Order not found' });
     }
-    if (order.status !== 'pending_approval') {
+    const retryingExistingOrder = order.status === 'approved' && !!order.merchize_order_id;
+    if (order.status !== 'pending_approval' && !retryingExistingOrder) {
       return Response.json({ error: 'Order is not pending approval' });
     }
 
@@ -237,7 +238,7 @@ export default async function (req) {
     }
 
     if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
-      const note = `Merchize order ${merchizeData.data._id} created, but artwork import needs retry: ${merchizeData.artwork_import.error}`;
+      const note = `Merchize order ${merchizeData.data._id} ${retryingExistingOrder ? 'artwork retry failed' : 'created, but artwork import needs retry'}: ${merchizeData.artwork_import.error}`;
       await base44.asServiceRole.entities.Order.update(orderId, {
         merchize_order_id: merchizeData.data._id,
         status: 'approved',
@@ -247,12 +248,15 @@ export default async function (req) {
     }
 
     if (merchizeData.success && merchizeData.data?._id) {
+      const successNote = retryingExistingOrder
+        ? `Artwork re-attached to Merchize order: ${merchizeData.data._id}`
+        : `Merchize order created: ${merchizeData.data._id}`;
       await base44.asServiceRole.entities.Order.update(orderId, {
         merchize_order_id: merchizeData.data._id,
         status: 'approved',
-        admin_notes: (order.admin_notes || '') + `\nMerchize order created: ${merchizeData.data._id}`,
+        admin_notes: (order.admin_notes || '') + `\n${successNote}`,
       });
-      console.log(`Merchize order created for ${orderId}: ${merchizeData.data._id}`);
+      console.log(`${retryingExistingOrder ? 'Artwork re-attached to' : 'Merchize order created for'} ${orderId}: ${merchizeData.data._id}`);
       return Response.json({ success: true, merchize_order_id: merchizeData.data._id });
     } else {
       console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
