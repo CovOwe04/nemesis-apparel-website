@@ -35,7 +35,7 @@ export default function Landing() {
   return (
     <div className="bg-void">
       {/* HERO */}
-      <section className="hero-dark relative h-[92vh] min-h-[600px] overflow-hidden bg-black">
+      <section className="hero-dark relative h-[93vh] min-h-[600px] overflow-hidden bg-black">
         <img
           src={HERO_URL}
           alt="Athlete celebrating mid-rally"
