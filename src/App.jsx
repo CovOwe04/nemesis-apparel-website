@@ -16,6 +16,7 @@ import JerseyEditor from './pages/JerseyEditor';
 import DesignLab from './pages/DesignLab';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import OverlayScrollbar from './components/OverlayScrollbar';
 import { CartProvider } from '@/lib/CartContext';
 
 const AuthenticatedApp = () => {
@@ -57,6 +58,7 @@ const AuthenticatedApp = () => {
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       <Footer />
+      <OverlayScrollbar />
     </div>
   );
 };
