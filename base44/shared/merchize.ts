@@ -174,6 +174,20 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
   return { productId, variantId, sku };
 }
 
+// Resolve the listing's designed print artwork (front/back/sleeve/hood) from
+// the Jersey entity, preferring per-color artwork and falling back to the
+// jersey-level artwork. Used when sending artwork to Merchize via
+// /order/import/artworks so the order always carries the listing's design.
+export function resolveListingArtwork(jersey: any, colorName: string) {
+  const colorObj = (jersey?.colors || []).find((c) => c.name === colorName);
+  return {
+    front: colorObj?.artwork_front || jersey?.artwork_front || '',
+    back: colorObj?.artwork_back || jersey?.artwork_back || '',
+    sleeve: colorObj?.artwork_sleeve || jersey?.artwork_sleeve || '',
+    hood: colorObj?.artwork_hood || jersey?.artwork_hood || '',
+  };
+}
+
 export async function createMerchizeOrder(
   baseUrl: string,
   token: string,

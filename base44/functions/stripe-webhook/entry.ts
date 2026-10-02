@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createMerchizeOrder } from '../../shared/merchize.ts';
+import { createMerchizeOrder, resolveListingArtwork } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
@@ -324,6 +324,7 @@ export default async function(req) {
         if (isPersonalized && !isSafeImageUrl(item.rendered_image)) {
           throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
         }
+        const listingArtwork = resolveListingArtwork(jersey, item.colorName);
         return {
           product_id: productId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
@@ -334,10 +335,10 @@ export default async function(req) {
           image: isPersonalized ? item.rendered_image : (item.rendered_image || item.front_image || jersey.front_image || ''),
           ...(isPersonalized ? { requires_custom_artwork_front: true } : {}),
           order_artwork: {
-            front: isPersonalized ? item.rendered_artwork_front : (item.rendered_artwork_front || item.artwork_front || ''),
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
+            front: isPersonalized ? item.rendered_artwork_front : (listingArtwork.front || item.artwork_front || ''),
+            back: listingArtwork.back || item.artwork_back || '',
+            sleeve: listingArtwork.sleeve || item.artwork_sleeve || '',
+            hood: listingArtwork.hood || item.artwork_hood || '',
           },
         };
       };
@@ -385,6 +386,8 @@ export default async function(req) {
                 throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
               }
               const size = item.shirtSize || 'M';
+              const presetJersey = jerseyMap.get(item.jerseyId);
+              const presetArtwork = resolveListingArtwork(presetJersey, item.colorName);
               merchizeItems.push({
                 product_id: vmi.merchize_product_id,
                 sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
@@ -396,9 +399,9 @@ export default async function(req) {
                 requires_custom_artwork_front: true,
                 order_artwork: {
                   front: item.rendered_artwork_front,
-                  back: item.artwork_back || '',
-                  sleeve: item.artwork_sleeve || '',
-                  hood: item.artwork_hood || '',
+                  back: presetArtwork.back || '',
+                  sleeve: presetArtwork.sleeve || '',
+                  hood: presetArtwork.hood || '',
                 },
               });
             }

@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProduct, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
+import { createCustomProduct, createMerchizeOrder, importMerchizeOrderArtworks, resolveListingArtwork } from '../../shared/merchize.ts';
 import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -142,6 +142,11 @@ export default async function (req) {
     for (const item of cartItems) {
       if (item.isCustomDesign) continue;
 
+      // Resolve the listing's designed artwork (front/back/sleeve/hood) from
+      // the Jersey entity, preferring per-color artwork over jersey-level.
+      const jersey = jerseyMap.get(item.jerseyId);
+      const listingArtwork = resolveListingArtwork(jersey, item.colorName);
+
       if (item.custom_merchize_product_id) {
         // Custom Identity Lab product (single size)
         merchizeItems.push({
@@ -155,13 +160,12 @@ export default async function (req) {
           requires_custom_artwork_front: true,
           order_artwork: {
             front: item.rendered_artwork_front,
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
+            back: listingArtwork.back || '',
+            sleeve: listingArtwork.sleeve || '',
+            hood: listingArtwork.hood || '',
           },
         });
       } else if (item.customName || item.customNumber) {
-        const jersey = jerseyMap.get(item.jerseyId);
         const combo = (jersey?.name_number_combos || []).find((entry) =>
           (entry.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
           (entry.number || '') === (item.customNumber || '')
@@ -185,14 +189,13 @@ export default async function (req) {
           requires_custom_artwork_front: true,
           order_artwork: {
             front: item.rendered_artwork_front,
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
+            back: listingArtwork.back || '',
+            sleeve: listingArtwork.sleeve || '',
+            hood: listingArtwork.hood || '',
           },
         });
       } else if (!item.customName && !item.customNumber) {
         // Standard product (non-custom items only)
-        const jersey = jerseyMap.get(item.jerseyId);
         const existingProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
         if (!existingProductId) continue;
         const variantSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
@@ -208,10 +211,10 @@ export default async function (req) {
           currency: 'USD',
           image: jersey.front_image || item.front_image || '',
           order_artwork: {
-            front: item.artwork_front || '',
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
+            front: listingArtwork.front || item.artwork_front || '',
+            back: listingArtwork.back || item.artwork_back || '',
+            sleeve: listingArtwork.sleeve || item.artwork_sleeve || '',
+            hood: listingArtwork.hood || item.artwork_hood || '',
           },
         });
       }
