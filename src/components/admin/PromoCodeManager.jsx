@@ -202,6 +202,21 @@ export default function PromoCodeManager() {
     );
   }
 
+  // Group promo codes by their associated listing so each code sits
+  // directly beneath the listing it applies to.
+  const grouped = (() => {
+    const map = new Map();
+    for (const promo of promos) {
+      const key = promo.jersey_id || '__none__';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(promo);
+    }
+    return [...map.entries()].map(([jerseyId, codes]) => ({
+      jersey: jerseys.find((j) => j.id === jerseyId) || null,
+      codes,
+    }));
+  })();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -216,30 +231,37 @@ export default function PromoCodeManager() {
           <p className="mono-label text-fog/50">NO PROMO CODES YET.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {promos.map((promo) => {
-            const jersey = jerseys.find((j) => j.id === promo.jersey_id);
-            return (
-              <div key={promo.id} className="border border-steel rounded-[6px] p-4 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span className="font-heading text-lg uppercase text-fog">{promo.code}</span>
-                    <span className={`mono-label px-2 py-0.5 rounded-[3px] ${promo.active ? 'bg-kinetic/20 text-kinetic' : 'bg-steel/40 text-fog/40'}`}>
-                      {promo.active ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                  </div>
-                  <div className="mono-label text-fog/50 mt-1">
-                    {promo.discount_type === 'percentage' ? `${promo.discount_value}% off` : `$${promo.discount_value} off`} · {jersey?.name || 'Unknown jersey'} · Used {promo.times_used || 0}x
-                  </div>
-                  {promo.description && <p className="text-fog/40 text-xs mt-1">{promo.description}</p>}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => startEdit(promo)} className="mono-label text-fog/50 hover:text-kinetic transition-colors px-3 py-2 border border-steel rounded-[6px]">EDIT</button>
-                  <button onClick={() => remove(promo.id)} className="text-fog/40 hover:text-kinetic transition-colors p-2"><Trash2 size={16} /></button>
-                </div>
+        <div className="space-y-6">
+          {grouped.map(({ jersey, codes }) => (
+            <div key={jersey?.id || '__none__'}>
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-steel">
+                <span className="font-heading text-fog uppercase">{jersey?.name || 'Unassigned'}</span>
+                {jersey?.team && <span className="mono-label text-fog/40">{jersey.team}</span>}
               </div>
-            );
-          })}
+              <div className="space-y-3">
+                {codes.map((promo) => (
+                  <div key={promo.id} className="border border-steel rounded-[6px] p-4 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <span className="font-heading text-lg uppercase text-fog">{promo.code}</span>
+                        <span className={`mono-label px-2 py-0.5 rounded-[3px] ${promo.active ? 'bg-kinetic/20 text-kinetic' : 'bg-steel/40 text-fog/40'}`}>
+                          {promo.active ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </div>
+                      <div className="mono-label text-fog/50 mt-1">
+                        {promo.discount_type === 'percentage' ? `${promo.discount_value}% off` : `$${Number(promo.discount_value).toFixed(2)} off`} · Used {promo.times_used || 0}x
+                      </div>
+                      {promo.description && <p className="text-fog/40 text-xs mt-1">{promo.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => startEdit(promo)} className="mono-label text-fog/50 hover:text-kinetic transition-colors px-3 py-2 border border-steel rounded-[6px]">EDIT</button>
+                      <button onClick={() => remove(promo.id)} className="text-fog/40 hover:text-kinetic transition-colors p-2"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
