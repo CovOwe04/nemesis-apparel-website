@@ -50,10 +50,10 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
                 <button
                   type="button"
                   onClick={() => removeImage(ci)}
-                  className="absolute inset-0 bg-void/70 text-fog flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 bg-void/80 text-fog p-1 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity"
                   aria-label="Remove image"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             ) : (
