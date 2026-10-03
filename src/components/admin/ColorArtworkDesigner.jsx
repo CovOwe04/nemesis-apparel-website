@@ -59,9 +59,8 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
   };
   const setArtworkVertPos = (key, value) => updateColor(colorIndex, { [key]: value });
 
-  const validCombos = (combos || []).filter((c) => c.name || c.number);
-  const previewName = validCombos[0]?.name || 'YOUR NAME';
-  const previewNumber = validCombos[0]?.number || '00';
+  const previewName = 'YOUR NAME';
+  const previewNumber = '00';
 
   return (
     <div className="border border-steel rounded-[4px]">
