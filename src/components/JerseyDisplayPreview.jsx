@@ -16,11 +16,11 @@ export default function JerseyDisplayPreview({
   className = '',
 }) {
   const [previewUrl, setPreviewUrl] = useState('');
+  const [prevUrl, setPrevUrl] = useState('');
 
   useEffect(() => {
     let active = true;
     let objectUrl = '';
-    setPreviewUrl('');
 
     Promise.resolve().then(() => renderJerseyDisplayToBlob({
       imageUrl,
@@ -36,6 +36,7 @@ export default function JerseyDisplayPreview({
       if (!blob) throw new Error('Could not render jersey preview.');
       if (!active) return;
       objectUrl = URL.createObjectURL(blob);
+      setPrevUrl(previewUrl);
       setPreviewUrl(objectUrl);
     }).catch((error) => {
       if (active) console.error('Jersey preview render failed:', error);
@@ -45,6 +46,7 @@ export default function JerseyDisplayPreview({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     imageUrl,
     jersey,
@@ -61,7 +63,14 @@ export default function JerseyDisplayPreview({
 
   return (
     <div className={`relative overflow-hidden bg-black ${className}`}>
-      {previewUrl && <img src={previewUrl} alt="Customized jersey preview" className="block w-full h-full object-fill" />}
+      {prevUrl && (
+        <img src={prevUrl} alt="" aria-hidden="true"
+          className="absolute inset-0 block w-full h-full object-fill" />
+      )}
+      {previewUrl && (
+        <img key={previewUrl} src={previewUrl} alt="Customized jersey preview"
+          className="absolute inset-0 block w-full h-full object-fill animate-in fade-in duration-300" />
+      )}
     </div>
   );
 }
