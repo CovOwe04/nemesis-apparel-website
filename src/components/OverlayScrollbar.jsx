@@ -57,7 +57,7 @@ export default function OverlayScrollbar() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className={`absolute right-0.5 w-2 cursor-grab active:cursor-grabbing transition-colors ${dragging ? 'bg-kinetic' : 'bg-muted-foreground/50 hover:bg-kinetic'}`}
+        className={`absolute right-0.5 w-2 cursor-default transition-colors ${dragging ? 'bg-kinetic' : 'bg-muted-foreground/50 hover:bg-kinetic'}`}
         style={{ top: m.top, height: m.height }}
       />
     </div>
