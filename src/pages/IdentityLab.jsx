@@ -557,7 +557,7 @@ export default function IdentityLab() {
                   <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>
               ) : (
-                <>{editId ? 'Update cart' : 'Add to cart'} — ${jersey.price}</>
+                <>{editId ? 'Update cart' : 'Add to cart'} — ${jersey.price.toFixed(2)}</>
               )}
             </button>
           </div>

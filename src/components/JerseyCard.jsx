@@ -6,8 +6,9 @@ import { useCart } from '@/lib/CartContext';
 const CAD_RATE = 1.36;
 
 function formatPrice(priceUsd, currency) {
-  const value = currency === 'CAD' ? Math.round(priceUsd * CAD_RATE) : priceUsd;
-  return currency === 'CAD' ? `CA$${value}` : `$${value}`;
+  const value = currency === 'CAD' ? priceUsd * CAD_RATE : priceUsd;
+  const formatted = Number(value).toFixed(2);
+  return currency === 'CAD' ? `CA$${formatted}` : `$${formatted}`;
 }
 
 function getColors(jersey) {
