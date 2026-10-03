@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProductForItem, buildCustomOrderItem, buildPresetOrderItem, findPresetMatch, ensurePresetSellerSkus, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
+import { createCustomProductForItem, buildCustomOrderItem, buildPresetOrderItem, findPresetMatch, createMerchizeOrder, orderItemAttributes, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
 import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -115,7 +115,6 @@ export default async function (req) {
         const jersey = jerseyMap.get(item.jerseyId);
         const vmi = findPresetMatch(item, jersey)?.vmi;
         if (!vmi?.merchize_product_id) continue;
-        await ensurePresetSellerSkus(baseUrl, merchizeToken, merchizeKey, vmi.merchize_product_id);
         const mItem = buildPresetOrderItem(item, jersey, vmi);
         if (mItem) merchizeItems.push(mItem);
       } else if (!item.customName && !item.customNumber) {
@@ -128,6 +127,7 @@ export default async function (req) {
         const merchizeSku = variantSkus[size] || variantSkus['M'] || Object.values(variantSkus)[0];
         if (!merchizeSku) continue;
         merchizeItems.push({
+          name: item.name || jersey?.name || 'Jersey',
           product_id: existingProductId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
           merchize_sku: merchizeSku,
@@ -135,6 +135,7 @@ export default async function (req) {
           price: item.price,
           currency: 'USD',
           image: jersey.front_image || item.front_image || '',
+          attributes: orderItemAttributes(item),
           order_artwork: {
             front: item.artwork_front || '',
             back: item.artwork_back || '',

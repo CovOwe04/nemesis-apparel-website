@@ -328,6 +328,17 @@ export async function ensurePresetSellerSkus(baseUrl: string, token: string, api
   console.log(`Set ${updates.length} seller SKU(s) on preset product ${productId}`);
 }
 
+// Merchize order-import items require `name` and `attributes` (color + size) so
+// the line maps to the correct variant of the seller product. The `/catalog`
+// endpoint ignores seller product_id and auto-creates generic products; the
+// `/order/external/orders` endpoint respects product_id + merchize_sku + attributes.
+export function orderItemAttributes(item: any) {
+  return [
+    { name: 'Color', option: item.colorName || 'Default' },
+    { name: 'Size', option: item.shirtSize || 'M' },
+  ];
+}
+
 // Merchize order line for a preset item that already has a generated product.
 // Call ensurePresetSellerSkus for the product first so the line maps to it.
 export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
@@ -335,6 +346,7 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
   const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
   if (!vmi?.merchize_product_id || !merchizeSku) return null;
   return {
+    name: item.name || jersey?.name || 'Jersey',
     product_id: vmi.merchize_product_id,
     sku: customSellerSku(vmi.merchize_product_id, size),
     merchize_sku: merchizeSku,
@@ -342,6 +354,7 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
     price: item.price,
     currency: 'USD',
     image: item.rendered_image,
+    attributes: orderItemAttributes(item),
     requires_custom_artwork_front: true,
     order_artwork: {
       front: item.rendered_artwork_front,
@@ -355,6 +368,7 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
 // Order line for an item that has a custom product from createCustomProductForItem.
 export function buildCustomOrderItem(item: any) {
   return {
+    name: item.name || 'Custom Jersey',
     product_id: item.custom_external_product_id || item.custom_merchize_product_id,
     sku: item.custom_seller_sku || `NEMESIS-CUSTOM-${item.shirtSize || 'M'}`,
     merchize_sku: item.custom_merchize_sku || '',
@@ -362,6 +376,7 @@ export function buildCustomOrderItem(item: any) {
     price: item.price,
     currency: 'USD',
     image: item.rendered_image,
+    attributes: orderItemAttributes(item),
     requires_custom_artwork_front: true,
     order_artwork: {
       front: item.rendered_artwork_front,
@@ -399,7 +414,11 @@ export async function createMerchizeOrder(
     }
   }
 
-  const merchizeRes = await fetch(`${baseUrl}/order/external/orders/catalog`, {
+  // POST to /order/external/orders (the order-import endpoint), NOT /catalog.
+  // The /catalog endpoint ignores seller product_id and auto-creates a generic
+  // catalog product for each line; /order/external/orders maps each line to the
+  // existing seller product identified by product_id + merchize_sku + attributes.
+  const merchizeRes = await fetch(`${baseUrl}/order/external/orders`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

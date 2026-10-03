@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem, findPresetMatch, buildPresetOrderItem, ensurePresetSellerSkus } from '../../shared/merchize.ts';
+import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem, findPresetMatch, buildPresetOrderItem, orderItemAttributes } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
@@ -314,6 +314,7 @@ export default async function(req) {
           throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
         }
         return {
+          name: item.name || jersey?.name || 'Jersey',
           product_id: productId,
           sku: `NEMESIS-${(jersey.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
           merchize_sku: merchizeSku,
@@ -321,6 +322,7 @@ export default async function(req) {
           price: item.price,
           currency: 'USD',
           image: isPersonalized ? item.rendered_image : (item.rendered_image || item.front_image || jersey.front_image || ''),
+          attributes: orderItemAttributes(item),
           ...(isPersonalized ? { requires_custom_artwork_front: true } : {}),
           order_artwork: {
             front: isPersonalized ? item.rendered_artwork_front : (item.rendered_artwork_front || item.artwork_front || ''),
@@ -359,7 +361,6 @@ export default async function(req) {
             const jersey = jerseyMap.get(item.jerseyId);
             const { vmi } = findPresetMatch(item, jersey);
             if (vmi?.merchize_product_id) {
-              await ensurePresetSellerSkus(baseUrl, merchizeToken, merchizeKey, vmi.merchize_product_id);
               const mItem = buildPresetOrderItem(item, jersey, vmi);
               if (mItem) merchizeItems.push(mItem);
               continue;
