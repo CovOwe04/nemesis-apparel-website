@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-
 const SECTION_IMAGE =
   'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/1f6359d8f_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_1106.jpg';
 
@@ -39,14 +37,7 @@ export default function WeGetItDone() {
             </div>
           </div>
 
-          <div className="mt-10">
-            <Link
-              to="/design-lab"
-              className="btn-solid px-7 py-4 font-heading uppercase"
-            >
-              Create your own
-            </Link>
-          </div>
+
         </div>
       </div>
     </section>
