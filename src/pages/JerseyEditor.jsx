@@ -9,6 +9,7 @@ import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
 import DesignerPanel from '@/components/admin/DesignerPanel';
 import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS } from '@/lib/jerseyStyle';
+import { buildSyncedIds, generateMerchizeVariants } from '@/lib/generateMerchizeVariants';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -73,6 +74,7 @@ export default function JerseyEditor() {
   const [pendingGenerateId, setPendingGenerateId] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
+  const [genProgress, setGenProgress] = useState('');
 
   useEffect(() => {
     if (!jerseyId) return;
@@ -148,8 +150,17 @@ export default function JerseyEditor() {
       if (result.data?.error) throw new Error(result.data.error);
       const savedId = result.data?.id || jerseyId;
       if (!savedId) throw new Error('Listing was saved but no listing ID was returned.');
-      if (form.use_existing_merchize_product) navigate('/nexus-control');
-      else setPendingGenerateId(savedId);
+      if (form.use_existing_merchize_product) {
+        navigate('/nexus-control');
+      } else {
+        // Only prompt to generate if there are variants without a Merchize
+        // product yet — once every variant is generated, Update Listing just
+        // saves and returns to the dashboard.
+        const synced = buildSyncedIds(form.colors, form.name_number_combos, payload.variant_merchize_ids);
+        const missing = synced.filter((v) => !v.merchize_product_id || !v.manually_set);
+        if (missing.length === 0) navigate('/nexus-control');
+        else setPendingGenerateId(savedId);
+      }
     } catch (err) {
       alert('Save failed: ' + (err?.message || 'unknown error'));
     } finally {
@@ -161,50 +172,48 @@ export default function JerseyEditor() {
     setGenerating(true);
     setGenError('');
     try {
-      const colors = form.colors.length > 0 ? form.colors : [{ name: 'Default' }];
-      const combos = form.name_number_combos || [];
-      const variants = [];
-      if (combos.length > 0) {
-        for (const color of colors) {
-          for (const combo of combos) {
-            variants.push({ color_name: color.name || 'Default', combo_name: combo.name || '', combo_number: combo.number || '' });
-          }
-        }
-      } else {
-        for (const color of colors) {
-          variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
-        }
-      }
-      if (variants.length > 0) {
-        const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
-        const res = await base44.functions.invoke('create-merchize-products', {
-          jerseyId: pendingGenerateId,
-          variants,
-          passcode,
-          merchize_product_id: form.merchize_product_id,
-          merchize_variants: form.merchize_variants,
-        });
-        if (res.data?.error) { setGenError(res.data.error); return; }
-        const results = res.data?.results || [];
-        const variantIds = results.filter((r) => r.success).map((r) => ({
-          color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
-          merchize_product_id: r.merchize_product_id, external_product_id: r.external_product_id || '', manually_set: false,
-          variant_ids: r.variant_ids || {}, skus: r.skus || {},
-        }));
-        if (variantIds.length > 0) {
-          const saveResult = await base44.functions.invoke('save-listing', {
-            jerseyId: pendingGenerateId,
-            listing: { variant_merchize_ids: variantIds },
-            passcode,
-          });
-          if (saveResult.data?.error) throw new Error(saveResult.data.error);
-        }
-      }
-      navigate('/nexus-control');
+      const colorArtwork = form.colors.reduce((acc, c) => {
+        acc[c.name || 'Default'] = {
+          front: c.artwork_front || '',
+          back: c.artwork_back || '',
+          sleeve: c.artwork_sleeve || '',
+          hood: c.artwork_hood || '',
+        };
+        return acc;
+      }, {});
+      const { updatedIds, results, error } = await generateMerchizeVariants({
+        jerseyId: pendingGenerateId,
+        colors: form.colors,
+        combos: form.name_number_combos,
+        variantMerchizeIds: form.variant_merchize_ids,
+        merchizeProductId: form.merchize_product_id,
+        merchizeVariants: form.merchize_variants,
+        colorArtwork,
+        nameStyle: form.name_style,
+        numberStyle: form.number_style,
+        customFontUrl: form.custom_font_url,
+        customFontName: form.custom_font_name,
+        fontId: form.font_id,
+        enableName: form.enable_name,
+        enableNumber: form.enable_number,
+        onProgress: setGenProgress,
+      });
+      if (error) { setGenError(error); return; }
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const saveResult = await base44.functions.invoke('save-listing', {
+        jerseyId: pendingGenerateId,
+        listing: { variant_merchize_ids: updatedIds },
+        passcode,
+      });
+      if (saveResult.data?.error) throw new Error(saveResult.data.error);
+      const failed = (results || []).filter((r) => !r.success);
+      if (failed.length > 0) setGenError(`${failed.length} variant(s) failed: ${failed[0].error}`);
+      else navigate('/nexus-control');
     } catch (err) {
       setGenError(err?.message || 'Generation failed');
     } finally {
       setGenerating(false);
+      setGenProgress('');
     }
   };
 
@@ -414,6 +423,7 @@ export default function JerseyEditor() {
               Create Merchize products for this listing's variants now, or skip and generate later from the editor.
             </p>
             {genError && <p className="mono-label text-kinetic text-[0.65rem]">{genError}</p>}
+            {genProgress && <p className="mono-label text-fog/50 text-[0.65rem]">{genProgress}</p>}
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={runGenerate} disabled={generating}
                 className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">

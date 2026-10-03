@@ -1,11 +1,6 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
-import {
-  resolveArtworkNameStyle,
-  resolveArtworkNumberStyle,
-} from '@/lib/jerseyStyle';
+import { generateVariants, buildSyncedIds, generateMerchizeVariants } from '@/lib/generateMerchizeVariants';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -17,25 +12,6 @@ function sortSizes(entries) {
   });
 }
 
-function generateVariants(colors, combos) {
-  const variants = [];
-  const colorList = colors.length > 0 ? colors : [{ name: 'Default' }];
-  for (const color of colorList) {
-    variants.push({ color_name: color.name || 'Default', combo_name: '', combo_number: '' });
-  }
-  for (const color of colorList) {
-    for (const combo of combos) {
-      if (!combo.name && !combo.number) continue;
-      variants.push({
-        color_name: color.name || 'Default',
-        combo_name: combo.name || '',
-        combo_number: combo.number || '',
-      });
-    }
-  }
-  return variants;
-}
-
 export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, fontId, enableName, enableNumber }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -45,21 +21,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
 
   const allVariants = generateVariants(colors, combos);
 
-  const syncedIds = allVariants.map((v) => {
-    const existing = (variantMerchizeIds || []).find(
-      (vmi) => vmi.color_name === v.color_name && vmi.combo_name === v.combo_name && vmi.combo_number === v.combo_number
-    );
-    return {
-      color_name: v.color_name,
-      combo_name: v.combo_name,
-      combo_number: v.combo_number,
-      merchize_product_id: existing?.merchize_product_id || '',
-      title: existing?.title || '',
-      manually_set: existing?.manually_set || false,
-      variant_ids: existing?.variant_ids || {},
-      skus: existing?.skus || {},
-    };
-  });
+  const syncedIds = buildSyncedIds(colors, combos, variantMerchizeIds);
 
   const updateTitle = (index, value) => {
     const updated = syncedIds.map((v, i) =>
@@ -89,134 +51,19 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     setGenerating(true);
     setError('');
     try {
-      // Step 1: Render display images for variants with name/number combos.
-      // Uses direct Canvas 2D rendering (not html2canvas / SVG-to-image) so
-      // text, arch/flag curves, outlines, and fonts match the designer exactly.
-      const renderedImages = {};
-      const needsRender = missing.filter((v) => v.combo_name || v.combo_number);
-      for (let i = 0; i < needsRender.length; i++) {
-        const v = needsRender[i];
-        setRenderProgress(`Rendering ${i + 1}/${needsRender.length}…`);
-        const colorObj = (colors || []).find((c) => c.name === v.color_name);
-        const images = colorObj?.images || [];
-        if (images.length === 0) continue;
-        const isStatic = images.length <= 1;
-        const imageUrl = isStatic ? images[0].url : images[images.length - 1].url;
-
-        try {
-          const blob = await renderJerseyDisplayToBlob({
-            imageUrl,
-            jersey: {
-              static_display: isStatic,
-              name_style: nameStyle,
-              number_style: numberStyle,
-              custom_font_url: customFontUrl,
-              custom_font_name: customFontName,
-            },
-            color: colorObj,
-            customName: v.combo_name,
-            customNumber: v.combo_number,
-            fontId,
-            enableName,
-            enableNumber,
-          });
-          if (blob) {
-            const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
-            renderedImages[key] = file_url;
-          }
-        } catch (err) {
-          console.error('Display render failed:', err);
-        }
-      }
-
-      // Step 1b: Render name/number onto front artwork via direct Canvas 2D
-      const renderedArtwork = {};
-      for (let i = 0; i < needsRender.length; i++) {
-        const v = needsRender[i];
-        setRenderProgress(`Compositing artwork ${i + 1}/${needsRender.length}…`);
-        const colorObj = (colors || []).find((c) => c.name === v.color_name);
-        const resolvedNameStyle = resolveArtworkNameStyle({ name_style: nameStyle }, colorObj);
-        const resolvedNumberStyle = resolveArtworkNumberStyle({ number_style: numberStyle }, colorObj);
-        const artworkFront = colorObj?.artwork_front || '';
-        if (!artworkFront) continue;
-
-        // Load artwork to get natural dimensions
-        const artworkImg = new Image();
-        artworkImg.crossOrigin = 'anonymous';
-        artworkImg.src = artworkFront;
-        await new Promise((resolve) => {
-          artworkImg.onload = resolve;
-          artworkImg.onerror = resolve;
-          setTimeout(resolve, 5000);
-        });
-        const naturalW = artworkImg.naturalWidth || 1200;
-        const naturalH = artworkImg.naturalHeight || 1200;
-        const maxDim = 1200;
-        const sz = Math.min(1, maxDim / Math.max(naturalW, naturalH));
-        const renderW = Math.round(naturalW * sz);
-        const renderH = Math.round(naturalH * sz);
-
-        const isStaticArtwork = (colorObj?.images?.length || 0) <= 1;
-        const artworkFontFam = customFontName ? `'${customFontName}', 'Archivo Black', sans-serif` : "'Archivo Black', sans-serif";
-
-        try {
-          const blob = await renderOverlayToBlob({
-            imageUrl: artworkFront,
-            imageFit: 'contain',
-            customName: v.combo_name,
-            customNumber: v.combo_number,
-            nameStyle: resolvedNameStyle,
-            numberStyle: resolvedNumberStyle,
-            fontFam: artworkFontFam,
-            customFontUrl,
-            customFontName,
-            enableName,
-            enableNumber,
-            staticDisplay: isStaticArtwork,
-            isArtwork: true,
-            aspectRatio: naturalW / naturalH,
-            renderW,
-            renderH,
-          });
-          if (blob) {
-            const file = new File([blob], `artwork-front-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            const key = `${v.color_name}|${v.combo_name}|${v.combo_number}`;
-            renderedArtwork[key] = file_url;
-          }
-        } catch (err) {
-          console.error('Artwork render failed:', err);
-          setError(`Artwork render failed for ${v.color_name}: ${err.message}`);
-        }
-      }
-      setRenderProgress('');
-
-      // Step 2: Call create-merchize-products with rendered images and artwork
-      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
-      const res = await base44.functions.invoke('create-merchize-products', {
-        jerseyId,
-        variants: missing.map((v) => ({ color_name: v.color_name, combo_name: v.combo_name, combo_number: v.combo_number })),
-        merchize_product_id: merchizeProductId,
-        merchize_variants: merchizeVariants,
-        colorArtwork,
-        renderedImages,
-        renderedArtwork,
-        passcode,
+      const { updatedIds, results, error } = await generateMerchizeVariants({
+        jerseyId, colors, combos, variantMerchizeIds,
+        merchizeProductId, merchizeVariants, colorArtwork,
+        nameStyle, numberStyle, customFontUrl, customFontName, fontId,
+        enableName, enableNumber,
+        onProgress: setRenderProgress,
       });
-      if (res.data?.error) {
-        setError(res.data.error);
+      if (error) {
+        setError(error);
         return;
       }
-      const results = res.data?.results || [];
-      const updated = syncedIds.map((v) => {
-        const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);
-        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, external_product_id: r.external_product_id || '', title: r.title || '', manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
-        return v;
-      });
-      onChange(updated);
-      const failed = results.filter((r) => !r.success);
+      onChange(updatedIds);
+      const failed = (results || []).filter((r) => !r.success);
       if (failed.length > 0) setError(`${failed.length} failed: ${failed[0].error}`);
     } catch (err) {
       setError(err?.message || 'Generation failed');
