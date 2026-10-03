@@ -202,24 +202,22 @@ export default function DesignerPanel({
               fontName={currentStyle.custom_font_name || ''}
               onChange={({ url, name }) => { setStyle('custom_font_url', url); setStyle('custom_font_name', name); }}
             />
-            {!currentStyle.custom_font_url && (
-              <div>
-                <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
-                    {FONTS.map((f) => (
-                    <button key={f.id} type="button" onClick={() => {
-                      setStyle('font_id', f.id);
-                      setStyle('custom_font_url', '');
-                      setStyle('custom_font_name', '');
-                    }}
-                      className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${(currentStyle.font_id || form.font_id) === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
-                      style={{ fontFamily: f.family }}>
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
+            <div>
+              <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
+                  {FONTS.map((f) => (
+                  <button key={f.id} type="button" onClick={() => {
+                    setStyle('font_id', f.id);
+                    setStyle('custom_font_url', '');
+                    setStyle('custom_font_name', '');
+                  }}
+                    className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${(currentStyle.font_id || form.font_id) === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
+                    style={{ fontFamily: f.family }}>
+                    {f.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             {/* Warp sliders (horizontal) */}
             {form.enable_name || form.enable_number ? (
