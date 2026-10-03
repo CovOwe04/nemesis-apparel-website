@@ -70,7 +70,7 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
           <div className="flex flex-wrap gap-2">
             {color.images.map((img, ii) => (
               <div key={ii} className="relative w-20 h-24 bg-steel overflow-hidden rounded-[4px] group">
-                <Image src={img.url} alt="" fittingType="fit" className="w-full h-full" />
+                <Image src={img.url} alt="" fittingType="fit" className="w-full h-full object-contain" />
                 <button
                   type="button"
                   onClick={() => removeImage(ci, ii)}

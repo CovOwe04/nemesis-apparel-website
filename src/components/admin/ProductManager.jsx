@@ -98,7 +98,7 @@ export default function ProductManager() {
                           <GripVertical size={16} className="text-fog/30 shrink-0 mt-1" />
                           <span className="mono-label text-fog/30 w-5 text-center shrink-0 mt-1">{index + 1}</span>
                           <div className="w-16 h-20 bg-steel shrink-0 overflow-hidden rounded-[4px]">
-                            <Image src={j.front_image} alt={j.name} fittingType="fit" className="w-full h-full" />
+                            <Image src={j.front_image} alt={j.name} fittingType="fit" className="w-full h-full object-contain" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
