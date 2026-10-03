@@ -2,6 +2,17 @@
 
 import { isSafeImageUrl } from './security.ts';
 
+const SIZES = [
+  { name: 'XS', value: 'xs' },
+  { name: 'S', value: 's' },
+  { name: 'M', value: 'm' },
+  { name: 'L', value: 'l' },
+  { name: 'XL', value: 'xl' },
+  { name: '2XL', value: '2xl' },
+  { name: '3XL', value: '3xl' },
+  { name: '4XL', value: '4xl' },
+];
+
 interface CreateCustomProductParams {
   baseUrl: string;
   token: string;
@@ -12,18 +23,19 @@ interface CreateCustomProductParams {
   productImages: string[];
   colorName: string;
   colorHex: string;
-  size: string;
-  sizeValue: string;
   price: number;
-  fallbackSku: string;
+  fallbackSkus: Record<string, string>;
   artworkUrls: Record<string, string>;
 }
 
+// Step 1: Create the custom product with ALL size variants (matches the admin
+// "Generate Products" flow). Returns immediately after product creation + variant
+// fetch so the caller can persist the product ID before any artwork upload that
+// might fail and trigger a duplicate-creating retry.
 export async function createCustomProduct(params: CreateCustomProductParams) {
   const {
     baseUrl, token, apiKey, baseProductId, title, description,
-    productImages, colorName, colorHex, size, sizeValue, price,
-    fallbackSku, artworkUrls,
+    productImages, colorName, colorHex, price, fallbackSkus, artworkUrls,
   } = params;
 
   const attributes = [
@@ -35,27 +47,25 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
       values: [{ name: colorName, value: colorHex }],
     },
     {
-      is_preselected: true,
+      is_preselected: false,
       position: 2,
       type: 'size',
       name: 'Size',
-      values: [{ name: size, value: sizeValue }],
+      values: SIZES,
     },
   ];
 
-  const productVariants = [
-    {
-      is_default: true,
-      sku: fallbackSku,
-      sku_seller: '',
-      retail_price: price,
-      currency: 'USD',
-      options: [
-        { name: colorName, value: colorHex },
-        { name: size, value: sizeValue },
-      ],
-    },
-  ];
+  const productVariants = SIZES.map((s, i) => ({
+    is_default: i === 0,
+    sku: fallbackSkus?.[s.name] || '',
+    sku_seller: '',
+    retail_price: price,
+    currency: 'USD',
+    options: [
+      { name: colorName, value: colorHex },
+      { name: s.name, value: s.value },
+    ],
+  }));
 
   const payload = {
     title,
@@ -83,22 +93,47 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
 
   const productId = createData.data._id;
 
-  // Fetch the variant ID for this single-size product
-  let variantId = '';
-  let sku = fallbackSku;
+  // Fetch all variant IDs and SKUs for every size
+  let variantIds: Record<string, string> = {};
+  let skus: Record<string, string> = {};
   try {
     const variantsRes = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     });
     const variantsData = await variantsRes.json();
-    if (variantsData.success && Array.isArray(variantsData.data) && variantsData.data.length > 0) {
-      variantId = variantsData.data[0]._id;
-      sku = variantsData.data[0].sku || fallbackSku;
+    if (variantsData.success && Array.isArray(variantsData.data)) {
+      for (const v of variantsData.data) {
+        const sizeOption = v.options?.find((o: any) => o.attribute?.value_type === 'size');
+        if (sizeOption) {
+          const sizeKey = String(sizeOption.name).toUpperCase();
+          variantIds[sizeKey] = v._id;
+          skus[sizeKey] = v.sku || '';
+        }
+      }
     }
   } catch (err) {
-    console.error(`Failed to fetch variant for custom product ${productId}:`, err.message);
+    console.error(`Failed to fetch variants for custom product ${productId}:`, err.message);
   }
+
+  return { productId, variantIds, skus };
+}
+
+// Step 2: Upload artwork and display images to an already-created custom product.
+// Best-effort — logs errors but does not throw, so a failed upload does not block
+// order fulfillment or cause a duplicate product on retry.
+export async function uploadCustomProductArtwork(params: {
+  baseUrl: string;
+  token: string;
+  apiKey: string;
+  productId: string;
+  variantIds: Record<string, string>;
+  productImages: string[];
+  artworkUrls: Record<string, string>;
+}) {
+  const { baseUrl, token, apiKey, productId, variantIds, productImages, artworkUrls } = params;
+  let artworkUploaded = false;
+  let variantImagesUploaded = 0;
 
   // Upload artwork (front/back/sleeve/hood)
   const artworkEntries = Object.entries(artworkUrls).filter(([, url]) => url);
@@ -106,26 +141,28 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     try {
       const formData = new FormData();
       for (const [piece, url] of artworkEntries) {
-        if (!isSafeImageUrl(url)) throw new Error(`Unsafe ${piece} artwork URL for custom product ${productId}.`);
+        if (!isSafeImageUrl(url)) continue;
         const imgRes = await fetch(url);
-        if (!imgRes.ok) throw new Error(`Could not fetch ${piece} artwork for custom product ${productId} (HTTP ${imgRes.status}).`);
+        if (!imgRes.ok) continue;
         const blob = await imgRes.blob();
         const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
         formData.append(piece, blob, `${piece}.${ext}`);
       }
-      if ([...formData.keys()].length === 0) throw new Error(`No artwork files were prepared for custom product ${productId}.`);
-      const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const artworkData = await artworkRes.json();
-      if (!artworkRes.ok || !artworkData.success) {
-        throw new Error(artworkData.message || `Artwork upload failed for custom product ${productId} (HTTP ${artworkRes.status}).`);
+      if ([...formData.keys()].length > 0) {
+        const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const artworkData = await artworkRes.json();
+        artworkUploaded = artworkData.success === true;
+        if (!artworkUploaded) {
+          console.error(`Artwork upload returned non-success for ${productId}:`, artworkData.message);
+        }
       }
-      // Also set artwork URLs directly on the product (matches Generate button behavior)
+      // Also set artwork URLs directly on the product
       try {
-        const artworkBody = {};
+        const artworkBody: Record<string, string> = {};
         for (const [piece, url] of artworkEntries) {
           artworkBody[piece] = url;
         }
@@ -139,39 +176,46 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
       }
     } catch (err) {
       console.error(`Failed to upload artwork for custom product ${productId}:`, err.message);
-      throw err;
     }
   }
 
-  // Upload display images to the variant
-  if (variantId && productImages.length > 0) {
-    try {
-      const formData = new FormData();
-      for (const imgUrl of productImages) {
-        if (!isSafeImageUrl(imgUrl)) throw new Error('Unsafe customized jersey preview URL.');
+  // Upload display images to every variant
+  if (Object.keys(variantIds).length > 0 && productImages.length > 0) {
+    const imageBlobs: { blob: Blob; ext: string }[] = [];
+    for (const imgUrl of productImages) {
+      try {
+        if (!isSafeImageUrl(imgUrl)) continue;
         const imgRes = await fetch(imgUrl);
-        if (!imgRes.ok) throw new Error(`Could not fetch customized jersey preview (HTTP ${imgRes.status}).`);
+        if (!imgRes.ok) continue;
         const blob = await imgRes.blob();
         const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
-        formData.append('images', blob, `image.${ext}`);
+        imageBlobs.push({ blob, ext });
+      } catch (err) {
+        console.error(`Failed to fetch display image ${imgUrl}:`, err.message);
       }
-      if ([...formData.keys()].length === 0) throw new Error('No customized jersey preview was prepared for upload.');
-      const imageRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const imageData = await imageRes.json();
-      if (!imageRes.ok || !imageData.success) {
-        throw new Error(imageData.message || `Customized jersey preview upload failed (HTTP ${imageRes.status}).`);
+    }
+    for (const variantId of Object.values(variantIds)) {
+      try {
+        const formData = new FormData();
+        for (const { blob, ext } of imageBlobs) {
+          formData.append('images', blob, `image.${ext}`);
+        }
+        if ([...formData.keys()].length > 0) {
+          const variantImgRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+          const variantImgData = await variantImgRes.json();
+          if (variantImgData.success) variantImagesUploaded++;
+        }
+      } catch (err) {
+        console.error(`Failed to upload image to variant ${variantId}:`, err.message);
       }
-    } catch (err) {
-      console.error(`Failed to upload image to variant ${variantId}:`, err.message);
-      throw err;
     }
   }
 
-  return { productId, variantId, sku };
+  return { artworkUploaded, variantImagesUploaded };
 }
 
 export async function createMerchizeOrder(
