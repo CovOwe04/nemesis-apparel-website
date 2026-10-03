@@ -349,8 +349,11 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
   const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
   if (!vmi?.merchize_product_id || !merchizeSku) return null;
   const externalId = vmi.external_product_id || vmi.merchize_product_id;
+  // Merchize links a line to an existing product only when external product_id
+  // AND name match that product's title — otherwise it auto-creates a new one.
+  const title = vmi.title || [jersey?.name, vmi.color_name, vmi.combo_name, vmi.combo_number].filter(Boolean).join(' - ');
   return {
-    name: item.name || jersey?.name || 'Jersey',
+    name: title || item.name || 'Jersey',
     product_id: externalId,
     sku: customSellerSku(externalId, size),
     merchize_sku: merchizeSku,
@@ -372,7 +375,7 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
 // Order line for an item that has a custom product from createCustomProductForItem.
 export function buildCustomOrderItem(item: any) {
   return {
-    name: item.name || 'Custom Jersey',
+    name: item.custom_merchize_title || item.name || 'Custom Jersey',
     product_id: item.custom_external_product_id || item.custom_merchize_product_id,
     sku: item.custom_seller_sku || `NEMESIS-CUSTOM-${item.shirtSize || 'M'}`,
     merchize_sku: item.custom_merchize_sku || '',
