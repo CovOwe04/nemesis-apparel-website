@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem } from '../../shared/merchize.ts';
+import { createMerchizeOrder } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
@@ -286,23 +286,6 @@ export default async function(req) {
         }
       }));
 
-      // Check if a custom item matches a preset combo and return the variant mapping
-      const findPresetMatch = (item, jersey) => {
-        const combos = jersey?.name_number_combos || [];
-        const matchedCombo = combos.find((c) =>
-          (c.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
-          (c.number || '') === (item.customNumber || '')
-        );
-        if (!matchedCombo) return null;
-        const vmis = jersey?.variant_merchize_ids || [];
-        const vmi = vmis.find((v) =>
-          (v.color_name || 'Default') === (item.colorName || 'Default') &&
-          (v.combo_name || '').toUpperCase() === (matchedCombo.name || '').toUpperCase() &&
-          (v.combo_number || '') === (matchedCombo.number || '')
-        );
-        return (vmi && vmi.merchize_product_id) ? vmi : null;
-      };
-
       // Build a merchize item for a standard (non-custom) cart item
       const buildStandardItem = (item, { requireExactSize = false } = {}) => {
         const jersey = jerseyMap.get(item.jerseyId);
@@ -343,120 +326,14 @@ export default async function(req) {
       };
 
       if (hasCustom) {
-        // Use an existing preset product when possible. Otherwise, customized
-        // text can still auto-fulfill on the listing's existing product when
-        // its exact size SKU is configured. Only missing product/SKU mappings
-        // require manual product creation and review.
-        const presetMatches = [];
-        const existingProductMatches = [];
-        const needsApproval = [];
-        for (const item of customItems) {
-          const jersey = jerseyMap.get(item.jerseyId);
-          const vmi = jersey ? findPresetMatch(item, jersey) : null;
-          const size = item.shirtSize || 'M';
-          const presetSku = vmi?.skus?.[size];
-          if (vmi?.merchize_product_id && presetSku) {
-            presetMatches.push({ item, vmi, merchizeSku: presetSku });
-            continue;
-          }
-
-          if (!isSafeImageUrl(item.rendered_artwork_front) || !isSafeImageUrl(item.rendered_image)) {
-            needsApproval.push(item);
-            continue;
-          }
-          try {
-            const created = item.custom_merchize_product_id ? item : await createCustomProductForItem({
-              baseUrl, token: merchizeToken, apiKey: merchizeKey, item, jersey,
-              sellerSkuPrefix: `NEMESIS-${orderId.slice(-6).toUpperCase()}-${cartItems.indexOf(item) + 1}`,
-            });
-            if (created?.custom_merchize_sku) existingProductMatches.push(buildCustomOrderItem(created));
-            else needsApproval.push(item);
-          } catch (err) {
-            console.error(`Custom product creation failed for ${item.name}:`, err.message || err);
-            needsApproval.push(item);
-          }
-        }
-        // Persist custom product IDs so admin retries never duplicate products
-        await base44.asServiceRole.entities.Order.update(orderId, { items_json: JSON.stringify(cartItems) });
-
-        if (needsApproval.length > 0) {
-          // Admin review is reserved for orders that cannot use a configured
-          // Merchize product and exact size SKU.
-          await base44.asServiceRole.entities.Order.update(orderId, {
-            status: 'pending_approval',
-            admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nManual review required: ${needsApproval.length} customized item(s) need a Merchize product or exact size SKU.`,
-          });
-          console.log(`Order ${orderId} set to pending_approval for ${needsApproval.length} items without an existing product/size SKU mapping`);
-        } else {
-          // Every custom item has an existing preset or listing product mapping.
-          try {
-            const merchizeItems = [];
-            for (const { item, vmi, merchizeSku } of presetMatches) {
-              if (!isSafeImageUrl(item.rendered_artwork_front)) {
-                throw new Error(`Personalized front print artwork is missing for ${item.name || 'customized jersey'}.`);
-              }
-              if (!isSafeImageUrl(item.rendered_image)) {
-                throw new Error(`Customized jersey preview is missing for ${item.name || 'customized jersey'}.`);
-              }
-              const size = item.shirtSize || 'M';
-              merchizeItems.push({
-                product_id: vmi.merchize_product_id,
-                sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
-                merchize_sku: merchizeSku,
-                quantity: item.quantity,
-                price: item.price,
-                currency: 'USD',
-                image: item.rendered_image,
-                requires_custom_artwork_front: true,
-                order_artwork: {
-                  front: item.rendered_artwork_front,
-                  back: item.artwork_back || '',
-                  sleeve: item.artwork_sleeve || '',
-                  hood: item.artwork_hood || '',
-                },
-              });
-            }
-            merchizeItems.push(...existingProductMatches);
-            for (const item of cartItems) {
-              if (item.customName || item.customNumber || item.isCustomDesign) continue;
-              const mItem = buildStandardItem(item);
-              if (mItem) merchizeItems.push(mItem);
-            }
-
-            if (merchizeItems.length > 0) {
-              const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
-                orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
-              });
-              if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
-                await base44.asServiceRole.entities.Order.update(orderId, {
-                  merchize_order_id: merchizeData.data._id,
-                  status: 'approved',
-                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nArtwork import failed: ${merchizeData.artwork_import.error}\nArtwork attachment needs admin retry.`,
-                });
-                console.error(`Merchize artwork import needs retry for order ${orderId}:`, merchizeData.artwork_import.error);
-              } else if (merchizeData.success && merchizeData.data?._id) {
-                await base44.asServiceRole.entities.Order.update(orderId, {
-                  merchize_order_id: merchizeData.data._id,
-                  status: 'approved',
-                  admin_notes: `Stripe: ${session.id}\nMerchize: ${merchizeData.data._id}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nCustomized items created using configured Merchize products.`,
-                });
-                console.log(`Merchize order created (preset): ${merchizeData.data._id}`);
-              } else {
-                console.error('Merchize order creation failed:', JSON.stringify(merchizeData).substring(0, 500));
-                await base44.asServiceRole.entities.Order.update(orderId, {
-                  status: 'pending_approval',
-                  admin_notes: `Stripe: ${session.id}\nMerchize FAILED: ${merchizeData.msg || 'unknown error'}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
-                });
-              }
-            }
-          } catch (merchizeErr) {
-            console.error('Merchize integration error:', merchizeErr.message || merchizeErr);
-            await base44.asServiceRole.entities.Order.update(orderId, {
-              status: 'pending_approval',
-              admin_notes: `Stripe: ${session.id}\nMerchize ERROR: ${merchizeErr.message}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}`,
-            });
-          }
-        }
+        // Customized orders are never auto-fulfilled. Park them for admin design
+        // review; the admin approves via approve-custom-order, which creates the
+        // Merchize products and fulfillment order at that point.
+        await base44.asServiceRole.entities.Order.update(orderId, {
+          status: 'pending_approval',
+          admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin design review before Merchize fulfillment.`,
+        });
+        console.log(`Order ${orderId} set to pending_approval — ${customItems.length} customized item(s) awaiting admin review`);
       } else {
         // No custom items — fulfill directly via Merchize
         try {
