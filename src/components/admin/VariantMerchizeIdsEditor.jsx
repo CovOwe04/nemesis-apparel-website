@@ -212,7 +212,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       const results = res.data?.results || [];
       const updated = syncedIds.map((v) => {
         const r = results.find((rr) => rr.color_name === v.color_name && rr.combo_name === v.combo_name && rr.combo_number === v.combo_number);
-        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, title: r.title || '', manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
+        if (r && r.success) return { ...v, merchize_product_id: r.merchize_product_id, external_product_id: r.external_product_id || '', title: r.title || '', manually_set: false, variant_ids: r.variant_ids || {}, skus: r.skus || {} };
         return v;
       });
       onChange(updated);

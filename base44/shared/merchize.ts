@@ -345,10 +345,11 @@ export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
   const size = item.shirtSize || 'M';
   const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
   if (!vmi?.merchize_product_id || !merchizeSku) return null;
+  const externalId = vmi.external_product_id || vmi.merchize_product_id;
   return {
     name: item.name || jersey?.name || 'Jersey',
-    product_id: vmi.merchize_product_id,
-    sku: customSellerSku(vmi.merchize_product_id, size),
+    product_id: externalId,
+    sku: customSellerSku(externalId, size),
     merchize_sku: merchizeSku,
     quantity: item.quantity,
     price: item.price,

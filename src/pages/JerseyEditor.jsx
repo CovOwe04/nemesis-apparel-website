@@ -188,7 +188,7 @@ export default function JerseyEditor() {
         const results = res.data?.results || [];
         const variantIds = results.filter((r) => r.success).map((r) => ({
           color_name: r.color_name, combo_name: r.combo_name, combo_number: r.combo_number,
-          merchize_product_id: r.merchize_product_id, manually_set: false,
+          merchize_product_id: r.merchize_product_id, external_product_id: r.external_product_id || '', manually_set: false,
           variant_ids: r.variant_ids || {}, skus: r.skus || {},
         }));
         if (variantIds.length > 0) {

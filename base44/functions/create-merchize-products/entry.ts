@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { requireAdminPasscode, isSafeImageUrl } from '../../shared/security.ts';
+import { customSellerSku } from '../../shared/merchize.ts';
 
 const SIZES = [
   { name: 'XS', value: 'xs' },
@@ -84,10 +85,13 @@ export default async function(req) {
         },
       ];
 
+      // Stable dash-free external ID; it becomes the seller SKU's ID segment and
+      // order lines reference it as product_id so Merchize links to this product.
+      const externalId = `P${jerseyId.slice(-8)}${Date.now().toString(36)}${results.length}`.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
       const productVariants = SIZES.map((size, i) => ({
         is_default: i === 0,
         sku: fallbackSkus[size.name] || '',
-        sku_seller: '',
+        sku_seller: customSellerSku(externalId, size.name),
         retail_price: jersey.price,
         currency: 'USD',
         options: [
@@ -244,6 +248,7 @@ export default async function(req) {
         results.push({
           color_name, combo_name, combo_number,
           merchize_product_id: productId,
+          external_product_id: externalId,
           title: variantLabel,
           variant_ids: variantIds,
           skus,
