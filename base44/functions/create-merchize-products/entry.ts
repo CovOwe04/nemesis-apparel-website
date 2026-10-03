@@ -85,9 +85,11 @@ export default async function(req) {
         },
       ];
 
-      // Stable dash-free external ID; it becomes the seller SKU's ID segment and
-      // order lines reference it as product_id so Merchize links to this product.
-      const externalId = `P${jerseyId.slice(-8)}${Date.now().toString(36)}${results.length}`.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      // Unique dash-free external ID (UUID-based so concurrent variants or
+      // repeated generations never collide). It becomes the seller SKU's ID
+      // segment and order lines reference it as product_id so Merchize links
+      // to this product instead of auto-creating a generic one.
+      const externalId = `P${crypto.randomUUID().replace(/-/g, '')}`.toUpperCase();
       const productVariants = SIZES.map((size, i) => ({
         is_default: i === 0,
         sku: fallbackSkus[size.name] || '',
