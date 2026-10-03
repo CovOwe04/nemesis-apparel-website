@@ -241,8 +241,9 @@ export async function renderOverlayToBlob({
   aspectRatio = 1,
   renderW,
   renderH,
+  superSample = 2,
 }) {
-  const SUPER = 2; // 2x supersampling for crisp output
+  const SUPER = superSample; // supersampling factor for crisp output
   const canvas = document.createElement('canvas');
   canvas.width = renderW * SUPER;
   canvas.height = renderH * SUPER;
@@ -457,12 +458,16 @@ export function renderJerseyDisplayToBlob({
   letterSpacing = 0,
   enableName = true,
   enableNumber = true,
+  preview = false,
 }) {
   if (!imageUrl) throw new Error('Jersey display image is missing.');
 
   const staticDisplay = Boolean(jersey?.static_display);
-  const renderW = staticDisplay ? 1200 : 900;
-  const renderH = 1200;
+  // Live preview uses a smaller canvas with no supersampling for speed;
+  // full-res 2x render is reserved for the final cart artwork upload.
+  const renderW = preview ? (staticDisplay ? 600 : 480) : (staticDisplay ? 1200 : 900);
+  const renderH = preview ? 600 : 1200;
+  const superSample = preview ? 1 : 2;
   const font = FONTS.find((entry) => entry.id === fontId) || FONTS[0];
   const fontFam = jersey?.custom_font_name
     ? `'${jersey.custom_font_name}', ${font.family}`
@@ -485,5 +490,6 @@ export function renderJerseyDisplayToBlob({
     staticDisplay,
     renderW,
     renderH,
+    superSample,
   });
 }
