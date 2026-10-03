@@ -45,7 +45,7 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
         <div key={ci} className="border border-steel rounded-[6px] p-4">
           <div className="flex items-center gap-3">
             {color.images[0] ? (
-              <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded-[12px] group">
+              <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-[12px] group">
                 <img src={color.images[0].url} alt="" className="w-full h-full object-cover" />
                 <button
                   type="button"
@@ -57,7 +57,7 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
                 </button>
               </div>
             ) : (
-              <label className="w-16 h-16 shrink-0 border border-dashed border-steel rounded-[12px] flex items-center justify-center cursor-pointer hover:border-kinetic transition-colors">
+              <label className="w-24 h-24 shrink-0 border border-dashed border-steel rounded-[12px] flex items-center justify-center cursor-pointer hover:border-kinetic transition-colors">
                 {uploading === ci ? (
                   <span className="mono-label text-fog/40 text-[0.5rem]">...</span>
                 ) : (
