@@ -55,6 +55,9 @@ export function resolveNameStyle(jersey, color) {
   };
   return {
     ...merged,
+    // horiz_pos is a hardcoded global layout constant — any stale saved value
+    // must not override the current MOCKUP_NAME_HORIZ_POS.
+    horiz_pos: MOCKUP_NAME_HORIZ_POS,
     // Per-color artwork position controls must not shift 3D/mockup text.
     vert_pos: jersey?.name_style?.vert_pos ?? DEFAULT_NAME_STYLE.vert_pos,
   };
@@ -68,6 +71,7 @@ export function resolveNumberStyle(jersey, color) {
   };
   return {
     ...merged,
+    horiz_pos: MOCKUP_NUMBER_HORIZ_POS,
     // Per-color artwork position controls must not shift 3D/mockup text.
     vert_pos: jersey?.number_style?.vert_pos ?? DEFAULT_NUMBER_STYLE.vert_pos,
   };
