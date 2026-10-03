@@ -76,18 +76,16 @@ export default function JerseyDisplayPreview({
     <div className={`relative overflow-hidden bg-black ${className}`}>
       {prevUrl && (
         <img src={prevUrl} alt="" aria-hidden="true"
-          className={`absolute inset-0 block w-full h-full object-fill transition-all duration-300 ${rendering ? 'blur-md scale-105 opacity-40' : 'blur-0 scale-100 opacity-100'}`} />
+          className={`absolute inset-0 block w-full h-full object-fill transition-[filter,opacity] duration-300 ${rendering ? 'blur-[3px] opacity-80' : 'blur-0 opacity-100'}`} />
       )}
       {previewUrl && (
         <img key={previewUrl} src={previewUrl} alt="Customized jersey preview"
-          className={`absolute inset-0 block w-full h-full object-fill transition-all duration-300 ${rendering ? 'blur-md scale-105 opacity-40' : 'blur-0 scale-100 opacity-100'} animate-in fade-in duration-300`} />
+          className={`absolute inset-0 block w-full h-full object-fill transition-[filter,opacity] duration-300 ${rendering ? 'blur-[3px] opacity-80' : 'blur-0 opacity-100'} animate-in fade-in duration-300`} />
       )}
       {rendering && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            <span className="mono-label text-white/70">Rendering</span>
-          </div>
+        <div className="absolute top-3 right-3 flex items-center gap-2 pointer-events-none">
+          <div className="w-4 h-4 border border-white/30 border-t-white/80 rounded-full animate-spin" />
+          <span className="mono-label text-white/60 text-[0.6rem]">Rendering</span>
         </div>
       )}
     </div>
