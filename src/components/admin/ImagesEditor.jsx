@@ -36,7 +36,7 @@ export default function ImagesEditor({ images, onChange }) {
       {images.map((img, index) => (
         <div key={index} className="flex gap-3 items-start border border-steel rounded-[6px] p-3">
           <div className="w-20 h-24 bg-steel shrink-0 overflow-hidden rounded-[4px]">
-            <Image src={img.url} alt="" fittingType="fill" className="w-full h-full" />
+            <Image src={img.url} alt="" fittingType="fill" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 space-y-2">
             <input
