@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { renderJerseyDisplayToBlob } from '@/components/admin/canvasOverlayRenderer';
 
 export default function JerseyDisplayPreview({
@@ -16,8 +16,8 @@ export default function JerseyDisplayPreview({
   className = '',
 }) {
   const [previewUrl, setPreviewUrl] = useState('');
-  const [prevUrl, setPrevUrl] = useState('');
   const [rendering, setRendering] = useState(false);
+  const currentUrlRef = useRef('');
 
   useEffect(() => {
     let active = true;
@@ -40,8 +40,11 @@ export default function JerseyDisplayPreview({
       })).then((blob) => {
         if (!blob) throw new Error('Could not render jersey preview.');
         if (!active) return;
+        // Revoke the previous URL only after the new one is ready,
+        // so the backing image never swaps to a dead URL.
+        if (currentUrlRef.current) URL.revokeObjectURL(currentUrlRef.current);
         objectUrl = URL.createObjectURL(blob);
-        setPrevUrl(previewUrl);
+        currentUrlRef.current = objectUrl;
         setPreviewUrl(objectUrl);
         setRendering(false);
       }).catch((error) => {
@@ -55,7 +58,8 @@ export default function JerseyDisplayPreview({
     return () => {
       active = false;
       clearTimeout(timer);
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // If this run never produced a URL, nothing to revoke yet.
+      // The current backing URL is revoked on the next successful render.
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -72,20 +76,26 @@ export default function JerseyDisplayPreview({
     showNumberPlaceholder,
   ]);
 
+  // Revoke the last URL on unmount.
+  useEffect(() => {
+    return () => {
+      if (currentUrlRef.current) URL.revokeObjectURL(currentUrlRef.current);
+    };
+  }, []);
+
   return (
     <div className={`relative overflow-hidden bg-black ${className}`}>
-      {prevUrl && (
-        <img src={prevUrl} alt="" aria-hidden="true"
-          className={`absolute inset-0 block w-full h-full object-fill transition-[filter,opacity] duration-300 ${rendering ? 'blur-[3px] opacity-80' : 'blur-0 opacity-100'}`} />
-      )}
       {previewUrl && (
-        <img key={previewUrl} src={previewUrl} alt="Customized jersey preview"
-          className={`absolute inset-0 block w-full h-full object-fill transition-[filter,opacity] duration-300 ${rendering ? 'blur-[3px] opacity-80' : 'blur-0 opacity-100'} animate-in fade-in duration-300`} />
+        <img
+          key={previewUrl}
+          src={previewUrl}
+          alt="Customized jersey preview"
+          className={`absolute inset-0 block w-full h-full object-fill transition-[filter,opacity] duration-300 ${rendering ? 'blur-[3px] opacity-80' : 'blur-0 opacity-100'} animate-in fade-in duration-300`}
+        />
       )}
       {rendering && (
-        <div className="absolute top-3 right-3 flex items-center gap-2 pointer-events-none">
-          <div className="w-4 h-4 border border-white/30 border-t-white/80 rounded-full animate-spin" />
-          <span className="mono-label text-white/60 text-[0.6rem]">Rendering</span>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
         </div>
       )}
     </div>
