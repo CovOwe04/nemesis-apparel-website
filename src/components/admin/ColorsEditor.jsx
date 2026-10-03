@@ -17,12 +17,12 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
     onChange(colors.filter((_, i) => i !== index));
   };
 
-  const addImage = async (colorIndex, file) => {
+  const setImage = async (colorIndex, file) => {
     setUploading(colorIndex);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       onChange(colors.map((c, i) =>
-        i === colorIndex ? { ...c, images: [...c.images, { url: file_url }] } : c
+        i === colorIndex ? { ...c, images: [{ url: file_url }] } : c
       ));
     } catch {
       alert('Upload failed.');
@@ -31,18 +31,18 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
     }
   };
 
-  const removeImage = (colorIndex, imageIndex) => {
+  const removeImage = (colorIndex) => {
     onChange(colors.map((c, i) =>
-      i === colorIndex ? { ...c, images: c.images.filter((_, j) => j !== imageIndex) } : c
+      i === colorIndex ? { ...c, images: [] } : c
     ));
   };
 
-  const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
+  const inputCls = "flex-1 min-w-0 bg-white text-black border border-steel rounded-[6px] px-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
 
   return (
     <div className="space-y-4">
       {colors.map((color, ci) => (
-        <div key={ci} className="border border-steel rounded-[6px] p-4 space-y-3">
+        <div key={ci} className="border border-steel rounded-[6px] p-4">
           <div className="flex items-center gap-3">
             <input
               type="color"
@@ -57,6 +57,33 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
               placeholder="Color name (e.g. Blackout)"
               className={inputCls}
             />
+            {color.images[0] ? (
+              <div className="relative w-10 h-10 shrink-0 overflow-hidden rounded-[12px] group">
+                <img src={color.images[0].url} alt="" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(ci)}
+                  className="absolute inset-0 bg-void/70 text-fog flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove image"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="w-10 h-10 shrink-0 border border-dashed border-steel rounded-[12px] flex items-center justify-center cursor-pointer hover:border-kinetic transition-colors">
+                {uploading === ci ? (
+                  <span className="mono-label text-fog/40 text-[0.5rem]">...</span>
+                ) : (
+                  <Plus size={16} className="text-fog/40" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setImage(ci, f); e.target.value = ''; }}
+                />
+              </label>
+            )}
             <button
               type="button"
               onClick={() => removeColor(ci)}
@@ -66,35 +93,6 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
               <Trash2 size={16} />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {color.images.map((img, ii) => (
-              <div key={ii} className="relative w-28 overflow-hidden rounded-[12px] group">
-                <img src={img.url} alt="" className="w-full h-auto block rounded-[12px]" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(ci, ii)}
-                  className="absolute top-1 right-1 bg-void/80 text-fog p-1 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Remove image"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            <label className="w-20 h-24 border border-dashed border-steel rounded-[4px] flex items-center justify-center cursor-pointer hover:border-kinetic transition-colors">
-              {uploading === ci ? (
-                <span className="mono-label text-fog/40 text-[0.6rem]">...</span>
-              ) : (
-                <Plus size={20} className="text-fog/40" />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) addImage(ci, f); e.target.value = ''; }}
-              />
-            </label>
-          </div>
-
         </div>
       ))}
       <button
