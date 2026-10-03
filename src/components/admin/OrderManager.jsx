@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Eye, Mail, User, Package, Trash2 } from 'lucide-react';
 import DesignReviewModal from '@/components/admin/DesignReviewModal';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 const STATUS_STYLES = {
   pending_approval: 'text-kinetic border-kinetic',
@@ -20,15 +21,16 @@ export default function OrderManager() {
   const [syncingOrderId, setSyncingOrderId] = useState('');
   const [syncMessage, setSyncMessage] = useState(null);
   const [deletingId, setDeletingId] = useState('');
+  const [confirmOrder, setConfirmOrder] = useState(null);
 
   const deleteOrder = async (order) => {
-    if (!window.confirm(`Delete order for ${order.customer_name}? This cannot be undone.`)) return;
     setDeletingId(order.id);
     try {
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('get-admin-orders', { action: 'delete', orderId: order.id, passcode });
       if (res.data?.error) throw new Error(res.data.error);
       setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      setConfirmOrder(null);
     } catch (err) {
       setLoadError(err?.response?.data?.error || err?.data?.error || err?.message || 'Could not delete order.');
     } finally {
@@ -143,7 +145,7 @@ export default function OrderManager() {
                       <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteOrder(o); }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmOrder(o); }}
                       disabled={deletingId === o.id}
                       title="Delete order"
                       className="inline-flex items-center justify-center border border-steel text-fog/50 hover:text-kinetic hover:border-kinetic/50 px-2.5 py-2 rounded-[4px] disabled:opacity-50 transition-colors"
@@ -189,6 +191,17 @@ export default function OrderManager() {
           })}
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!confirmOrder}
+        title="Delete order?"
+        description={confirmOrder ? `Delete order for ${confirmOrder.customer_name}? This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        loading={!!deletingId}
+        onConfirm={() => confirmOrder && deleteOrder(confirmOrder)}
+        onCancel={() => setConfirmOrder(null)}
+      />
 
       {/* Design Review Modal */}
       {reviewOrder && (
