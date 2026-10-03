@@ -2,8 +2,8 @@ import { FONTS } from '@/lib/fonts';
 
 // Shared style resolver — merges jersey-level defaults with per-color overrides.
 
-export const MOCKUP_NAME_HORIZ_POS = 30.4;
-export const MOCKUP_NUMBER_HORIZ_POS = 30.4;
+export const MOCKUP_NAME_HORIZ_POS = 30.2;
+export const MOCKUP_NUMBER_HORIZ_POS = 30.2;
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
