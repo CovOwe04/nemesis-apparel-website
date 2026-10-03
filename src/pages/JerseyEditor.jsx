@@ -153,13 +153,34 @@ export default function JerseyEditor() {
       if (form.use_existing_merchize_product) {
         navigate('/nexus-control');
       } else {
-        // Only prompt to generate if there are variants without a Merchize
-        // product yet — once every variant is generated, Update Listing just
-        // saves and returns to the dashboard.
+        // Verify stored Merchize products still exist — a product deleted in
+        // Merchize should be offered for regeneration, not treated as generated.
         const synced = buildSyncedIds(form.colors, form.name_number_combos, payload.variant_merchize_ids);
-        const missing = synced.filter((v) => !v.merchize_product_id);
+        const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
+        let cleared = synced;
+        if (storedIds.length > 0) {
+          const verifyRes = await base44.functions.invoke('verify-merchize-products', {
+            productIds: storedIds,
+            passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+          });
+          const missingIds = verifyRes.data?.missing || [];
+          if (missingIds.length > 0) {
+            cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
+              ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
+              : v);
+            await base44.functions.invoke('save-listing', {
+              jerseyId: savedId,
+              listing: { variant_merchize_ids: cleared },
+              passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+            });
+          }
+        }
+        const missing = cleared.filter((v) => !v.merchize_product_id);
         if (missing.length === 0) navigate('/nexus-control');
-        else setPendingGenerateId(savedId);
+        else {
+          setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
+          setPendingGenerateId(savedId);
+        }
       }
     } catch (err) {
       alert('Save failed: ' + (err?.message || 'unknown error'));

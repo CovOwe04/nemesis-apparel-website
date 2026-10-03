@@ -37,15 +37,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
     onChange(updated);
   };
 
-  const resetVariant = (index) => {
-    const updated = syncedIds.map((v, i) =>
-      i === index
-        ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
-        : v
-    );
-    onChange(updated);
-  };
-
   const generate = async () => {
     setShowConfirm(false);
     if (!jerseyId) {
@@ -152,16 +143,6 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
                         ))}
                       </div>
                     </div>
-                    {vmi.merchize_product_id && (
-                      <button
-                        type="button"
-                        onClick={() => resetVariant(i)}
-                        disabled={generating}
-                        className="mono-label text-kinetic hover:text-fog transition-colors text-[0.6rem] uppercase tracking-wider disabled:opacity-50"
-                      >
-                        Reset product ID
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
