@@ -359,7 +359,7 @@ export default async function(req) {
 
             // Preset item — use the existing pre-generated product when available.
             const jersey = jerseyMap.get(item.jerseyId);
-            const { vmi } = findPresetMatch(item, jersey);
+            const vmi = findPresetMatch(item, jersey)?.vmi;
             if (vmi?.merchize_product_id) {
               const mItem = buildPresetOrderItem(item, jersey, vmi);
               if (mItem) merchizeItems.push(mItem);
