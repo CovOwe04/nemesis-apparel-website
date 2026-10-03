@@ -326,3 +326,14 @@ footer.site-footer {
 .dark textarea::placeholder {
   color: hsl(var(--muted-foreground));
 }
+
+/* Themed native dropdown lists in dark mode */
+.dark select option {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+.dark select option:checked,
+.dark select option:hover {
+  background-color: hsl(var(--kinetic));
+  color: hsl(var(--void));
+}
