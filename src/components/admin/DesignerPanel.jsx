@@ -24,6 +24,16 @@ function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
   );
 }
 
+function ColorSwatch({ label, color, onChange }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <input type="color" value={color} onChange={(e) => onChange(e.target.value)}
+        className="w-7 h-7 bg-white border border-steel rounded-[2px] cursor-pointer" />
+      <span className="mono-label text-fog/50 text-[0.5rem]">{label}</span>
+    </div>
+  );
+}
+
 export default function DesignerPanel({
   form, setField, setStyle, currentStyle, designerTab, setDesignerTab, staticDisplay, jerseyId,
 }) {
@@ -219,6 +229,15 @@ export default function DesignerPanel({
                 <HorizontalSlider label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
                 <HorizontalSlider label="RISE" value={currentStyle.rise} min={-45} max={45} onChange={(v) => setStyle('rise', v)} />
                 <HorizontalSlider label="FLAG" value={currentStyle.flag} min={-50} max={50} onChange={(v) => setStyle('flag', v)} />
+                <div className="flex items-center gap-3 pt-1">
+                  <ColorSwatch label="FILL" color={currentStyle.color || '#F5F5F7'} onChange={(v) => setStyle('color', v)} />
+                  <ColorSwatch label="STROKE" color={currentStyle.outline_color || '#0A0A0A'} onChange={(v) => setStyle('outline_color', v)} />
+                  <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
+                    <input type="checkbox" checked={currentStyle.outline ?? true} onChange={(e) => setStyle('outline', e.target.checked)} className="accent-kinetic w-3.5 h-3.5" />
+                    <span className="mono-label text-fog/50 text-[0.5rem]">OUTLINE</span>
+                  </label>
+                </div>
+                <HorizontalSlider label="THICKNESS" value={currentStyle.outline_thickness ?? 1.4} min={0} max={5} step={0.1} onChange={(v) => setStyle('outline_thickness', v)} />
               </div>
             ) : (
               <p className="mono-label text-fog/30 py-4">Enable Name or Number to access designer controls.</p>
