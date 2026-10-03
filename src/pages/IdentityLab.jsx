@@ -236,6 +236,10 @@ export default function IdentityLab() {
       rendered_image: renderedName || renderedNumber ? renderedImage : selectedImage,
       rendered_image_version: renderedName || renderedNumber ? 'canvas-v1' : '',
       rendered_artwork_front: renderedArtworkFront,
+      artwork_front: currentColor?.artwork_front || jersey.artwork_front || '',
+      artwork_back: currentColor?.artwork_back || jersey.artwork_back || '',
+      artwork_sleeve: currentColor?.artwork_sleeve || jersey.artwork_sleeve || '',
+      artwork_hood: currentColor?.artwork_hood || jersey.artwork_hood || '',
     };
     if (editId && items.some((i) => i.id === editId)) {
       editItem(editId, payload);

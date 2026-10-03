@@ -34,12 +34,17 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
       price: jersey.price,
       front_image: front,
       back_image: back,
+      colorName: colors[0]?.name || 'Default',
       static_display: jersey.static_display,
       customName: '',
       font: '',
       size: 0,
       curve: 0,
       quantity: 1,
+      artwork_front: colors[0]?.artwork_front || jersey.artwork_front || '',
+      artwork_back: colors[0]?.artwork_back || jersey.artwork_back || '',
+      artwork_sleeve: colors[0]?.artwork_sleeve || jersey.artwork_sleeve || '',
+      artwork_hood: colors[0]?.artwork_hood || jersey.artwork_hood || '',
     });
   };
 
