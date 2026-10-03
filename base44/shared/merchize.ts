@@ -268,18 +268,25 @@ export async function importMerchizeOrderArtworks(
   // fulfillment failure.
   let detailRes;
   let detail;
-  for (let attempt = 0; attempt < 4; attempt++) {
+  const MAX_DETAIL_ATTEMPTS = 8;
+  for (let attempt = 0; attempt < MAX_DETAIL_ATTEMPTS; attempt++) {
     detailRes = await fetch(detailUrl, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     });
     detail = await detailRes.json();
-    console.log(`[importMerchizeOrderArtworks] detail attempt ${attempt + 1}/4 — ok=${detailRes.ok} success=${detail.success} items_found=${detail.data?.items?.length || 0}`);
+    console.log(`[importMerchizeOrderArtworks] detail attempt ${attempt + 1}/${MAX_DETAIL_ATTEMPTS} — ok=${detailRes.ok} success=${detail.success} items_found=${detail.data?.items?.length || 0} message=${detail.message || ''}`);
+    // Success — order items are available
+    if (detailRes.ok && detail.success && Array.isArray(detail.data?.items) && detail.data.items.length >= items.length) break;
+    // Transient "Order is being processed" — retry with backoff
+    if (attempt < MAX_DETAIL_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+      continue;
+    }
+    // Final attempt failed — throw with the Merchize error message
     if (!detailRes.ok || !detail.success) {
       throw new Error(detail.message || `Could not retrieve Merchize order items (HTTP ${detailRes.status}).`);
     }
-    if (Array.isArray(detail.data?.items) && detail.data.items.length >= items.length) break;
-    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
   }
   if (!Array.isArray(detail.data?.items) || detail.data.items.length < items.length) {
     console.error(`[importMerchizeOrderArtworks] order items not available — expected ${items.length}, got ${detail.data?.items?.length || 0}`);

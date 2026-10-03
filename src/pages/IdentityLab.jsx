@@ -6,6 +6,7 @@ import JerseyDisplayPreview from '@/components/JerseyDisplayPreview';
 import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { resolveNameStyle, resolveNumberStyle, resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
+import { formatPrice, getCurrency } from '@/lib/currency';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 
 function getColors(jersey) {
@@ -561,7 +562,7 @@ export default function IdentityLab() {
                   <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>
               ) : (
-                <>{editId ? 'Update cart' : 'Add to cart'} — ${jersey.price.toFixed(2)}</>
+                <>{editId ? 'Update cart' : 'Add to cart'} — {formatPrice(jersey.price, getCurrency())}</>
               )}
             </button>
           </div>

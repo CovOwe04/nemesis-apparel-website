@@ -2,14 +2,7 @@ import { Link } from 'react-router-dom';
 import { Image } from '@/components/ui/image';
 import { Plus } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
-
-const CAD_RATE = 1.36;
-
-function formatPrice(priceUsd, currency) {
-  const value = currency === 'CAD' ? priceUsd * CAD_RATE : priceUsd;
-  const formatted = Number(value).toFixed(2);
-  return currency === 'CAD' ? `CA$${formatted}` : `$${formatted}`;
-}
+import { formatPrice } from '@/lib/currency';
 
 function getColors(jersey) {
   if (jersey.colors && jersey.colors.length > 0) return jersey.colors;

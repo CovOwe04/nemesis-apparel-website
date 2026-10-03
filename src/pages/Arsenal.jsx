@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import JerseyCard from '@/components/JerseyCard';
+import { getCurrency, setCurrency as persistCurrency } from '@/lib/currency';
 import { Search } from 'lucide-react';
 
 export default function Arsenal() {
@@ -13,14 +14,12 @@ export default function Arsenal() {
   const [codeError, setCodeError] = useState('');
   const [unlocking, setUnlocking] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [currency, setCurrency] = useState(
-    () => (typeof window !== 'undefined' && localStorage.getItem('nemesis-currency')) || 'USD'
-  );
+  const [currency, setCurrency] = useState(() => getCurrency());
 
   const clubCode = (searchParams.get('club') || '').trim().toUpperCase();
 
   useEffect(() => {
-    localStorage.setItem('nemesis-currency', currency);
+    persistCurrency(currency);
   }, [currency]);
 
   useEffect(() => {

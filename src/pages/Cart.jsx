@@ -5,6 +5,7 @@ import IdentityNameOverlay from '@/components/IdentityNameOverlay';
 import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { renderJerseyDisplayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { useCart } from '@/lib/CartContext';
+import { formatPrice, getCurrency } from '@/lib/currency';
 import { Plus, Minus, Trash2, Pencil, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 
 const FONT_LABELS = {
@@ -14,8 +15,6 @@ const FONT_LABELS = {
 };
 
 const VERT_LABELS = { 10: 'HIGH', 25: 'NORMAL', 50: 'LOW' };
-
-const CAD_RATE = 1.36;
 
 const SHIPPING_RATES = {
   USA: 0,
@@ -55,12 +54,6 @@ function detectCountryCode(postalCode) {
   if (/^\d{5}(-\d{4})?$/.test(pc)) return 'US';
   if (/^[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVWXYZ]\s?\d[ABCEGHJKLMNPRSTVWXYZ]\d$/.test(pc)) return 'CA';
   return 'OTHER';
-}
-
-function formatPrice(priceUsd, currency) {
-  const value = currency === 'CAD' ? priceUsd * CAD_RATE : priceUsd;
-  const formatted = Number(value).toFixed(2);
-  return currency === 'CAD' ? `CA$${formatted}` : `$${formatted}`;
 }
 
 export default function Cart() {
@@ -139,7 +132,7 @@ export default function Cart() {
 
   const hasStalePersonalizedRender = stalePersonalizedItems.length > 0;
 
-  const currency = shippingAddress.country === 'CA' ? 'CAD' : 'USD';
+  const currency = getCurrency();
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
   const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
 
