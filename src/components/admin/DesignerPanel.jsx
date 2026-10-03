@@ -223,7 +223,7 @@ export default function DesignerPanel({
             {/* Warp sliders (horizontal) */}
             {form.enable_name || form.enable_number ? (
               <div className="border border-steel rounded-[4px] p-3 space-y-3">
-                <div className="mono-label text-kinetic text-[0.6rem]">WARP</div>
+                <div className="mono-label text-kinetic text-[0.6rem]">PROPERTIES</div>
                 <HorizontalSlider label="SIZE" value={currentStyle.font_size} min={10} max={100} onChange={(v) => setStyle('font_size', v)} />
                 <HorizontalSlider label="VERT POS" value={currentStyle.vert_pos ?? (designerTab === 'name' ? 40 : 50)} min={0} max={100} onChange={(v) => setStyle('vert_pos', v)} />
                 <HorizontalSlider label="ARCH" value={currentStyle.arch} min={-50} max={50} onChange={(v) => setStyle('arch', v)} />
