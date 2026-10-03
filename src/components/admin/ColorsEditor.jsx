@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Image } from '@/components/ui/image';
 import { Trash2, Plus } from 'lucide-react';
 
 export default function ColorsEditor({ colors, onChange, jerseyId }) {
@@ -69,8 +68,8 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {color.images.map((img, ii) => (
-              <div key={ii} className="relative w-20 h-24 bg-steel overflow-hidden rounded-[4px] group">
-                <Image src={img.url} alt="" fittingType="fill" className="w-full h-full object-cover" />
+              <div key={ii} className="relative w-20 overflow-hidden rounded-[12px] group">
+                <img src={img.url} alt="" className="w-full h-auto block rounded-[12px]" />
                 <button
                   type="button"
                   onClick={() => removeImage(ci, ii)}
