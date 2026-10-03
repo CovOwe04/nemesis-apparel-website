@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProductForItem, buildCustomOrderItem, buildPresetOrderItem, findPresetMatch, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
+import { createCustomProductForItem, buildCustomOrderItem, buildPresetOrderItem, findPresetMatch, ensurePresetSellerSkus, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
 import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -113,34 +113,11 @@ export default async function (req) {
         merchizeItems.push(buildCustomOrderItem(item));
       } else if (item.customName || item.customNumber) {
         const jersey = jerseyMap.get(item.jerseyId);
-        const combo = (jersey?.name_number_combos || []).find((entry) =>
-          (entry.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
-          (entry.number || '') === (item.customNumber || '')
-        );
-        const vmi = (jersey?.variant_merchize_ids || []).find((entry) =>
-          (entry.color_name || 'Default') === (item.colorName || 'Default') &&
-          (entry.combo_name || '').toUpperCase() === (combo?.name || '').toUpperCase() &&
-          (entry.combo_number || '') === (combo?.number || '')
-        );
-        const size = item.shirtSize || 'M';
-        const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
-        if (!vmi?.merchize_product_id || !merchizeSku) continue;
-        merchizeItems.push({
-          product_id: vmi.merchize_product_id,
-          sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
-          merchize_sku: merchizeSku,
-          quantity: item.quantity,
-          price: item.price,
-          currency: 'USD',
-          image: item.rendered_image,
-          requires_custom_artwork_front: true,
-          order_artwork: {
-            front: item.rendered_artwork_front,
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
-          },
-        });
+        const vmi = findPresetMatch(item, jersey)?.vmi;
+        if (!vmi?.merchize_product_id) continue;
+        await ensurePresetSellerSkus(baseUrl, merchizeToken, merchizeKey, vmi.merchize_product_id);
+        const mItem = buildPresetOrderItem(item, jersey, vmi);
+        if (mItem) merchizeItems.push(mItem);
       } else if (!item.customName && !item.customNumber) {
         // Standard product (non-custom items only)
         const jersey = jerseyMap.get(item.jerseyId);

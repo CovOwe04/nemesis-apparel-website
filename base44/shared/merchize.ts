@@ -296,14 +296,47 @@ export function isPresetItem(item: any, jersey: any) {
   return findPresetMatch(item, jersey) !== null;
 }
 
+// Preset products are generated without seller SKUs, so Merchize cannot link
+// an external order line to them and auto-creates a generic product instead.
+// Stamp every size variant with a seller SKU whose external-ID segment is the
+// Merchize product ID (idempotent — only missing/mismatched variants update).
+export async function ensurePresetSellerSkus(baseUrl: string, token: string, apiKey: string, productId: string) {
+  const res = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success || !Array.isArray(data.data)) {
+    throw new Error(`Could not load variants for preset product ${productId}.`);
+  }
+  const updates = [];
+  for (const v of data.data) {
+    const sizeOption = v.options?.find((o: any) => o.attribute?.value_type === 'size');
+    if (!sizeOption) continue;
+    const expected = customSellerSku(productId, String(sizeOption.name).toUpperCase());
+    if (v.sku_seller !== expected) updates.push({ _id: v._id, sku_seller: expected });
+  }
+  if (updates.length === 0) return;
+  const updRes = await fetch(`${baseUrl}/product/products/${productId}/variants`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ variants: updates }),
+  });
+  const updData = await updRes.json();
+  if (!updRes.ok || !updData.success) {
+    throw new Error(`Could not set seller SKUs on preset product ${productId}.`);
+  }
+  console.log(`Set ${updates.length} seller SKU(s) on preset product ${productId}`);
+}
+
 // Merchize order line for a preset item that already has a generated product.
+// Call ensurePresetSellerSkus for the product first so the line maps to it.
 export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
   const size = item.shirtSize || 'M';
   const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
   if (!vmi?.merchize_product_id || !merchizeSku) return null;
   return {
     product_id: vmi.merchize_product_id,
-    sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+    sku: customSellerSku(vmi.merchize_product_id, size),
     merchize_sku: merchizeSku,
     quantity: item.quantity,
     price: item.price,
