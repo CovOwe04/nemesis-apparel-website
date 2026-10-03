@@ -10,6 +10,12 @@ export default async function(req) {
     if (denied) return denied;
 
     const base44 = createClientFromRequest(req);
+
+    if (body.action === 'delete' && body.orderId) {
+      await base44.asServiceRole.entities.Order.delete(body.orderId);
+      return Response.json({ success: true, deleted: body.orderId });
+    }
+
     const orders = await base44.asServiceRole.entities.Order.list('-created_date', 100);
     return Response.json({ orders: orders || [] });
   } catch (error) {

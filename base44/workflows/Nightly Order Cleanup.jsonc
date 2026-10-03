@@ -15,8 +15,8 @@
           },
           "then": "end",
           "x-base44": {
-            "title": "Delete old orders",
-            "description": "Removes orders older than 1 year"
+            "title": "Delete fulfilled orders",
+            "description": "Removes fulfilled orders older than 60 days"
           }
         }
       }
@@ -40,5 +40,5 @@
     }
   },
   "name": "Nightly Order Cleanup",
-  "description": "Deletes orders older than 1 year every night at 2am to prevent database overload"
+  "description": "Deletes fulfilled orders older than 60 days every night at 2am to prevent database overload"
 }

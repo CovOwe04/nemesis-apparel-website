@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Eye, Mail, User, Package } from 'lucide-react';
+import { Eye, Mail, User, Package, Trash2 } from 'lucide-react';
 import DesignReviewModal from '@/components/admin/DesignReviewModal';
 
 const STATUS_STYLES = {
@@ -19,6 +19,22 @@ export default function OrderManager() {
   const [reviewOrder, setReviewOrder] = useState(null);
   const [syncingOrderId, setSyncingOrderId] = useState('');
   const [syncMessage, setSyncMessage] = useState(null);
+  const [deletingId, setDeletingId] = useState('');
+
+  const deleteOrder = async (order) => {
+    if (!window.confirm(`Delete order for ${order.customer_name}? This cannot be undone.`)) return;
+    setDeletingId(order.id);
+    try {
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const res = await base44.functions.invoke('get-admin-orders', { action: 'delete', orderId: order.id, passcode });
+      if (res.data?.error) throw new Error(res.data.error);
+      setOrders((prev) => prev.filter((o) => o.id !== order.id));
+    } catch (err) {
+      setLoadError(err?.response?.data?.error || err?.data?.error || err?.message || 'Could not delete order.');
+    } finally {
+      setDeletingId('');
+    }
+  };
 
   const loadOrders = () => {
     setLoading(true);
@@ -125,6 +141,14 @@ export default function OrderManager() {
                       className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px]"
                     >
                       <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteOrder(o); }}
+                      disabled={deletingId === o.id}
+                      title="Delete order"
+                      className="inline-flex items-center justify-center border border-steel text-fog/50 hover:text-kinetic hover:border-kinetic/50 px-2.5 py-2 rounded-[4px] disabled:opacity-50 transition-colors"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

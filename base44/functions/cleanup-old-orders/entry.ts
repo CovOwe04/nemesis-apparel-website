@@ -26,16 +26,17 @@ export default async function (req) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Delete orders older than 1 year
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    const cutoffIso = oneYearAgo.toISOString();
+    // Delete fulfilled orders older than 60 days
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const cutoffIso = sixtyDaysAgo.toISOString();
 
     await base44.asServiceRole.entities.Order.deleteMany({
+      status: 'fulfilled',
       created_date: { $lt: cutoffIso },
     });
 
-    console.log(`Cleanup: deleted orders older than ${cutoffIso}`);
+    console.log(`Cleanup: deleted fulfilled orders older than ${cutoffIso}`);
     return Response.json({
       success: true,
       cutoff: cutoffIso,
