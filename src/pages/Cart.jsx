@@ -76,6 +76,9 @@ export default function Cart() {
   const [formError, setFormError] = useState('');
   const [renderRefreshError, setRenderRefreshError] = useState('');
   const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [promoError, setPromoError] = useState('');
   const [shippingAddress, setShippingAddress] = useState({
     line1: '', line2: '', city: '', state: '', postalCode: '', country: 'CA'
   });
@@ -138,8 +141,68 @@ export default function Cart() {
   const currency = shippingAddress.country === 'CA' ? 'CAD' : 'USD';
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
   const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
-  const hstUsd = shippingAddress.country === 'CA' ? total * 0.13 : 0;
-  const grandTotalUsd = total + shippingUsd + hstUsd;
+
+  // Recompute the applied promo discount from the live cart so the summary
+  // stays in sync as items/quantities change (no extra API call needed).
+  const promoDiscountUsd = (() => {
+    if (!appliedPromo) return 0;
+    const matching = items.filter((i) => i.jerseyId === appliedPromo.jerseyId);
+    const matchingSubtotal = matching.reduce((s, i) => s + i.price * i.quantity, 0);
+    if (matching.length === 0) return 0;
+    if (appliedPromo.minOrderValue > 0 && matchingSubtotal < appliedPromo.minOrderValue) return 0;
+    let d = appliedPromo.discountType === 'percentage'
+      ? Math.round(matchingSubtotal * (appliedPromo.discountValue / 100) * 100) / 100
+      : Math.min(appliedPromo.discountValue, matchingSubtotal);
+    if (appliedPromo.maxDiscountValue > 0 && d > appliedPromo.maxDiscountValue) d = appliedPromo.maxDiscountValue;
+    return d;
+  })();
+
+  const discountedSubtotalUsd = Math.max(0, total - promoDiscountUsd);
+  const hstUsd = shippingAddress.country === 'CA' ? Math.round(discountedSubtotalUsd * 0.13 * 100) / 100 : 0;
+  const grandTotalUsd = discountedSubtotalUsd + shippingUsd + hstUsd;
+
+  const applyPromo = async () => {
+    setPromoError('');
+    if (!promoCode.trim()) {
+      setPromoError('Enter a promo code.');
+      return;
+    }
+    setPromoApplying(true);
+    try {
+      const res = await base44.functions.invoke('save-promo-code', {
+        action: 'validate',
+        code: promoCode.trim(),
+        items: items.map((i) => ({ jerseyId: i.jerseyId, price: i.price, quantity: i.quantity })),
+      });
+      const data = res.data;
+      if (data?.valid) {
+        setAppliedPromo({
+          code: data.code,
+          promoId: data.promoId,
+          jerseyId: data.jerseyId,
+          description: data.description,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          minOrderValue: data.minOrderValue,
+          maxDiscountValue: data.maxDiscountValue,
+        });
+      } else {
+        setAppliedPromo(null);
+        setPromoError(data?.error || 'Invalid promo code');
+      }
+    } catch (err) {
+      setPromoError(err?.response?.data?.error || err?.data?.error || err?.message || 'Could not validate promo code');
+      setAppliedPromo(null);
+    } finally {
+      setPromoApplying(false);
+    }
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    setPromoError('');
+  };
 
   if (ordered) {
     return (
@@ -200,7 +263,7 @@ export default function Cart() {
         customerEmail: customerEmail.trim(),
         shippingAddress,
         currency,
-        promoCode: promoCode.trim()
+        promoCode: appliedPromo ? appliedPromo.code : ''
       });
       if (res.data?.url) {
         window.location.href = res.data.url;
@@ -371,6 +434,12 @@ export default function Cart() {
                 }
               </span>
             </div>
+            {promoDiscountUsd > 0 && (
+              <div className="flex items-center justify-between text-kinetic mb-4">
+                <span className="mono-label">PROMO DISCOUNT</span>
+                <span className="font-heading">−{formatPrice(promoDiscountUsd, currency)}</span>
+              </div>
+            )}
             {hstUsd > 0 && (
               <div className="flex items-center justify-between text-fog/50 mb-4">
                 <span className="mono-label">HST (13%)</span>
@@ -428,13 +497,40 @@ export default function Cart() {
             {/* Promo code */}
             <div className="mb-4">
               <label className="mono-label text-fog/50 block mb-1.5">PROMO CODE</label>
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="Enter code"
-                className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-2.5 text-sm uppercase placeholder:text-black/40 focus:border-kinetic outline-none"
-              />
+              {appliedPromo ? (
+                <div className="flex items-center justify-between border border-kinetic/50 bg-kinetic/10 rounded-[6px] px-4 py-2.5">
+                  <div className="min-w-0">
+                    <div className="font-heading text-fog uppercase text-sm truncate">{appliedPromo.code}</div>
+                    {appliedPromo.description && (
+                      <div className="mono-label text-fog/50 truncate mt-0.5">{appliedPromo.description}</div>
+                    )}
+                  </div>
+                  <button
+                    onClick={removePromo}
+                    className="mono-label text-fog/50 hover:text-kinetic transition-colors ml-3 shrink-0"
+                    aria-label="Remove promo code">
+                    REMOVE
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(''); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } }}
+                    placeholder="Enter code"
+                    className="flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-2.5 text-sm uppercase placeholder:text-black/40 focus:border-kinetic outline-none"
+                  />
+                  <button
+                    onClick={applyPromo}
+                    disabled={promoApplying || !promoCode.trim()}
+                    className="mono-label border border-steel text-fog hover:text-kinetic hover:border-kinetic/50 rounded-[6px] px-4 py-2.5 transition-colors disabled:opacity-50">
+                    {promoApplying ? '…' : 'APPLY'}
+                  </button>
+                </div>
+              )}
+              {promoError && <p className="mono-label text-kinetic mt-1.5">{promoError}</p>}
             </div>
 
             {formError && <p className="mono-label text-kinetic mb-3">{formError}</p>}
