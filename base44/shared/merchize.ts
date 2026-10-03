@@ -26,6 +26,14 @@ interface CreateCustomProductParams {
   price: number;
   fallbackSkus: Record<string, string>;
   artworkUrls: Record<string, string>;
+  sellerSkuPrefix?: string;
+}
+
+// Seller SKU for a custom product size — used on both the product variant and
+// the order line so Merchize maps the order to this product instead of
+// auto-creating a generic one.
+export function customSellerSku(prefix: string, size: string) {
+  return `${prefix}-${size}`;
 }
 
 // Step 1: Create the custom product with ALL size variants (matches the admin
@@ -35,7 +43,7 @@ interface CreateCustomProductParams {
 export async function createCustomProduct(params: CreateCustomProductParams) {
   const {
     baseUrl, token, apiKey, baseProductId, title, description,
-    productImages, colorName, colorHex, price, fallbackSkus, artworkUrls,
+    productImages, colorName, colorHex, price, fallbackSkus, sellerSkuPrefix,
   } = params;
 
   const attributes = [
@@ -58,7 +66,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
   const productVariants = SIZES.map((s, i) => ({
     is_default: i === 0,
     sku: fallbackSkus?.[s.name] || '',
-    sku_seller: '',
+    sku_seller: sellerSkuPrefix ? customSellerSku(sellerSkuPrefix, s.name) : '',
     retail_price: price,
     currency: 'USD',
     options: [
@@ -216,6 +224,68 @@ export async function uploadCustomProductArtwork(params: {
   }
 
   return { artworkUploaded, variantImagesUploaded };
+}
+
+// Create a personalized product for one cart item exactly like the admin
+// "Generate in Merchize" button: title "<Listing> - <Color> - <Name> - <Number>",
+// all sizes, artwork on the main product, 3D render on every size variant.
+// Stores the product mapping on the item and returns it.
+export async function createCustomProductForItem(opts: {
+  baseUrl: string; token: string; apiKey: string; item: any; jersey: any; sellerSkuPrefix: string;
+}) {
+  const { baseUrl, token, apiKey, item, jersey, sellerSkuPrefix } = opts;
+  const baseProductId = jersey?.merchize_product_id || jersey?.merchize_existing_product_id;
+  if (!baseProductId) return null;
+
+  const colorName = item.colorName || 'Default';
+  const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
+  const title = [jersey.name, item.colorName, item.customName, item.customNumber].filter(Boolean).join(' - ');
+  const productImages = [item.rendered_image].filter(Boolean);
+  const artworkUrls: Record<string, string> = {};
+  if (item.rendered_artwork_front) artworkUrls.front = item.rendered_artwork_front;
+  if (item.artwork_back) artworkUrls.back = item.artwork_back;
+  if (item.artwork_sleeve) artworkUrls.sleeve = item.artwork_sleeve;
+  if (item.artwork_hood) artworkUrls.hood = item.artwork_hood;
+  const fallbackSkus = (jersey.merchize_product_id ? jersey.merchize_variants : jersey.merchize_existing_variants) || {};
+
+  const { productId, variantIds, skus } = await createCustomProduct({
+    baseUrl, token, apiKey, baseProductId, title,
+    description: jersey.description || '',
+    productImages, colorName, colorHex: colorObj?.hex || '#000000',
+    price: jersey.price, fallbackSkus, artworkUrls, sellerSkuPrefix,
+  });
+  const size = item.shirtSize || 'M';
+  item.custom_merchize_product_id = productId;
+  item.custom_merchize_title = title;
+  item.custom_merchize_variant_ids = variantIds;
+  item.custom_merchize_skus = skus;
+  item.custom_merchize_variant_id = variantIds[size] || '';
+  item.custom_merchize_sku = skus[size] || fallbackSkus[size] || '';
+  item.custom_seller_sku = customSellerSku(sellerSkuPrefix, size);
+
+  await uploadCustomProductArtwork({ baseUrl, token, apiKey, productId, variantIds, productImages, artworkUrls });
+  console.log(`Custom product created: ${productId} "${title}"`);
+  return item;
+}
+
+// Order line for an item that has a custom product from createCustomProductForItem.
+export function buildCustomOrderItem(item: any) {
+  return {
+    product_id: item.custom_merchize_product_id,
+    sku: item.custom_seller_sku || `NEMESIS-CUSTOM-${item.shirtSize || 'M'}`,
+    merchize_sku: item.custom_merchize_sku || '',
+    quantity: item.quantity,
+    price: item.price,
+    currency: 'USD',
+    image: item.rendered_image,
+    requires_custom_artwork_front: true,
+    order_artwork: {
+      front: item.rendered_artwork_front,
+      back: item.artwork_back || '',
+      sleeve: item.artwork_sleeve || '',
+      hood: item.artwork_hood || '',
+    },
+  };
 }
 
 export async function createMerchizeOrder(

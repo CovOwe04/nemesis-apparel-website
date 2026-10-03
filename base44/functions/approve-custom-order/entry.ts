@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProduct, uploadCustomProductArtwork, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
+import { createCustomProductForItem, buildCustomOrderItem, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
 import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -79,79 +79,18 @@ export default async function (req) {
       if (item.custom_merchize_product_id) continue; // already created
 
       const jersey = jerseyMap.get(item.jerseyId);
-      const baseProductId = jersey?.merchize_existing_product_id || jersey?.merchize_product_id;
-      if (!baseProductId) {
+      const created = await createCustomProductForItem({
+        baseUrl, token: merchizeToken, apiKey: merchizeKey, item, jersey,
+        sellerSkuPrefix: `NEMESIS-${orderId.slice(-6).toUpperCase()}-${cartItems.indexOf(item) + 1}`,
+      });
+      if (!created) {
         console.error(`Skipping custom product for ${item.name}: no base Merchize product`);
         continue;
       }
-
-      const colorObj = (jersey.colors || []).find((c) => c.name === item.colorName);
-      const colorHex = colorObj?.hex || '#000000';
-
-      // Use composited artwork (with name/number) for front, base artwork for other pieces
-      const artworkKey = JSON.stringify([item.jerseyId, item.colorName || 'Default', item.customName || '', item.customNumber || '', item.front_image || '']);
-      const compositedFront = compositedArtwork?.[artworkKey] || item.rendered_artwork_front;
-      const freshDisplay = item.rendered_image || compositedDisplay?.[artworkKey];
-
-      const productImages = [];
-      if (freshDisplay) productImages.push(freshDisplay);
-      else if (colorObj?.images?.length > 0) productImages.push(...colorObj.images.map((i) => i.url));
-      else if (jersey.front_image) productImages.push(jersey.front_image);
-
-      // Upload composited front artwork + base back/sleeve/hood so the product
-      // carries the full print file set (same as admin Generate Products).
-      const artworkUrls = {};
-      if (compositedFront) artworkUrls.front = compositedFront;
-      if (item.artwork_back) artworkUrls.back = item.artwork_back;
-      if (item.artwork_sleeve) artworkUrls.sleeve = item.artwork_sleeve;
-      if (item.artwork_hood) artworkUrls.hood = item.artwork_hood;
-
-      const titleParts = [jersey.name, item.colorName, item.customName, item.customNumber ? `#${item.customNumber}` : ''].filter(Boolean);
-      const fallbackSkus = jersey.merchize_existing_variants || jersey.merchize_variants || {};
-
-      try {
-        // Create the product with all sizes — returns immediately so we can
-        // persist the product ID before artwork upload (prevents duplicate
-        // products if artwork upload fails and the admin retries).
-        const { productId, variantIds, skus } = await createCustomProduct({
-          baseUrl, token: merchizeToken, apiKey: merchizeKey,
-          baseProductId,
-          title: titleParts.join(' - '),
-          description: jersey.description || '',
-          productImages,
-          colorName: item.colorName || 'Default',
-          colorHex,
-          price: jersey.price,
-          fallbackSkus,
-          artworkUrls,
-        });
-        item.custom_merchize_product_id = productId;
-        item.custom_merchize_variant_ids = variantIds;
-        item.custom_merchize_skus = skus;
-        const size = item.shirtSize || 'M';
-        item.custom_merchize_variant_id = variantIds[size] || variantIds['M'] || Object.values(variantIds)[0] || '';
-        item.custom_merchize_sku = skus[size] || skus['M'] || Object.values(skus)[0] || '';
-        if (freshDisplay) item.fresh_display_image = freshDisplay;
-        console.log(`Custom product created: ${productId} for ${item.customName} #${item.customNumber}`);
-
-        // Save the product ID immediately so a retry never creates a duplicate
-        await base44.asServiceRole.entities.Order.update(orderId, {
-          items_json: JSON.stringify(cartItems),
-        });
-
-        // Upload artwork + display images (best-effort, non-fatal)
-        try {
-          await uploadCustomProductArtwork({
-            baseUrl, token: merchizeToken, apiKey: merchizeKey,
-            productId, variantIds, productImages, artworkUrls,
-          });
-        } catch (artworkErr) {
-          console.error(`Artwork upload failed for ${productId} (non-fatal):`, artworkErr.message);
-        }
-      } catch (err) {
-        console.error(`Failed to create custom product for ${item.name}:`, err.message);
-        throw err;
-      }
+      // Save the product ID immediately so a retry never creates a duplicate
+      await base44.asServiceRole.entities.Order.update(orderId, {
+        items_json: JSON.stringify(cartItems),
+      });
     }
 
     // Save updated items with custom product IDs (also covers the retry case
@@ -167,22 +106,7 @@ export default async function (req) {
 
       if (item.custom_merchize_product_id) {
         // Custom Identity Lab product (all sizes; order uses the buyer's size SKU)
-        merchizeItems.push({
-          product_id: item.custom_merchize_product_id,
-          sku: `NEMESIS-CUSTOM-${(item.name || 'JERSEY').replace(/\s+/g, '-')}`,
-          merchize_sku: item.custom_merchize_sku || '',
-          quantity: item.quantity,
-          price: item.price,
-          currency: 'USD',
-          image: item.rendered_image,
-          requires_custom_artwork_front: true,
-          order_artwork: {
-            front: item.rendered_artwork_front,
-            back: item.artwork_back || '',
-            sleeve: item.artwork_sleeve || '',
-            hood: item.artwork_hood || '',
-          },
-        });
+        merchizeItems.push(buildCustomOrderItem(item));
       } else if (item.customName || item.customNumber) {
         const jersey = jerseyMap.get(item.jerseyId);
         const combo = (jersey?.name_number_combos || []).find((entry) =>

@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createMerchizeOrder } from '../../shared/merchize.ts';
+import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
@@ -360,10 +360,24 @@ export default async function(req) {
             continue;
           }
 
-          const existingProductItem = buildStandardItem(item, { requireExactSize: true });
-          if (existingProductItem) existingProductMatches.push(existingProductItem);
-          else needsApproval.push(item);
+          if (!isSafeImageUrl(item.rendered_artwork_front) || !isSafeImageUrl(item.rendered_image)) {
+            needsApproval.push(item);
+            continue;
+          }
+          try {
+            const created = item.custom_merchize_product_id ? item : await createCustomProductForItem({
+              baseUrl, token: merchizeToken, apiKey: merchizeKey, item, jersey,
+              sellerSkuPrefix: `NEMESIS-${orderId.slice(-6).toUpperCase()}-${cartItems.indexOf(item) + 1}`,
+            });
+            if (created?.custom_merchize_sku) existingProductMatches.push(buildCustomOrderItem(created));
+            else needsApproval.push(item);
+          } catch (err) {
+            console.error(`Custom product creation failed for ${item.name}:`, err.message || err);
+            needsApproval.push(item);
+          }
         }
+        // Persist custom product IDs so admin retries never duplicate products
+        await base44.asServiceRole.entities.Order.update(orderId, { items_json: JSON.stringify(cartItems) });
 
         if (needsApproval.length > 0) {
           // Admin review is reserved for orders that cannot use a configured
