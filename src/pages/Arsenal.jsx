@@ -79,7 +79,7 @@ export default function Arsenal() {
       {/* Grid */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-10">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4 flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-3 bg-background border border-steel rounded-[6px] px-4 py-3 transition-colors focus-within:border-kinetic/70 focus-within:ring-2 focus-within:ring-kinetic/20">
+          <div className="flex-1 flex items-center gap-3 bg-background border border-steel rounded-[6px] px-4 py-3 transition-colors focus-within:border-kinetic">
             <Search size={18} className="text-fog/50 shrink-0" />
             <input
               type="text"
