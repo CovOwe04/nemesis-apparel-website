@@ -105,6 +105,9 @@ export default async function(req) {
         description: jersey.description || '',
         images: productImages,
         base_product_id: baseProductId,
+        // Order imports link to the product whose external_product_id matches
+        // the order line's product_id + store identifier.
+        external_product_id: { id: externalId, source: 'api', identifier: 'nemesis-apparel.base44.app' },
         attributes,
         variants: productVariants,
         is_collection_hidden: false,

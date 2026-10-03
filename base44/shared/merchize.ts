@@ -83,6 +83,9 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
     description,
     images: productImages,
     base_product_id: baseProductId,
+    // Order imports link to the product whose external_product_id matches
+    // the order line's product_id + store identifier.
+    ...(sellerSkuPrefix ? { external_product_id: { id: sellerSkuPrefix, source: 'api', identifier: 'nemesis-apparel.base44.app' } } : {}),
     attributes,
     variants: productVariants,
     is_collection_hidden: false,
