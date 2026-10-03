@@ -68,7 +68,7 @@ export default function ColorsEditor({ colors, onChange, jerseyId }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {color.images.map((img, ii) => (
-              <div key={ii} className="relative w-20 overflow-hidden rounded-[12px] group">
+              <div key={ii} className="relative w-28 overflow-hidden rounded-[12px] group">
                 <img src={img.url} alt="" className="w-full h-auto block rounded-[12px]" />
                 <button
                   type="button"

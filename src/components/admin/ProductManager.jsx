@@ -96,7 +96,7 @@ export default function ProductManager() {
                           className="flex items-start gap-3 border border-steel rounded-[6px] p-3 bg-void">
                           <GripVertical size={16} className="text-fog/30 shrink-0 mt-1" />
                           <span className="mono-label text-fog/30 w-5 text-center shrink-0 mt-1">{index + 1}</span>
-                          <div className="w-16 shrink-0 overflow-hidden rounded-[12px]">
+                          <div className="w-24 shrink-0 overflow-hidden rounded-[12px]">
                             <img src={j.front_image} alt={j.name} className="w-full h-auto block rounded-[12px]" />
                           </div>
                           <div className="flex-1 min-w-0">
