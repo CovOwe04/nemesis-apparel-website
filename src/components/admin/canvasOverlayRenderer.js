@@ -11,6 +11,8 @@ import {
   ARTWORK_NAME_VERT_POS,
   ARTWORK_NUMBER_VERT_POS,
   ARTWORK_TEXT_SCALE_ADJUSTMENT,
+  MOCKUP_NAME_HORIZ_POS,
+  MOCKUP_NUMBER_HORIZ_POS,
   resolveNameStyle,
   resolveNumberStyle,
   resolveFont,
@@ -304,6 +306,11 @@ export async function renderOverlayToBlob({
   // 4. Merge styles with defaults
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
+  // 3D mockup renders always use the hardcoded mockup horizontal position.
+  if (!isArtwork) {
+    ns.horiz_pos = MOCKUP_NAME_HORIZ_POS;
+    nus.horiz_pos = MOCKUP_NUMBER_HORIZ_POS;
+  }
   const ls = letterSpacing ? letterSpacing / 10 : 0;
   const displayName = enableName ? (customName || '').toUpperCase() : '';
   const displayNumber = enableNumber ? (customNumber || '') : '';

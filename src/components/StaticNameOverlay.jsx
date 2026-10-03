@@ -47,8 +47,8 @@ export default function StaticNameOverlay({
   plainImage = false,
 }) {
   const uid = useId().replace(/:/g, '');
-  const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
-  const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
+  const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle, horiz_pos: MOCKUP_NAME_HORIZ_POS };
+  const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle, horiz_pos: MOCKUP_NUMBER_HORIZ_POS };
   const nameFont = resolveFont(nameStyle, fontId, customFontUrl, customFontName);
   const numberFont = resolveFont(numberStyle, fontId, customFontUrl, customFontName);
 
