@@ -253,9 +253,16 @@ export async function importMerchizeOrderArtworks(
   opts: { orderId: string; identifier: string; items: any[] },
 ) {
   const { orderId, identifier, items } = opts;
+  console.log(`[importMerchizeOrderArtworks] START — orderId=${orderId} identifier=${identifier} items=${items.length}`);
+  for (const [i, item] of items.entries()) {
+    console.log(`[importMerchizeOrderArtworks] item[${i}] product_id=${item.product_id} sku=${item.sku} merchize_sku=${item.merchize_sku} qty=${item.quantity} requires_custom_artwork_front=${item.requires_custom_artwork_front || false}`);
+    console.log(`[importMerchizeOrderArtworks] item[${i}] order_artwork=`, JSON.stringify(item.order_artwork || {}));
+  }
+
   const detailUrl = new URL(`${baseUrl}/order/external/orders/order-detail`);
   detailUrl.searchParams.set('external_number', orderId);
   detailUrl.searchParams.set('identifier', identifier);
+  console.log(`[importMerchizeOrderArtworks] fetching order detail: ${detailUrl.toString()}`);
   // Merchize can take a moment to expose newly created order items to the
   // detail endpoint. Retry briefly before treating a missing item list as a
   // fulfillment failure.
@@ -267,6 +274,7 @@ export async function importMerchizeOrderArtworks(
       headers: { Authorization: `Bearer ${token}` },
     });
     detail = await detailRes.json();
+    console.log(`[importMerchizeOrderArtworks] detail attempt ${attempt + 1}/4 — ok=${detailRes.ok} success=${detail.success} items_found=${detail.data?.items?.length || 0}`);
     if (!detailRes.ok || !detail.success) {
       throw new Error(detail.message || `Could not retrieve Merchize order items (HTTP ${detailRes.status}).`);
     }
@@ -274,7 +282,13 @@ export async function importMerchizeOrderArtworks(
     if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
   }
   if (!Array.isArray(detail.data?.items) || detail.data.items.length < items.length) {
+    console.error(`[importMerchizeOrderArtworks] order items not available — expected ${items.length}, got ${detail.data?.items?.length || 0}`);
     throw new Error('Merchize created the order, but its order items are not available yet for artwork attachment. Retry artwork upload from the admin order.');
+  }
+
+  console.log(`[importMerchizeOrderArtworks] order detail items:`);
+  for (const [i, oi] of detail.data.items.entries()) {
+    console.log(`[importMerchizeOrderArtworks] detail item[${i}] id=${oi.id || oi._id} sku=${oi.sku} merchize_sku=${oi.merchize_sku} product_id=${oi.product_id || oi.product?._id}`);
   }
 
   // Match detail lines by either our seller SKU or Merchize's catalog SKU.
@@ -295,6 +309,8 @@ export async function importMerchizeOrderArtworks(
       inputByProductId.set(productId, queue);
     }
   });
+  console.log(`[importMerchizeOrderArtworks] SKU index keys:`, [...inputBySku.keys()]);
+  console.log(`[importMerchizeOrderArtworks] product_id index keys:`, [...inputByProductId.keys()]);
 
   const artworkRequests = [];
   const matchedInputs = new Set();
@@ -308,6 +324,7 @@ export async function importMerchizeOrderArtworks(
       const availableIndex = queue?.findIndex((candidate) => !matchedInputs.has(candidate)) ?? -1;
       if (availableIndex >= 0) {
         matchedIndex = queue.splice(availableIndex, 1)[0];
+        console.log(`[importMerchizeOrderArtworks] detail item[${index}] matched by SKU key="${key}" → input item[${matchedIndex}]`);
         break;
       }
     }
@@ -315,12 +332,17 @@ export async function importMerchizeOrderArtworks(
       const productId = String(orderItem.product_id || orderItem.product?._id || orderItem.product?.id || '').trim();
       const queue = inputByProductId.get(productId);
       const availableIndex = queue?.findIndex((candidate) => !matchedInputs.has(candidate)) ?? -1;
-      if (availableIndex >= 0) matchedIndex = queue.splice(availableIndex, 1)[0];
+      if (availableIndex >= 0) {
+        matchedIndex = queue.splice(availableIndex, 1)[0];
+        console.log(`[importMerchizeOrderArtworks] detail item[${index}] matched by product_id="${productId}" → input item[${matchedIndex}]`);
+      }
     }
     if (matchedIndex === undefined && detail.data.items.length === items.length && !matchedInputs.has(index)) {
       matchedIndex = index;
+      console.log(`[importMerchizeOrderArtworks] detail item[${index}] matched by position fallback → input item[${matchedIndex}]`);
     }
     if (matchedIndex === undefined) {
+      console.error(`[importMerchizeOrderArtworks] could not match detail item[${index}] skuKeys=${JSON.stringify(skuKeys)}`);
       throw new Error(`Could not match Merchize order item ${index + 1} to the submitted order items.`);
     }
     matchedInputs.add(matchedIndex);
@@ -336,7 +358,9 @@ export async function importMerchizeOrderArtworks(
       const url = source.order_artwork[side];
       if (url && isSafeImageUrl(url)) artwork[`design_${side}`] = url;
     }
+    console.log(`[importMerchizeOrderArtworks] detail item[${index}] → order_item_id=${orderItemId} artwork=${JSON.stringify(artwork)}`);
     if (Object.keys(artwork).length === 0) {
+      console.error(`[importMerchizeOrderArtworks] no artwork for detail item[${index}] — source.order_artwork=${JSON.stringify(source.order_artwork)}`);
       throw new Error(`No accessible print artwork URL was found for Merchize order item ${index + 1}.`);
     }
     if (source.requires_custom_artwork_front && !artwork.design_front) {
@@ -355,15 +379,23 @@ export async function importMerchizeOrderArtworks(
     throw new Error('No usable artwork URLs could be matched to the Merchize order items.');
   }
 
+  console.log(`[importMerchizeOrderArtworks] POST /order/import/artworks — ${artworkRequests.length} request(s):`);
+  console.log(JSON.stringify(artworkRequests, null, 2));
+
   const importRes = await fetch(`${baseUrl}/order/import/artworks`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ items: artworkRequests }),
   });
   const importData = await importRes.json();
+  console.log(`[importMerchizeOrderArtworks] response — ok=${importRes.ok} success=${importData.success} succeeded=${importData.data?.succeeded} invalid_items=${importData.data?.invalid_items?.length || 0} importers=${importData.data?.importers?.length || 0}`);
+  console.log(`[importMerchizeOrderArtworks] full response:`, JSON.stringify(importData).substring(0, 2000));
   const failedImporters = (importData.data?.importers || []).filter((importer) =>
     importer.status === 'failed' || importer.error_message
   );
+  if (failedImporters.length > 0) {
+    console.error(`[importMerchizeOrderArtworks] failed importers:`, JSON.stringify(failedImporters, null, 2));
+  }
   if (!importRes.ok || !importData.success || (importData.data?.invalid_items || []).length > 0 || failedImporters.length > 0) {
     throw new Error(failedImporters[0]?.error_message || importData.message || `Merchize rejected artwork import (HTTP ${importRes.status}).`);
   }
@@ -371,5 +403,6 @@ export async function importMerchizeOrderArtworks(
   if (succeeded < artworkRequests.length) {
     throw new Error(`Merchize imported ${succeeded} of ${artworkRequests.length} artwork sets.`);
   }
+  console.log(`[importMerchizeOrderArtworks] END — succeeded=${succeeded}`);
   return { success: true, succeeded, importers: importData.data?.importers || [] };
 }
