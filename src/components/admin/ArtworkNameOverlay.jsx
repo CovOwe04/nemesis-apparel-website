@@ -6,6 +6,7 @@ import {
   ARTWORK_NAME_VERT_POS,
   ARTWORK_NUMBER_VERT_POS,
   ARTWORK_TEXT_SCALE_ADJUSTMENT,
+  resolveFont,
 } from '@/lib/jerseyStyle';
 
 const DEFAULT_NAME_STYLE = {
@@ -47,21 +48,22 @@ export default function ArtworkNameOverlay({
   staticDisplay = false,
 }) {
   const uid = useId().replace(/:/g, '');
-  const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
+  const nameFont = resolveFont(nameStyle, fontId, customFontUrl, customFontName);
+  const numberFont = resolveFont(numberStyle, fontId, customFontUrl, customFontName);
 
   useEffect(() => {
-    if (!customFontUrl || !customFontName) return;
-    const id = `fontface-artwork-${customFontName.replace(/\s+/g, '-')}`;
-    if (document.getElementById(id)) return;
-    const style = document.createElement('style');
-    style.id = id;
-    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
-    document.head.appendChild(style);
-  }, [customFontUrl, customFontName]);
-
-  const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
+    for (const f of [nameFont, numberFont]) {
+      if (!f.customFontUrl || !f.customFontName) continue;
+      const id = `fontface-artwork-${f.customFontName.replace(/\s+/g, '-')}`;
+      if (document.getElementById(id)) continue;
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = `@font-face { font-family: '${f.customFontName}'; src: url('${f.customFontUrl}'); }`;
+      document.head.appendChild(style);
+    }
+  }, [nameFont.customFontUrl, nameFont.customFontName, numberFont.customFontUrl, numberFont.customFontName]);
   const displayName = enableName ? (customName || '').toUpperCase() : '';
   const displayNumber = enableNumber ? (customNumber || '') : '';
   const ls = letterSpacing ? letterSpacing / 10 : 0;
@@ -141,7 +143,7 @@ export default function ArtworkNameOverlay({
                 <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct, FONT_SCALE)} fill="none" stroke="none" />
               ))}
               <text
-                fontFamily={fontFam}
+                fontFamily={nameFont.fontFam}
                 fontSize={actualNameFontSize}
                 fill={ns.color}
                 stroke={ns.outline ? ns.outline_color : 'none'}
@@ -162,7 +164,7 @@ export default function ArtworkNameOverlay({
             <g transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct, FONT_SCALE)} fill="none" stroke="none" />
               <text
-                fontFamily={fontFam}
+                fontFamily={numberFont.fontFam}
                 fontSize={nus.font_size * FONT_SCALE}
                 fill={nus.color}
                 stroke={nus.outline ? nus.outline_color : 'none'}

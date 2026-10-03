@@ -1,7 +1,7 @@
 import { useId, useEffect } from 'react';
 import { Image } from '@/components/ui/image';
 import { FONTS } from '@/lib/fonts';
-import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS } from '@/lib/jerseyStyle';
+import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS, resolveFont } from '@/lib/jerseyStyle';
 
 export { FONTS };
 
@@ -44,21 +44,22 @@ export default function IdentityNameOverlay({
   plainImage = false,
 }) {
   const uid = useId().replace(/:/g, '');
-  const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
   const ns = { ...DEFAULT_NAME_STYLE, ...nameStyle };
   const nus = { ...DEFAULT_NUMBER_STYLE, ...numberStyle };
+  const nameFont = resolveFont(nameStyle, fontId, customFontUrl, customFontName);
+  const numberFont = resolveFont(numberStyle, fontId, customFontUrl, customFontName);
 
   useEffect(() => {
-    if (!customFontUrl || !customFontName) return;
-    const id = `fontface-${customFontName.replace(/\s+/g, '-')}`;
-    if (document.getElementById(id)) return;
-    const style = document.createElement('style');
-    style.id = id;
-    style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
-    document.head.appendChild(style);
-  }, [customFontUrl, customFontName]);
-
-  const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
+    for (const f of [nameFont, numberFont]) {
+      if (!f.customFontUrl || !f.customFontName) continue;
+      const id = `fontface-${f.customFontName.replace(/\s+/g, '-')}`;
+      if (document.getElementById(id)) continue;
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = `@font-face { font-family: '${f.customFontName}'; src: url('${f.customFontUrl}'); }`;
+      document.head.appendChild(style);
+    }
+  }, [nameFont.customFontUrl, nameFont.customFontName, numberFont.customFontUrl, numberFont.customFontName]);
   const displayName = (customName || '').toUpperCase() || (showNamePlaceholder ? 'YOUR NAME' : '');
   const displayNumber = customNumber || (showNumberPlaceholder ? '00' : '');
   const ls = letterSpacing ? letterSpacing / 10 : 0;
@@ -115,7 +116,7 @@ export default function IdentityNameOverlay({
               <path key={`p-${i}`} id={`${uid}-arc-${i}`} d={buildPath(namePathCenterX, startBase + i * lineHeight, textWidth(line), nameArchPct, nameFlagPct)} fill="none" stroke="none" />
             ))}
             <text
-              fontFamily={fontFam}
+              fontFamily={nameFont.fontFam}
               fontSize={actualNameFontSize}
               fill={ns.color}
               stroke={ns.outline ? ns.outline_color : 'none'}
@@ -135,7 +136,7 @@ export default function IdentityNameOverlay({
             <g data-overlay-number transform={numRotation} key={`g-num-${nus.arch}-${nus.flag}-${nus.rise}-${nus.vert_pos}`}>
               <path id={`${uid}-num`} d={buildPath(numPathCenterX, numBaselineY, numTextWidth, numArchPct, numFlagPct)} fill="none" stroke="none" />
               <text
-                fontFamily={fontFam}
+                fontFamily={numberFont.fontFam}
                 fontSize={nus.font_size}
                 fill={nus.color}
                 stroke={nus.outline ? nus.outline_color : 'none'}

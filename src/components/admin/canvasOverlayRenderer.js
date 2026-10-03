@@ -13,6 +13,7 @@ import {
   ARTWORK_TEXT_SCALE_ADJUSTMENT,
   resolveNameStyle,
   resolveNumberStyle,
+  resolveFont,
 } from '@/lib/jerseyStyle';
 import { FONTS } from '@/lib/fonts';
 
@@ -226,6 +227,7 @@ export async function renderOverlayToBlob({
   customNumber = '',
   nameStyle = {},
   numberStyle = {},
+  fontId = 'block',
   fontFam,
   customFontUrl = '',
   customFontName = '',
@@ -277,21 +279,25 @@ export async function renderOverlayToBlob({
     drawImageContain(ctx, img, renderW, renderH);
   }
 
-  // 3. Inject custom font @font-face if needed (self-contained — no dependency
-  //    on overlay components being rendered in the DOM)
-  if (customFontUrl && customFontName) {
-    const fontId = `fontface-render-${customFontName.replace(/\s+/g, '-')}`;
-    if (!document.getElementById(fontId)) {
+  // 3. Resolve per-element fonts (name and number can differ). Falls back to
+  //    the jersey-level fontId/customFont passed in when the style has none.
+  const nameFont = resolveFont(nameStyle, fontId, customFontUrl, customFontName);
+  const numberFont = resolveFont(numberStyle, fontId, customFontUrl, customFontName);
+  for (const f of [nameFont, numberFont]) {
+    if (!f.customFontUrl || !f.customFontName) continue;
+    const styleId = `fontface-render-${f.customFontName.replace(/\s+/g, '-')}`;
+    if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
-      style.id = fontId;
-      style.textContent = `@font-face { font-family: '${customFontName}'; src: url('${customFontUrl}'); }`;
+      style.id = styleId;
+      style.textContent = `@font-face { font-family: '${f.customFontName}'; src: url('${f.customFontUrl}'); }`;
       document.head.appendChild(style);
     }
   }
 
   // 4. Ensure fonts are loaded in the document
   try {
-    await document.fonts.load(`100px ${fontFam}`);
+    await document.fonts.load(`100px ${nameFont.fontFam}`);
+    await document.fonts.load(`100px ${numberFont.fontFam}`);
     await document.fonts.ready;
   } catch {}
 
@@ -385,7 +391,7 @@ export async function renderOverlayToBlob({
       ctx.translate(-nameRiseCenterX * scale, -nameBaselineY * scale);
     }
 
-    ctx.font = `${actualFontSize * scale}px ${fontFam}`;
+    ctx.font = `${actualFontSize * scale}px ${nameFont.fontFam}`;
 
     for (let i = 0; i < lines.length; i++) {
       const tw = textWidthFn(lines[i]);
@@ -415,7 +421,7 @@ export async function renderOverlayToBlob({
       ctx.translate(-numRiseCenterX * scale, -numBaselineY * scale);
     }
 
-    ctx.font = `${numFontSize * scale}px ${fontFam}`;
+    ctx.font = `${numFontSize * scale}px ${numberFont.fontFam}`;
 
     const path = buildPath(
       numPathCenterX, numBaselineY, numTextWidth,
@@ -462,6 +468,7 @@ export function renderJerseyDisplayToBlob({
     customNumber,
     nameStyle: resolveNameStyle(jersey, color),
     numberStyle: resolveNumberStyle(jersey, color),
+    fontId,
     fontFam,
     customFontUrl: jersey?.custom_font_url || '',
     customFontName: jersey?.custom_font_name || '',

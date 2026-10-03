@@ -1,3 +1,5 @@
+import { FONTS } from '@/lib/fonts';
+
 // Shared style resolver — merges jersey-level defaults with per-color overrides.
 
 export const MOCKUP_NAME_HORIZ_POS = 30.8;
@@ -69,4 +71,16 @@ export function resolveNumberStyle(jersey, color) {
     // Per-color artwork position controls must not shift 3D/mockup text.
     vert_pos: jersey?.number_style?.vert_pos ?? DEFAULT_NUMBER_STYLE.vert_pos,
   };
+}
+
+// Resolve font for a single text element (name or number). Per-style font
+// fields override the jersey-level fallback so the admin can set a different
+// font for the name vs the number.
+export function resolveFont(style, fallbackFontId, fallbackCustomFontUrl, fallbackCustomFontName) {
+  const fontId = style?.font_id || fallbackFontId || 'block';
+  const customFontUrl = style?.custom_font_url || fallbackCustomFontUrl || '';
+  const customFontName = style?.custom_font_name || fallbackCustomFontName || '';
+  const font = FONTS.find((f) => f.id === fontId) || FONTS[0];
+  const fontFam = customFontName ? `'${customFontName}', ${font.family}` : font.family;
+  return { fontId, customFontUrl, customFontName, fontFam };
 }

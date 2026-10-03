@@ -98,6 +98,7 @@ export default function DesignerPanel({
             imageUrl: url, imageFit: 'contain',
             customName: renderName, customNumber: renderNumber,
             nameStyle, numberStyle, fontFam,
+            fontId: form.font_id,
             customFontUrl: form.custom_font_url, customFontName: form.custom_font_name,
             enableName: form.enable_name, enableNumber: form.enable_number,
             staticDisplay, isArtwork: true,
@@ -195,23 +196,23 @@ export default function DesignerPanel({
 
           {/* Controls */}
           <div className="p-4 space-y-4">
-            {/* Font selector */}
+            {/* Font selector — applies to the current tab (name or number) only */}
             <FontUploader
-              fontUrl={form.custom_font_url}
-              fontName={form.custom_font_name}
-              onChange={({ url, name }) => { setField('custom_font_url', url); setField('custom_font_name', name); }}
+              fontUrl={currentStyle.custom_font_url || ''}
+              fontName={currentStyle.custom_font_name || ''}
+              onChange={({ url, name }) => { setStyle('custom_font_url', url); setStyle('custom_font_name', name); }}
             />
-            {!form.custom_font_url && (
+            {!currentStyle.custom_font_url && (
               <div>
                 <span className="mono-label text-fog/50 text-[0.65rem] block mb-1.5">DEFAULT FONT</span>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto scrollbar-hide">
                     {FONTS.map((f) => (
                     <button key={f.id} type="button" onClick={() => {
-                      setField('font_id', f.id);
-                      setField('custom_font_url', '');
-                      setField('custom_font_name', '');
+                      setStyle('font_id', f.id);
+                      setStyle('custom_font_url', '');
+                      setStyle('custom_font_name', '');
                     }}
-                      className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${form.font_id === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
+                      className={`px-2.5 py-1 border rounded-[4px] text-[0.65rem] transition-colors ${(currentStyle.font_id || form.font_id) === f.id ? 'border-kinetic bg-kinetic/10 text-fog' : 'border-steel text-fog/60 hover:text-fog'}`}
                       style={{ fontFamily: f.family }}>
                       {f.label}
                     </button>
