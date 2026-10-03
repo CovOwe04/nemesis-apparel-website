@@ -100,6 +100,7 @@ export default async function(req) {
     // Promo code validation
     let promoDiscountUsd = 0;
     let promoCodeId = '';
+    let promoJerseyId = '';
     if (body.promoCode) {
       const promos = await base44.asServiceRole.entities.PromoCode.filter(
         { code: body.promoCode.toUpperCase().trim() },
@@ -140,6 +141,7 @@ export default async function(req) {
         promoDiscountUsd = promo.max_discount_value;
       }
       promoCodeId = promo.id;
+      promoJerseyId = promo.jersey_id;
     }
 
     const region = getShipRegion(shippingAddress?.country);
@@ -150,8 +152,9 @@ export default async function(req) {
     const CAD_RATE = 1.36;
     const toMinor = (usd) => currency === 'cad' ? Math.round(usd * 100 * CAD_RATE) : Math.round(usd * 100);
     const subtotalUsd = verifiedItems.reduce((s, i) => s + i.price * i.quantity, 0);
-    const hstUsd = country === 'CA' ? Math.round(subtotalUsd * 0.13 * 100) / 100 : 0;
-    const totalUsd = subtotalUsd + shippingUsd + hstUsd;
+    const discountedSubtotalUsd = Math.max(0, subtotalUsd - promoDiscountUsd);
+    const hstUsd = country === 'CA' ? Math.round(discountedSubtotalUsd * 0.13 * 100) / 100 : 0;
+    const totalUsd = discountedSubtotalUsd + shippingUsd + hstUsd;
     const itemCount = verifiedItems.reduce((s, i) => s + i.quantity, 0);
     const hasCustom = verifiedItems.some((i) => i.customName || i.customNumber);
 
@@ -178,17 +181,45 @@ export default async function(req) {
     const rawOrigin = req.headers.get('origin') || '';
     const origin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://nemesis-apparel.base44.app';
 
-    const lineItems = verifiedItems.map((item) => ({
-      quantity: item.quantity,
-      price_data: {
-        currency,
-        unit_amount: toMinor(item.price),
-        product_data: {
-          name: `${item.name}${item.team ? ' — ' + item.team : ''}`,
-          description: `Size ${item.shirtSize || 'M'}${item.customName ? ' · Name: ' + item.customName : ''}${item.customNumber ? ' · #' + item.customNumber : ''}`,
+    // Distribute the promo discount across matching items by reducing their
+    // unit_amount. Stripe rejects negative line-item amounts, so the discount
+    // is applied inline rather than as a separate negative line item.
+    const discountMinorTotal = toMinor(promoDiscountUsd);
+    const itemUnitDiscountMinor = new Map();
+    if (discountMinorTotal > 0 && promoJerseyId) {
+      const matching = verifiedItems
+        .map((item, i) => ({ item, i }))
+        .filter(({ item }) => item.jerseyId === promoJerseyId);
+      const matchingMinorSubtotal = matching.reduce(
+        (s, { item }) => s + toMinor(item.price) * item.quantity, 0
+      );
+      let allocated = 0;
+      matching.forEach(({ item, i }, idx) => {
+        const itemMinorSubtotal = toMinor(item.price) * item.quantity;
+        const isLast = idx === matching.length - 1;
+        const share = isLast
+          ? discountMinorTotal - allocated
+          : Math.floor((itemMinorSubtotal / matchingMinorSubtotal) * discountMinorTotal);
+        allocated += share;
+        if (share > 0) itemUnitDiscountMinor.set(i, Math.floor(share / item.quantity));
+      });
+    }
+
+    const lineItems = verifiedItems.map((item, i) => {
+      const baseMinor = toMinor(item.price);
+      const perUnitDiscount = itemUnitDiscountMinor.get(i) || 0;
+      return {
+        quantity: item.quantity,
+        price_data: {
+          currency,
+          unit_amount: Math.max(0, baseMinor - perUnitDiscount),
+          product_data: {
+            name: `${item.name}${item.team ? ' — ' + item.team : ''}`,
+            description: `Size ${item.shirtSize || 'M'}${item.customName ? ' · Name: ' + item.customName : ''}${item.customNumber ? ' · #' + item.customNumber : ''}`,
+          },
         },
-      },
-    }));
+      };
+    });
 
     if (shippingUsd > 0) {
       lineItems.push({
@@ -208,17 +239,6 @@ export default async function(req) {
           currency,
           unit_amount: toMinor(hstUsd),
           product_data: { name: 'HST (13%)' },
-        },
-      });
-    }
-
-    if (promoDiscountUsd > 0) {
-      lineItems.push({
-        quantity: 1,
-        price_data: {
-          currency,
-          unit_amount: -toMinor(promoDiscountUsd),
-          product_data: { name: 'Promo Code Discount' },
         },
       });
     }
