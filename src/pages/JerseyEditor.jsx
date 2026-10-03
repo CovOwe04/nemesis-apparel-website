@@ -114,7 +114,10 @@ export default function JerseyEditor() {
   const styleKey = designerTab === 'name' ? 'name_style' : 'number_style';
   const currentStyle = form[styleKey] || {};
   const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const setStyle = (field, value) => setField(styleKey, { ...currentStyle, [field]: value });
+  const setStyle = (field, value) => setForm((f) => ({
+    ...f,
+    [styleKey]: { ...(f[styleKey] || {}), [field]: value },
+  }));
 
   useEffect(() => {
     if (designerTab === 'name' && !form.enable_name && form.enable_number) setDesignerTab('number');else
