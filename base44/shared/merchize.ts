@@ -135,27 +135,47 @@ export async function uploadCustomProductArtwork(params: {
   let artworkUploaded = false;
   let variantImagesUploaded = 0;
 
-  // Set artwork URLs on the main product only (not variants). The print files
-  // are already hosted on the Base44 CDN, so we just point the product at them.
+  // Upload artwork files to the main product only (matches admin Generate flow).
   const artworkEntries = Object.entries(artworkUrls).filter(([, url]) => url);
   if (artworkEntries.length > 0) {
     try {
-      const artworkBody: Record<string, string> = {};
+      const formData = new FormData();
       for (const [piece, url] of artworkEntries) {
-        artworkBody[piece] = url;
+        if (!isSafeImageUrl(url)) continue;
+        const imgRes = await fetch(url);
+        if (!imgRes.ok) continue;
+        const blob = await imgRes.blob();
+        const ext = (imgRes.headers.get('content-type') || 'image/png').split('/')[1]?.replace('svg+xml', 'svg') || 'png';
+        formData.append(piece, blob, `${piece}.${ext}`);
       }
-      const artworkRes = await fetch(`${baseUrl}/product/products/${productId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ artwork: artworkBody }),
-      });
-      const artworkData = await artworkRes.json();
-      artworkUploaded = artworkData.success === true;
-      if (!artworkUploaded) {
-        console.error(`Artwork URL set returned non-success for ${productId}:`, artworkData.message);
+      if ([...formData.keys()].length > 0) {
+        const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const artworkData = await artworkRes.json();
+        artworkUploaded = artworkData.success === true;
+        if (!artworkUploaded) {
+          console.error(`Artwork upload returned non-success for ${productId}:`, artworkData.message);
+        }
+      }
+      // Also set artwork URLs directly on the product
+      try {
+        const artworkBody: Record<string, string> = {};
+        for (const [piece, url] of artworkEntries) {
+          artworkBody[piece] = url;
+        }
+        await fetch(`${baseUrl}/product/products/${productId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artwork: artworkBody }),
+        });
+      } catch (err) {
+        console.error(`Failed to set artwork via POST for ${productId}:`, err.message);
       }
     } catch (err) {
-      console.error(`Failed to set artwork on product ${productId}:`, err.message);
+      console.error(`Failed to upload artwork for custom product ${productId}:`, err.message);
     }
   }
 
