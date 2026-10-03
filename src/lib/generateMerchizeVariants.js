@@ -53,7 +53,7 @@ export async function generateMerchizeVariants({
   enableName, enableNumber, onProgress,
 }) {
   const syncedIds = buildSyncedIds(colors, combos, variantMerchizeIds);
-  const missing = syncedIds.filter((v) => !v.merchize_product_id || !v.manually_set);
+  const missing = syncedIds.filter((v) => !v.merchize_product_id);
   if (missing.length === 0) {
     return { updatedIds: syncedIds, results: [], skipped: true, error: null };
   }

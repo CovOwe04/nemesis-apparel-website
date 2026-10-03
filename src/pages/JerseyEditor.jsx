@@ -157,7 +157,7 @@ export default function JerseyEditor() {
         // product yet — once every variant is generated, Update Listing just
         // saves and returns to the dashboard.
         const synced = buildSyncedIds(form.colors, form.name_number_combos, payload.variant_merchize_ids);
-        const missing = synced.filter((v) => !v.merchize_product_id || !v.manually_set);
+        const missing = synced.filter((v) => !v.merchize_product_id);
         if (missing.length === 0) navigate('/nexus-control');
         else setPendingGenerateId(savedId);
       }

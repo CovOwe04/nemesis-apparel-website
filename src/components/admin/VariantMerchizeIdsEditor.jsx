@@ -43,7 +43,7 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       setError('Save the jersey first, then generate.');
       return;
     }
-    const missing = syncedIds.filter((v) => !v.merchize_product_id || !v.manually_set);
+    const missing = syncedIds.filter((v) => !v.merchize_product_id);
     if (missing.length === 0) {
       setError('All variants already have product IDs.');
       return;
