@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
-import { createCustomProductForItem, buildCustomOrderItem, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
+import { createCustomProductForItem, buildCustomOrderItem, buildPresetOrderItem, findPresetMatch, createMerchizeOrder, importMerchizeOrderArtworks } from '../../shared/merchize.ts';
 import { isSafeImageUrl, requireAdminPasscode } from '../../shared/security.ts';
 
 export default async function (req) {
@@ -79,6 +79,10 @@ export default async function (req) {
       if (item.custom_merchize_product_id) continue; // already created
 
       const jersey = jerseyMap.get(item.jerseyId);
+      // Preset items with a pre-generated product use that product directly —
+      // never create a duplicate custom product for them.
+      const { vmi: presetVmi } = findPresetMatch(item, jersey);
+      if (presetVmi?.merchize_product_id) continue;
       const created = await createCustomProductForItem({
         baseUrl, token: merchizeToken, apiKey: merchizeKey, item, jersey,
         sellerSkuPrefix: `NEMESIS-${orderId.slice(-6).toUpperCase()}-${cartItems.indexOf(item) + 1}`,

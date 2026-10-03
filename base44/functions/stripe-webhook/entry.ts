@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
-import { createMerchizeOrder } from '../../shared/merchize.ts';
+import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem, findPresetMatch, buildPresetOrderItem } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
 
 const CAD_RATE = 1.36;
@@ -222,10 +222,6 @@ export default async function(req) {
         console.error('Receipt email FAILED:', emailErr.message || emailErr);
       }
 
-      // Check for custom Identity Lab items
-      const customItems = cartItems.filter((i) => i.customName || i.customNumber);
-      const hasCustom = customItems.length > 0;
-
       const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
       const merchizeToken = secrets.get('MERCHIZE_ACCESS_TOKEN');
       const merchizeKey = secrets.get('MERCHIZE_API_KEY');
@@ -242,6 +238,16 @@ export default async function(req) {
         }
       }));
       const jerseyMap = new Map(jerseys.filter(Boolean).map((jersey) => [jersey.id, jersey]));
+
+      // Only truly custom name/number items (not matching any preset) need admin
+      // design review. Preset items use pre-generated Merchize products and fulfill
+      // automatically, like standard items.
+      const trulyCustomItems = cartItems.filter((i) => {
+        if (!i.customName && !i.customNumber) return false;
+        const jersey = jerseyMap.get(i.jerseyId);
+        return !findPresetMatch(i, jersey);
+      });
+      const hasTrulyCustom = trulyCustomItems.length > 0;
 
       // Existing-product IDs are entered manually in the listing editor, so
       // their size SKUs may not be stored alongside the ID. Resolve missing
@@ -325,23 +331,55 @@ export default async function(req) {
         };
       };
 
-      if (hasCustom) {
-        // Customized orders are never auto-fulfilled. Park them for admin design
-        // review; the admin approves via approve-custom-order, which creates the
+      if (hasTrulyCustom) {
+        // Only truly custom (non-preset) name/number items need admin design
+        // review. The admin approves via approve-custom-order, which creates the
         // Merchize products and fulfillment order at that point.
         await base44.asServiceRole.entities.Order.update(orderId, {
           status: 'pending_approval',
           admin_notes: `Stripe: ${session.id}\nPayment: ${stripePaymentId}\nShip to: ${addrStr}\nShipping: $${shippingCostUsd}\nAwaiting admin design review before Merchize fulfillment.`,
         });
-        console.log(`Order ${orderId} set to pending_approval — ${customItems.length} customized item(s) awaiting admin review`);
+        console.log(`Order ${orderId} set to pending_approval — ${trulyCustomItems.length} truly custom item(s) awaiting admin review`);
       } else {
-        // No custom items — fulfill directly via Merchize
+        // No truly custom items — fulfill directly via Merchize. Preset items
+        // use their pre-generated product; if a preset has no product yet, create
+        // one on the fly (still auto-approved, no admin review).
         try {
           const merchizeItems = [];
           for (const item of cartItems) {
             if (item.isCustomDesign) continue;
-            const mItem = buildStandardItem(item);
-            if (mItem) merchizeItems.push(mItem);
+
+            if (!item.customName && !item.customNumber) {
+              const mItem = buildStandardItem(item);
+              if (mItem) merchizeItems.push(mItem);
+              continue;
+            }
+
+            // Preset item — use the existing pre-generated product when available.
+            const jersey = jerseyMap.get(item.jerseyId);
+            const { vmi } = findPresetMatch(item, jersey);
+            if (vmi?.merchize_product_id) {
+              const mItem = buildPresetOrderItem(item, jersey, vmi);
+              if (mItem) merchizeItems.push(mItem);
+              continue;
+            }
+
+            // Preset without a generated product — create one now and auto-fulfill.
+            if (!item.custom_merchize_product_id) {
+              const created = await createCustomProductForItem({
+                baseUrl, token: merchizeToken, apiKey: merchizeKey, item, jersey,
+                sellerSkuPrefix: `NEMESIS-${orderId.slice(-6).toUpperCase()}-${cartItems.indexOf(item) + 1}`,
+              });
+              if (!created) {
+                console.error(`Skipping preset product creation for ${item.name}: no base Merchize product`);
+                continue;
+              }
+              // Persist the new product ID so a webhook retry never duplicates it.
+              await base44.asServiceRole.entities.Order.update(orderId, {
+                items_json: JSON.stringify(cartItems),
+              });
+            }
+            merchizeItems.push(buildCustomOrderItem(item));
           }
 
           if (merchizeItems.length > 0) {

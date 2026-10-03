@@ -274,6 +274,51 @@ export async function createCustomProductForItem(opts: {
   return item;
 }
 
+// A preset item is one whose (name, number) matches an entry in the listing's
+// name_number_combos. Preset products are pre-generated in Merchize (stored on
+// variant_merchize_ids), so preset orders fulfill directly without admin review.
+export function findPresetMatch(item: any, jersey: any) {
+  const combos = jersey?.name_number_combos || [];
+  const combo = combos.find((entry: any) =>
+    (entry.name || '').toUpperCase() === (item.customName || '').toUpperCase() &&
+    (entry.number || '') === (item.customNumber || ''),
+  );
+  if (!combo) return null;
+  const vmi = (jersey?.variant_merchize_ids || []).find((entry: any) =>
+    (entry.color_name || 'Default') === (item.colorName || 'Default') &&
+    (entry.combo_name || '').toUpperCase() === (combo.name || '').toUpperCase() &&
+    (entry.combo_number || '') === (combo.number || ''),
+  );
+  return { combo, vmi };
+}
+
+export function isPresetItem(item: any, jersey: any) {
+  return findPresetMatch(item, jersey) !== null;
+}
+
+// Merchize order line for a preset item that already has a generated product.
+export function buildPresetOrderItem(item: any, jersey: any, vmi: any) {
+  const size = item.shirtSize || 'M';
+  const merchizeSku = vmi?.skus?.[size] || vmi?.skus?.M || Object.values(vmi?.skus || {})[0] || '';
+  if (!vmi?.merchize_product_id || !merchizeSku) return null;
+  return {
+    product_id: vmi.merchize_product_id,
+    sku: `NEMESIS-${(item.name || 'JERSEY').replace(/\s+/g, '-')}-${size}`,
+    merchize_sku: merchizeSku,
+    quantity: item.quantity,
+    price: item.price,
+    currency: 'USD',
+    image: item.rendered_image,
+    requires_custom_artwork_front: true,
+    order_artwork: {
+      front: item.rendered_artwork_front,
+      back: item.artwork_back || '',
+      sleeve: item.artwork_sleeve || '',
+      hood: item.artwork_hood || '',
+    },
+  };
+}
+
 // Order line for an item that has a custom product from createCustomProductForItem.
 export function buildCustomOrderItem(item: any) {
   return {
