@@ -14,6 +14,11 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const promos = base44.asServiceRole.entities.PromoCode;
 
+    if (action === 'list') {
+      const list = await promos.list('-created_date', 200);
+      return Response.json({ success: true, promos: list });
+    }
+
     if (action === 'delete') {
       if (typeof promoId !== 'string') {
         return Response.json({ error: 'promoId is required' }, { status: 400 });

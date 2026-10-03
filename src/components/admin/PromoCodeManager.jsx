@@ -35,11 +35,12 @@ export default function PromoCodeManager() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [promoList, jerseyList] = await Promise.all([
-        base44.entities.PromoCode.list('-created_date', 100),
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const [promoRes, jerseyList] = await Promise.all([
+        base44.functions.invoke('save-promo-code', { action: 'list', passcode }),
         base44.entities.Jersey.list('-created_date', 100),
       ]);
-      setPromos(promoList || []);
+      setPromos(promoRes.data?.promos || []);
       setJerseys(jerseyList || []);
     } catch (err) {
       console.error('Fetch error:', err);
