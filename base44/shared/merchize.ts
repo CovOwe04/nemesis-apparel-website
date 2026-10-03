@@ -32,8 +32,11 @@ interface CreateCustomProductParams {
 // Seller SKU for a custom product size — used on both the product variant and
 // the order line so Merchize maps the order to this product instead of
 // auto-creating a generic one.
-export function customSellerSku(prefix: string, size: string) {
-  return `${prefix}-${size}`;
+// Merchize reads the 3rd dash-separated segment of a seller SKU as the
+// product's external ID, and order lines whose product_id equals that ID are
+// linked to this product (no generic product is auto-created).
+export function customSellerSku(externalId: string, size: string) {
+  return `NEMESIS-C-${externalId}-${size}`;
 }
 
 // Step 1: Create the custom product with ALL size variants (matches the admin
@@ -233,7 +236,9 @@ export async function uploadCustomProductArtwork(params: {
 export async function createCustomProductForItem(opts: {
   baseUrl: string; token: string; apiKey: string; item: any; jersey: any; sellerSkuPrefix: string;
 }) {
-  const { baseUrl, token, apiKey, item, jersey, sellerSkuPrefix } = opts;
+  const { baseUrl, token, apiKey, item, jersey } = opts;
+  // External ID must not contain dashes (it is one SKU segment)
+  const sellerSkuPrefix = opts.sellerSkuPrefix.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const baseProductId = jersey?.merchize_product_id || jersey?.merchize_existing_product_id;
   if (!baseProductId) return null;
 
@@ -262,6 +267,7 @@ export async function createCustomProductForItem(opts: {
   item.custom_merchize_variant_id = variantIds[size] || '';
   item.custom_merchize_sku = skus[size] || fallbackSkus[size] || '';
   item.custom_seller_sku = customSellerSku(sellerSkuPrefix, size);
+  item.custom_external_product_id = sellerSkuPrefix;
 
   await uploadCustomProductArtwork({ baseUrl, token, apiKey, productId, variantIds, productImages, artworkUrls });
   console.log(`Custom product created: ${productId} "${title}"`);
@@ -271,7 +277,7 @@ export async function createCustomProductForItem(opts: {
 // Order line for an item that has a custom product from createCustomProductForItem.
 export function buildCustomOrderItem(item: any) {
   return {
-    product_id: item.custom_merchize_product_id,
+    product_id: item.custom_external_product_id || item.custom_merchize_product_id,
     sku: item.custom_seller_sku || `NEMESIS-CUSTOM-${item.shirtSize || 'M'}`,
     merchize_sku: item.custom_merchize_sku || '',
     quantity: item.quantity,
