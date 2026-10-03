@@ -133,7 +133,7 @@ export default function OrderManager() {
                         disabled={syncingOrderId === o.id}
                         className="mono-label px-3 py-2 border border-steel text-fog/70 hover:text-fog hover:border-fog/50 rounded-[4px] disabled:opacity-50"
                       >
-                        {syncingOrderId === o.id ? 'CHECKING…' : 'SYNC STATUS'}
+                        {syncingOrderId === o.id ? 'CHECKING…' : 'CHECK STATUS'}
                       </button>
                     )}
                     <button
