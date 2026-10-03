@@ -158,6 +158,27 @@ export default function Cart() {
     return d;
   })();
 
+  // Per-item promo discount so the savings can be shown directly beneath
+  // the listing it applies to, rather than only in the order summary.
+  const itemPromoDiscount = (item) => {
+    if (!appliedPromo || item.jerseyId !== appliedPromo.jerseyId) return 0;
+    const matching = items.filter((i) => i.jerseyId === appliedPromo.jerseyId);
+    const matchingSubtotal = matching.reduce((s, i) => s + i.price * i.quantity, 0);
+    if (matchingSubtotal === 0) return 0;
+    if (appliedPromo.minOrderValue > 0 && matchingSubtotal < appliedPromo.minOrderValue) return 0;
+    const lineTotal = item.price * item.quantity;
+    let d = appliedPromo.discountType === 'percentage'
+      ? lineTotal * (appliedPromo.discountValue / 100)
+      : Math.min(appliedPromo.discountValue, matchingSubtotal) * (lineTotal / matchingSubtotal);
+    if (appliedPromo.maxDiscountValue > 0) {
+      const totalD = appliedPromo.discountType === 'percentage'
+        ? matchingSubtotal * (appliedPromo.discountValue / 100)
+        : Math.min(appliedPromo.discountValue, matchingSubtotal);
+      if (totalD > 0) d = d * (Math.min(totalD, appliedPromo.maxDiscountValue) / totalD);
+    }
+    return Math.round(d * 100) / 100;
+  };
+
   const discountedSubtotalUsd = Math.max(0, total - promoDiscountUsd);
   const hstUsd = shippingAddress.country === 'CA' ? Math.round(discountedSubtotalUsd * 0.13 * 100) / 100 : 0;
   const grandTotalUsd = discountedSubtotalUsd + shippingUsd + hstUsd;
@@ -404,7 +425,12 @@ export default function Cart() {
                       <Plus size={14} />
                     </button>
                   </div>
-                  <div className="font-heading text-fog">{formatPrice(item.price * item.quantity, currency)}</div>
+                  <div className="text-right">
+                    <div className="font-heading text-fog">{formatPrice(item.price * item.quantity, currency)}</div>
+                    {itemPromoDiscount(item) > 0 && (
+                      <div className="mono-label text-kinetic mt-0.5">−{formatPrice(itemPromoDiscount(item), currency)} PROMO</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -435,12 +461,6 @@ export default function Cart() {
                 }
               </span>
             </div>
-            {promoDiscountUsd > 0 && (
-              <div className="flex items-center justify-between text-kinetic mb-4">
-                <span className="mono-label">PROMO DISCOUNT</span>
-                <span className="font-heading">−{formatPrice(promoDiscountUsd, currency)}</span>
-              </div>
-            )}
             {hstUsd > 0 && (
               <div className="flex items-center justify-between text-fog/50 mb-4">
                 <span className="mono-label">HST (13%)</span>
