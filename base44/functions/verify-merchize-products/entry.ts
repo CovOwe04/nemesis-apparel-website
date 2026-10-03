@@ -33,7 +33,8 @@ export default async function(req) {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
         const data = await res.json();
-        if (res.ok && data.success && data.data?._id) {
+        // Merchize soft-deletes products: they still load but carry is_deleted.
+        if (res.ok && data.success && data.data?._id && !data.data.is_deleted) {
           existing.push(productId);
         } else {
           missing.push(productId);
