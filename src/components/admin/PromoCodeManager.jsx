@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 import { Trash2, Plus, Save, X, Tag } from 'lucide-react';
 
 const EMPTY_PROMO = {
@@ -23,6 +24,7 @@ const EMPTY_PROMO = {
  * }} PromoForm */
 
 export default function PromoCodeManager() {
+  const { toast } = useToast();
   const [promos, setPromos] = useState([]);
   const [jerseys, setJerseys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,11 @@ export default function PromoCodeManager() {
 
   const save = async () => {
     if (!form.code || !form.discount_value || !form.jersey_id) {
-      alert('Code, discount value, and jersey are required.');
+      toast({
+        title: 'Missing fields',
+        description: 'Code, discount value, and jersey are required.',
+        variant: 'destructive',
+      });
       return;
     }
     setSaving(true);
@@ -69,15 +75,24 @@ export default function PromoCodeManager() {
         start_date: form.start_date ? new Date(form.start_date).toISOString() : '',
         end_date: form.end_date ? new Date(form.end_date).toISOString() : '',
       };
-      if (editing === 'new') {
-        await base44.entities.PromoCode.create(payload);
-      } else {
-        await base44.entities.PromoCode.update(editing, payload);
-      }
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const promoId = editing === 'new' ? undefined : editing;
+      const res = await base44.functions.invoke('save-promo-code', {
+        promoId, promo: payload, passcode,
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({
+        title: 'Promo code saved',
+        description: `${payload.code} has been ${editing === 'new' ? 'created' : 'updated'}.`,
+      });
       cancel();
       fetchData();
     } catch (err) {
-      alert('Save failed: ' + (err?.message || 'unknown error'));
+      toast({
+        title: 'Save failed',
+        description: err?.message || 'Unknown error',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -86,10 +101,19 @@ export default function PromoCodeManager() {
   const remove = async (id) => {
     if (!confirm('Delete this promo code?')) return;
     try {
-      await base44.entities.PromoCode.delete(id);
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+      const res = await base44.functions.invoke('save-promo-code', {
+        promoId: id, action: 'delete', passcode,
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast({ title: 'Promo code deleted' });
       fetchData();
     } catch (err) {
-      alert('Delete failed: ' + (err?.message || 'unknown error'));
+      toast({
+        title: 'Delete failed',
+        description: err?.message || 'Unknown error',
+        variant: 'destructive',
+      });
     }
   };
 
