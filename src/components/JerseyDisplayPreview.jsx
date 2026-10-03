@@ -22,28 +22,31 @@ export default function JerseyDisplayPreview({
     let active = true;
     let objectUrl = '';
 
-    Promise.resolve().then(() => renderJerseyDisplayToBlob({
-      imageUrl,
-      jersey,
-      color,
-      customName: customName || (showNamePlaceholder ? 'YOUR NAME' : ''),
-      customNumber: customNumber || (showNumberPlaceholder ? '00' : ''),
-      fontId,
-      letterSpacing,
-      enableName,
-      enableNumber,
-    })).then((blob) => {
-      if (!blob) throw new Error('Could not render jersey preview.');
-      if (!active) return;
-      objectUrl = URL.createObjectURL(blob);
-      setPrevUrl(previewUrl);
-      setPreviewUrl(objectUrl);
-    }).catch((error) => {
-      if (active) console.error('Jersey preview render failed:', error);
-    });
+    const timer = setTimeout(() => {
+      Promise.resolve().then(() => renderJerseyDisplayToBlob({
+        imageUrl,
+        jersey,
+        color,
+        customName: customName || (showNamePlaceholder ? 'YOUR NAME' : ''),
+        customNumber: customNumber || (showNumberPlaceholder ? '00' : ''),
+        fontId,
+        letterSpacing,
+        enableName,
+        enableNumber,
+      })).then((blob) => {
+        if (!blob) throw new Error('Could not render jersey preview.');
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPrevUrl(previewUrl);
+        setPreviewUrl(objectUrl);
+      }).catch((error) => {
+        if (active) console.error('Jersey preview render failed:', error);
+      });
+    }, 180);
 
     return () => {
       active = false;
+      clearTimeout(timer);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
