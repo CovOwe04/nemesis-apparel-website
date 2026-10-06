@@ -223,16 +223,16 @@ export default function JerseyEditor() {
         onProgress: setGenProgress,
       });
       if (error) { setGenError(error); return; }
-      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
-      const saveResult = await base44.functions.invoke('save-listing', {
-        jerseyId: pendingGenerateId,
-        listing: { variant_merchize_ids: updatedIds },
-        passcode,
-      });
-      if (saveResult.data?.error) throw new Error(saveResult.data.error);
+      // Don't auto-save the listing here — the user clicked "Generate", not
+      // "Add/Update Listing". Put the generated IDs in the form so the user
+      // can review and persist them by clicking "Update listing".
+      setForm((f) => ({ ...f, variant_merchize_ids: updatedIds }));
       const failed = (results || []).filter((r) => !r.success);
-      if (failed.length > 0) setGenError(`${failed.length} variant(s) failed: ${failed[0].error}`);
-      else navigate('/nexus-control');
+      if (failed.length > 0) {
+        setGenError(`${failed.length} variant(s) failed: ${failed[0].error}`);
+      } else {
+        setPendingGenerateId(null);
+      }
     } catch (err) {
       setGenError(err?.message || 'Generation failed');
     } finally {
@@ -444,7 +444,7 @@ export default function JerseyEditor() {
           <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
             <div className="font-heading text-fog text-sm uppercase">Generate products in Merchize?</div>
             <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
-              Create Merchize products for this listing's variants now, or skip and generate later from the editor.
+              Create Merchize products for this listing's variants now, or skip and generate later from the editor. Generated IDs stay in the form — click "Update listing" to save them.
             </p>
             {genError && <p className="mono-label text-kinetic text-[0.65rem]">{genError}</p>}
             {genProgress && <p className="mono-label text-fog/50 text-[0.65rem]">{genProgress}</p>}
