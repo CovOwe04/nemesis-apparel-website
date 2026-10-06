@@ -109,6 +109,18 @@
               "outline_thickness": {
                 "type": "number",
                 "default": 1.4
+              },
+              "font_id": {
+                "type": "string",
+                "default": ""
+              },
+              "custom_font_url": {
+                "type": "string",
+                "default": ""
+              },
+              "custom_font_name": {
+                "type": "string",
+                "default": ""
               }
             },
             "default": {}
@@ -135,6 +147,18 @@
               "outline_thickness": {
                 "type": "number",
                 "default": 1.4
+              },
+              "font_id": {
+                "type": "string",
+                "default": ""
+              },
+              "custom_font_url": {
+                "type": "string",
+                "default": ""
+              },
+              "custom_font_name": {
+                "type": "string",
+                "default": ""
               }
             },
             "default": {}
@@ -263,6 +287,18 @@
         "font_size": {
           "type": "number",
           "default": 8
+        },
+        "font_id": {
+          "type": "string",
+          "default": ""
+        },
+        "custom_font_url": {
+          "type": "string",
+          "default": ""
+        },
+        "custom_font_name": {
+          "type": "string",
+          "default": ""
         }
       },
       "default": {}
@@ -309,6 +345,18 @@
         "font_size": {
           "type": "number",
           "default": 35
+        },
+        "font_id": {
+          "type": "string",
+          "default": ""
+        },
+        "custom_font_url": {
+          "type": "string",
+          "default": ""
+        },
+        "custom_font_name": {
+          "type": "string",
+          "default": ""
         }
       },
       "default": {}
