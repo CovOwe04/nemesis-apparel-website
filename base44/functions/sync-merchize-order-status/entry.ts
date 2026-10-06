@@ -7,7 +7,7 @@ function isFulfilledStatus(value: unknown) {
   return /^(fulfilled|fulfill|complete|completed|shipped|delivered|in transit|shipment started)$/.test(status);
 }
 
-async function syncOrder(base44: any, baseUrl: string, token: string, order: any) {
+async function syncOrder(base44: any, baseUrl: string, token: string, apiKey: string, order: any) {
   if (order.status === 'fulfilled') return { id: order.id, status: 'fulfilled', skipped: true };
   if (order.status !== 'approved' || !order.merchize_order_id) {
     return { id: order.id, skipped: true };
@@ -16,7 +16,7 @@ async function syncOrder(base44: any, baseUrl: string, token: string, order: any
   const detailUrl = new URL(`${baseUrl}/order/external/orders/order-detail`);
   detailUrl.searchParams.set('external_number', order.id);
   detailUrl.searchParams.set('identifier', 'nemesis-apparel.base44.app');
-  const detailRes = await fetch(detailUrl, { headers: { Authorization: `Bearer ${token}` } });
+  const detailRes = await fetch(detailUrl, { headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey } });
   const detail = await detailRes.json();
   if (!detailRes.ok || !detail.success) {
     return { id: order.id, error: detail.message || `HTTP ${detailRes.status}` };
@@ -46,6 +46,7 @@ export default async function(req: Request) {
     const base44 = createClientFromRequest(req);
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
+    const apiKey = secrets.get('MERCHIZE_API_KEY');
     if (!baseUrl || !token) {
       return Response.json({ error: 'Merchize API credentials are not configured.' }, { status: 503 });
     }
@@ -65,7 +66,7 @@ export default async function(req: Request) {
       const results = [];
       for (const order of approved) {
         try {
-          results.push(await syncOrder(base44, baseUrl, token, order));
+          results.push(await syncOrder(base44, baseUrl, token, apiKey, order));
         } catch (err) {
           results.push({ id: order.id, error: err.message || 'sync failed' });
         }
@@ -80,7 +81,7 @@ export default async function(req: Request) {
 
     const order = await base44.asServiceRole.entities.Order.get(body.orderId);
     if (!order) return Response.json({ error: 'Order not found' }, { status: 404 });
-    const result = await syncOrder(base44, baseUrl, token, order);
+    const result = await syncOrder(base44, baseUrl, token, apiKey, order);
     return Response.json({ success: true, ...result });
   } catch (error) {
     console.error('sync-merchize-order-status error:', error);

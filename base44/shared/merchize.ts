@@ -456,7 +456,7 @@ export async function createMerchizeOrder(
   if (!hasArtwork) return { ...merchizeData, artwork_import: { success: true, skipped: true } };
 
   try {
-    const artworkImport = await importMerchizeOrderArtworks(baseUrl, token, {
+    const artworkImport = await importMerchizeOrderArtworks(baseUrl, token, apiKey, {
       orderId,
       identifier,
       items,
@@ -474,6 +474,7 @@ export async function createMerchizeOrder(
 export async function importMerchizeOrderArtworks(
   baseUrl: string,
   token: string,
+  apiKey: string,
   opts: { orderId: string; identifier: string; items: any[] },
 ) {
   const { orderId, identifier, items } = opts;
@@ -496,7 +497,7 @@ export async function importMerchizeOrderArtworks(
   for (let attempt = 0; attempt < MAX_DETAIL_ATTEMPTS; attempt++) {
     detailRes = await fetch(detailUrl, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey },
     });
     detail = await detailRes.json();
     console.log(`[importMerchizeOrderArtworks] detail attempt ${attempt + 1}/${MAX_DETAIL_ATTEMPTS} — ok=${detailRes.ok} success=${detail.success} items_found=${detail.data?.items?.length || 0} message=${detail.message || ''}`);
@@ -615,7 +616,7 @@ export async function importMerchizeOrderArtworks(
 
   const importRes = await fetch(`${baseUrl}/order/import/artworks`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({ items: artworkRequests }),
   });
   const importData = await importRes.json();

@@ -68,7 +68,7 @@ export default async function(req) {
           if ([...formData.keys()].length > 0) {
             const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
               method: 'POST',
-              headers: { 'Authorization': `Bearer ${token}` },
+              headers: { 'Authorization': `Bearer ${token}`, 'x-api-key': apiKey || '' },
               body: formData,
             });
             const artworkData = await artworkRes.json();

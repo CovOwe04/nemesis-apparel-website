@@ -157,7 +157,7 @@ export default async function (req) {
 
     let merchizeData;
     if (order.merchize_order_id) {
-      const artworkImport = await importMerchizeOrderArtworks(baseUrl, merchizeToken, {
+      const artworkImport = await importMerchizeOrderArtworks(baseUrl, merchizeToken, merchizeKey, {
         orderId,
         identifier: 'nemesis-apparel.base44.app',
         items: merchizeItems,
