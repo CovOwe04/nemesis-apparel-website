@@ -96,7 +96,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
 
   const createRes = await fetch(`${baseUrl}/product/products/dropship/create`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
@@ -113,7 +113,7 @@ export async function createCustomProduct(params: CreateCustomProductParams) {
   try {
     const variantsRes = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey, 'Content-Type': 'application/json' },
     });
     const variantsData = await variantsRes.json();
     if (variantsData.success && Array.isArray(variantsData.data)) {
@@ -165,7 +165,7 @@ export async function uploadCustomProductArtwork(params: {
       if ([...formData.keys()].length > 0) {
         const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey },
           body: formData,
         });
         const artworkData = await artworkRes.json();
@@ -217,7 +217,7 @@ export async function uploadCustomProductArtwork(params: {
         if ([...formData.keys()].length > 0) {
           const variantImgRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey },
             body: formData,
           });
           const variantImgData = await variantImgRes.json();
@@ -305,7 +305,7 @@ export function isPresetItem(item: any, jersey: any) {
 // Merchize product ID (idempotent — only missing/mismatched variants update).
 export async function ensurePresetSellerSkus(baseUrl: string, token: string, apiKey: string, productId: string) {
   const res = await fetch(`${baseUrl}/product/products/${productId}/all-variants`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey },
   });
   const data = await res.json();
   if (!res.ok || !data.success || !Array.isArray(data.data)) {

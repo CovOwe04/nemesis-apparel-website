@@ -123,6 +123,7 @@ export default async function(req) {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
+            'x-api-key': apiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
@@ -149,6 +150,7 @@ export default async function(req) {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
+              'x-api-key': apiKey,
               'Content-Type': 'application/json',
             },
           });
@@ -184,7 +186,7 @@ export default async function(req) {
             if ([...formData.keys()].length > 0) {
               const artworkRes = await fetch(`${baseUrl}/artwork/artworks?product_id=${productId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 'Authorization': `Bearer ${token}`, 'x-api-key': apiKey },
                 body: formData,
               });
               const artworkData = await artworkRes.json();
@@ -238,7 +240,7 @@ export default async function(req) {
               if ([...formData.keys()].length > 0) {
                 const variantImgRes = await fetch(`${baseUrl}/product/variants/${variantId}/image`, {
                   method: 'POST',
-                  headers: { 'Authorization': `Bearer ${token}` },
+                  headers: { 'Authorization': `Bearer ${token}`, 'x-api-key': apiKey },
                   body: formData,
                 });
                 const variantImgData = await variantImgRes.json();
