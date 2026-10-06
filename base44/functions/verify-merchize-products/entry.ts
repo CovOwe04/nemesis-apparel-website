@@ -18,6 +18,7 @@ export default async function(req) {
 
     const baseUrl = secrets.get('MERCHIZE_API_BASE_URL');
     const token = secrets.get('MERCHIZE_ACCESS_TOKEN');
+    const apiKey = secrets.get('MERCHIZE_API_KEY');
     if (!baseUrl || !token) {
       return Response.json({ error: 'Merchize credentials not configured' }, { status: 500 });
     }
@@ -30,7 +31,7 @@ export default async function(req) {
       try {
         const res = await fetch(`${baseUrl}/product/products/${encodeURIComponent(productId)}`, {
           method: 'GET',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'x-api-key': apiKey || '', 'Content-Type': 'application/json' },
         });
         const data = await res.json();
         // Merchize soft-deletes products: they still load but carry is_deleted.
