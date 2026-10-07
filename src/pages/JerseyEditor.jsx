@@ -77,6 +77,7 @@ export default function JerseyEditor() {
   const [genError, setGenError] = useState('');
   const [genProgress, setGenProgress] = useState('');
   const [alertDialog, setAlertDialog] = useState(null);
+  const [savedId, setSavedId] = useState(null);
 
   useEffect(() => {
     if (!jerseyId) return;
@@ -138,6 +139,9 @@ export default function JerseyEditor() {
 
   const hasImages = form.colors.some((c) => c.images && c.images.length > 0);
   const staticDisplay = (form.colors.find((c) => c.images?.length > 0)?.images?.length || 0) <= 1;
+  // Once a brand-new listing is saved, switch the editor into update mode in
+  // place (no page switch) so re-clicking updates instead of creating duplicates.
+  const effectiveId = jerseyId || savedId;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -153,21 +157,23 @@ export default function JerseyEditor() {
     try {
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       if (form.use_existing_merchize_product) {
-        // Existing-product mode: save and navigate immediately (no pop-up).
+        // Existing-product mode: save in place and confirm with a dialog.
+        const wasUpdate = Boolean(effectiveId);
         const result = await base44.functions.invoke('save-listing', {
-          jerseyId: jerseyId || undefined,
+          jerseyId: effectiveId || undefined,
           listing: buildPayload(form),
           passcode,
         });
         if (result.data?.error) throw new Error(result.data.error);
-        navigate('/nexus-control');
+        if (!wasUpdate && result.data?.id) setSavedId(result.data.id);
+        setAlertDialog({ title: 'Listing saved', description: wasUpdate ? 'Your changes have been updated.' : 'The new listing has been added.', success: true });
       } else {
         // Catalog-product mode: check for missing variants WITHOUT saving.
         // The listing is only saved when the user explicitly clicks
         // "Add/Update Listing" (this path) or "Generate" (runGenerate).
         const synced = buildSyncedIds(form.colors, form.name_number_combos, form.variant_merchize_ids);
         let cleared = synced;
-        if (jerseyId) {
+        if (effectiveId) {
           const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
           if (storedIds.length > 0) {
             const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
@@ -181,18 +187,20 @@ export default function JerseyEditor() {
         }
         const missing = cleared.filter((v) => !v.merchize_product_id);
         if (missing.length === 0) {
-          // All variants already have products — save and navigate.
+          // All variants already have products — save in place and confirm.
+          const wasUpdate = Boolean(effectiveId);
           const result = await base44.functions.invoke('save-listing', {
-            jerseyId: jerseyId || undefined,
+            jerseyId: effectiveId || undefined,
             listing: buildPayload(form),
             passcode,
           });
           if (result.data?.error) throw new Error(result.data.error);
-          navigate('/nexus-control');
+          if (!wasUpdate && result.data?.id) setSavedId(result.data.id);
+          setAlertDialog({ title: 'Listing saved', description: wasUpdate ? 'Your changes have been updated.' : 'The new listing has been added.', success: true });
         } else {
           // Show pop-up WITHOUT saving — neither Generate nor Skip saves here.
           setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
-          setPendingGenerateId(jerseyId || null);
+          setPendingGenerateId(effectiveId || null);
         }
       }
     } catch (err) {
@@ -283,7 +291,7 @@ export default function JerseyEditor() {
             <ArrowLeft size={20} />
           </Link>
           <h1 className="font-heading text-xl uppercase text-fog">
-            {jerseyId ? 'Edit Listing' : 'Add New Listing'}
+            {(jerseyId || savedId) ? 'Edit Listing' : 'Add New Listing'}
           </h1>
         </div>
       </div>
@@ -457,7 +465,7 @@ export default function JerseyEditor() {
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving}
             className="inline-flex items-center gap-2 bg-kinetic px-6 py-3 font-heading uppercase text-void hover:bg-fog transition-colors rounded-[6px] disabled:opacity-60">
-              {jerseyId ? <><Save size={18} /> {saving ? 'Saving…' : 'Update listing'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add listing'}</>}
+              {(jerseyId || savedId) ? <><Save size={18} /> {saving ? 'Saving…' : 'Update listing'}</> : <><Plus size={18} /> {saving ? 'Saving…' : 'Add listing'}</>}
             </button>
             <Link to="/nexus-control" className="mono-label text-fog/50 hover:text-kinetic transition-colors px-4 py-3">
               CANCEL
@@ -471,6 +479,7 @@ export default function JerseyEditor() {
         title={alertDialog?.title}
         description={alertDialog?.description}
         alertMode
+        success={alertDialog?.success}
         onConfirm={() => setAlertDialog(null)}
         onCancel={() => setAlertDialog(null)}
       />
