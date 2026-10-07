@@ -25,8 +25,11 @@ export default function Landing() {
   useEffect(() => {
     base44.entities.Jersey.list('-created_date', 50).
     then((all) => {
-      const f = (all || []).filter((j) => j.featured);
-      setFeatured(f.length ? f.slice(0, 3) : (all || []).slice(0, 3));
+      // Featured = the top 3 listings by the admin's manual drag order.
+      const sorted = (all || [])
+        .filter((j) => !j.is_private)
+        .sort((a, b) => (a.sort_order ?? 9999) - (b.sort_order ?? 9999));
+      setFeatured(sorted.slice(0, 3));
     }).
     catch(() => setFeatured([])).
     finally(() => setLoading(false));
