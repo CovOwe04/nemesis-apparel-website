@@ -291,7 +291,7 @@ export default function IdentityLab() {
         <div className="flex flex-col gap-4">
           <div>
             <div className="mono-label text-fog/40 mb-0">{jersey.team}</div>
-            <h1 className="font-heading text-2xl sm:text-3xl uppercase text-fog leading-tight">
+            <h1 className="font-display font-bold text-2xl sm:text-3xl uppercase text-fog leading-tight tracking-wide">
               {jersey.name}
             </h1>
             {jersey.description && (

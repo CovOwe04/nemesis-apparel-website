@@ -73,7 +73,7 @@ export default function JerseyCard({ jersey, currency = 'USD' }) {
       </div>
       <div className="flex items-end justify-between gap-3 pt-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-heading text-base text-fog leading-tight truncate">
+          <h3 className="font-display font-bold text-base text-fog leading-tight truncate uppercase tracking-wide">
             {jersey.name}
           </h3>
           {colors.length > 1 && (

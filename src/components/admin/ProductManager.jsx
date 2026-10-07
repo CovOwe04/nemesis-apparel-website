@@ -101,7 +101,7 @@ export default function ProductManager() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-heading text-fog text-sm">{j.name}</span>
+                              <span className="font-display font-bold text-fog text-sm uppercase tracking-wide">{j.name}</span>
                               {j.featured && <Star size={12} className="text-kinetic fill-kinetic" />}
                               {j.is_private && <Lock size={12} className="text-kinetic" />}
                             </div>
