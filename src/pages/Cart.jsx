@@ -291,11 +291,11 @@ export default function Cart() {
             className="flex gap-4 sm:gap-6 border border-steel rounded-[6px] p-4">
             
               {item.rendered_image ?
-            <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
+            <Link to={`/lab/${item.jerseyId}`} className="shrink-0 self-center">
                   <img
                 src={item.rendered_image}
                 alt={`${item.name} preview`}
-                    className={`w-24 sm:w-28 ${item.static_display ? 'aspect-square' : 'aspect-[3/4]'} rounded-[12px] object-fill bg-void`}
+                    className="w-24 sm:w-28 h-auto rounded-[12px]"
               />
                 </Link> : item.isCustomDesign ?
             <div className="shrink-0 w-24 h-32 sm:w-28 sm:h-36 bg-steel border border-steel flex items-center justify-center rounded-[12px]">
