@@ -302,8 +302,8 @@ export default function Cart() {
                   <span className="mono-label text-fog/40 text-center px-1 leading-tight">
                     CUSTOM<br />DESIGN
                   </span>
-                </div> :
-            item.static_display ?
+                </div> : (item.customName || item.customNumber) ?
+            (item.static_display ?
             <Link to={`/lab/${item.jerseyId}`} className="shrink-0">
                   <StaticNameOverlay
                 image={item.front_image}
@@ -332,6 +332,13 @@ export default function Cart() {
                 letterSpacing={item.letterSpacing || 0}
                 className="w-24 h-32 sm:w-28 sm:h-36 bg-steel rounded-[12px] overflow-hidden" />
               
+                </Link>) :
+            <Link to={`/lab/${item.jerseyId}`} className="shrink-0 self-center">
+                  <img
+                src={item.static_display ? item.front_image : item.back_image}
+                alt={item.name}
+                    className="w-24 sm:w-28 h-auto rounded-[12px]"
+              />
                 </Link>
             }
 
