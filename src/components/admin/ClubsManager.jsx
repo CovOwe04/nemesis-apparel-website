@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
-import { Trash2, Plus, Save, X, Check, Link as LinkIcon, Users } from 'lucide-react';
+import { Trash2, Plus, Save, X, Check, Link as LinkIcon, Users, Search } from 'lucide-react';
 
 const inputCls = "w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 placeholder:text-black/40 focus:border-kinetic outline-none transition-colors";
 const labelCls = "mono-label text-fog/50 block mb-2";
@@ -26,6 +26,7 @@ export default function ClubsManager() {
   const [form, setForm] = useState(EMPTY_CLUB);
   const [saving, setSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
+  const [listingSearch, setListingSearch] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -49,15 +50,17 @@ export default function ClubsManager() {
 
   const startNew = () => {
     setForm({ ...EMPTY_CLUB, code: generateCode() });
+    setListingSearch('');
     setEditing('new');
   };
 
   const startEdit = (club) => {
     setForm({ ...EMPTY_CLUB, ...club });
+    setListingSearch('');
     setEditing(club.id);
   };
 
-  const cancel = () => { setEditing(null); setForm(EMPTY_CLUB); };
+  const cancel = () => { setEditing(null); setForm(EMPTY_CLUB); setListingSearch(''); };
 
   const copyLink = (code) => {
     const link = `${window.location.origin}/arsenal?club=${code}`;
@@ -193,21 +196,45 @@ export default function ClubsManager() {
             {jerseys.length === 0 ? (
               <p className="mono-label text-fog/30">No listings available. Create listings first.</p>
             ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {jerseys.map((j) => (
-                  <button type="button" key={j.id} onClick={() => toggleListing(j.id)}
-                    className={`w-full flex items-center gap-3 border rounded-[6px] p-2.5 transition-colors text-left ${selectedIds.has(j.id) ? 'border-kinetic bg-kinetic/10' : 'border-steel hover:border-fog/30'}`}>
-                    <div className="w-10 h-12 bg-steel shrink-0 overflow-hidden rounded-[3px]">
-                      <Image src={j.front_image} alt={j.name} fittingType="fill" className="w-full h-full" />
+              <>
+                <div className="relative mb-3">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-fog/30 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={listingSearch}
+                    onChange={(e) => setListingSearch(e.target.value)}
+                    placeholder="Search by listing name…"
+                    className="w-full bg-white text-black border border-steel rounded-[6px] pl-9 pr-3 py-2 text-sm placeholder:text-black/40 focus:border-kinetic outline-none transition-colors"
+                  />
+                </div>
+                {(() => {
+                  const q = listingSearch.trim().toLowerCase();
+                  const visible = jerseys.filter((j) =>
+                    (j.is_private || selectedIds.has(j.id)) &&
+                    (!q || (j.name || '').toLowerCase().includes(q))
+                  );
+                  if (visible.length === 0) {
+                    return <p className="mono-label text-fog/30 py-4 text-center">No private listings match.</p>;
+                  }
+                  return (
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {visible.map((j) => (
+                        <button type="button" key={j.id} onClick={() => toggleListing(j.id)}
+                          className={`w-full flex items-center gap-3 border rounded-[6px] p-2.5 transition-colors text-left ${selectedIds.has(j.id) ? 'border-kinetic bg-kinetic/10' : 'border-steel hover:border-fog/30'}`}>
+                          <div className="w-10 h-12 bg-steel shrink-0 overflow-hidden rounded-[3px]">
+                            <Image src={j.front_image} alt={j.name} fittingType="fill" className="w-full h-full" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-display font-bold text-fog text-xs uppercase truncate tracking-wide">{j.name}</div>
+                            <div className="mono-label text-fog/40 text-[0.6rem]">{j.team} · {j.category || 'Jersey'}</div>
+                          </div>
+                          {selectedIds.has(j.id) && <Check size={16} className="text-kinetic shrink-0" />}
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-heading text-fog text-xs uppercase truncate">{j.name}</div>
-                      <div className="mono-label text-fog/40 text-[0.6rem]">{j.team} · {j.category || 'Jersey'}</div>
-                    </div>
-                    {selectedIds.has(j.id) && <Check size={16} className="text-kinetic shrink-0" />}
-                  </button>
-                ))}
-              </div>
+                  );
+                })()}
+              </>
             )}
             <p className="mono-label text-fog/40 mt-3 text-[0.6rem]">{selectedIds.size} listing{selectedIds.size !== 1 ? 's' : ''} selected</p>
           </div>
