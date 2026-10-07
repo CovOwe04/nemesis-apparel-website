@@ -21,6 +21,7 @@ export default function ProductManager() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [orderDraft, setOrderDraft] = useState({});
 
   const loadJerseys = () => {
     setLoadingList(true);
@@ -35,11 +36,7 @@ export default function ProductManager() {
 
   useEffect(() => { loadJerseys(); }, []);
 
-  const onDragEnd = async (result) => {
-    if (!result.destination) return;
-    const reordered = Array.from(jerseys);
-    const [moved] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, moved);
+  const persistReorder = async (reordered) => {
     const updates = reordered.map((j, i) => ({ id: j.id, sort_order: i }));
     setJerseys(reordered);
     try {
@@ -51,6 +48,34 @@ export default function ProductManager() {
     } catch {
       loadJerseys();
     }
+  };
+
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
+    const reordered = Array.from(jerseys);
+    const [moved] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+    persistReorder(reordered);
+  };
+
+  // Manual order edit: move the listing to the typed 1-based position,
+  // shifting every listing between the old and new positions up or down.
+  const commitOrder = (jersey, value) => {
+    const oldPos = jerseys.findIndex((j) => j.id === jersey.id);
+    setOrderDraft((d) => {
+      const next = { ...d };
+      delete next[jersey.id];
+      return next;
+    });
+    if (oldPos < 0) return;
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) return;
+    const target = Math.max(0, Math.min(jerseys.length - 1, parsed - 1));
+    if (target === oldPos) return;
+    const reordered = Array.from(jerseys);
+    const [moved] = reordered.splice(oldPos, 1);
+    reordered.splice(target, 0, moved);
+    persistReorder(reordered);
   };
 
   const deleteJersey = async () => {
@@ -99,7 +124,20 @@ export default function ProductManager() {
                         <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps}
                           className="flex items-start gap-3 border border-steel rounded-[6px] p-3 bg-void">
                           <GripVertical size={16} className="text-fog/30 shrink-0 mt-1" />
-                          <span className="mono-label text-fog/30 w-5 text-center shrink-0 mt-1">{index + 1}</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={jerseys.length}
+                            value={orderDraft[j.id] ?? String(index + 1)}
+                            onChange={(e) => setOrderDraft((d) => ({ ...d, [j.id]: e.target.value }))}
+                            onBlur={(e) => commitOrder(j, e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Set order for ${j.name}`}
+                            className="no-spinner mono-label text-fog/30 w-9 text-center shrink-0 mt-1 bg-transparent border border-steel rounded-[4px] py-0.5 focus:text-fog focus:border-kinetic outline-none"
+                          />
                           <div className="w-24 shrink-0 overflow-hidden rounded-[12px]">
                             <img src={j.front_image} alt={j.name} className="w-full h-auto block rounded-[12px]" />
                           </div>
