@@ -20,8 +20,12 @@ export default async function (req) {
     if (!club) return Response.json({ error: 'Club not found' }, { status: 404 });
 
     for (const jerseyId of club.jersey_ids || []) {
-      const jersey = await jerseys.get(jerseyId);
-      if (jersey?.club_id === clubId) await jerseys.update(jerseyId, { club_id: '' });
+      try {
+        const jersey = await jerseys.get(jerseyId);
+        if (jersey?.club_id === clubId) await jerseys.update(jerseyId, { club_id: '' });
+      } catch {
+        // Jersey may have been deleted already — skip it.
+      }
     }
     await clubs.delete(clubId);
 

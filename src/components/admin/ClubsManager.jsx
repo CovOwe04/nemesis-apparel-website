@@ -27,6 +27,9 @@ export default function ClubsManager() {
   const [saving, setSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
   const [listingSearch, setListingSearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -135,17 +138,22 @@ export default function ClubsManager() {
     }
   };
 
-  const deleteClub = async (id, name) => {
-    if (!confirm(`Delete club "${name}"? Its listings will remain but lose their club association.`)) return;
+  const deleteClub = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
     try {
       const result = await base44.functions.invoke('delete-club', {
-        clubId: id,
+        clubId: deleteTarget.id,
         passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
       });
       if (result.data?.error) throw new Error(result.data.error);
       await load();
+      setDeleteTarget(null);
     } catch (err) {
-      alert('Delete failed: ' + (err?.message || 'unknown error'));
+      setDeleteError(err?.message || 'unknown error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -287,7 +295,7 @@ export default function ClubsManager() {
                       {copiedCode === club.code ? <Check size={12} /> : <LinkIcon size={12} />} {copiedCode === club.code ? 'COPIED' : 'LINK'}
                     </button>
                     <button onClick={() => startEdit(club)} className="mono-label text-fog/60 hover:text-kinetic text-xs border border-steel px-3 py-1.5 rounded-[6px] transition-colors">EDIT</button>
-                    <button onClick={() => deleteClub(club.id, club.name)} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors flex justify-center" aria-label={`Delete ${club.name}`}>
+                    <button onClick={() => { setDeleteError(''); setDeleteTarget(club); }} className="p-1.5 text-fog/40 hover:text-kinetic transition-colors flex justify-center" aria-label={`Delete ${club.name}`}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -295,6 +303,28 @@ export default function ClubsManager() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
+            <div className="font-heading text-fog text-sm uppercase">Delete club "{deleteTarget.name}"?</div>
+            <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
+              Its listings will remain but lose their club association.
+            </p>
+            {deleteError && <p className="mono-label text-kinetic text-[0.65rem]">{deleteError}</p>}
+            <div className="flex gap-2 pt-2">
+              <button type="button" onClick={deleteClub} disabled={deleting}
+                className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+              <button type="button" onClick={() => { setDeleteTarget(null); setDeleteError(''); }}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
