@@ -7,6 +7,7 @@ import { renderJerseyDisplayToBlob } from '@/components/admin/canvasOverlayRende
 import { useCart } from '@/lib/CartContext';
 import { formatPrice, getCurrency } from '@/lib/currency';
 import { Plus, Minus, Trash2, Pencil, ShoppingBag, ArrowRight, Check } from 'lucide-react';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 const FONT_LABELS = {
   block: 'BLOCK',
@@ -76,6 +77,7 @@ export default function Cart() {
   const [shippingAddress, setShippingAddress] = useState({
     line1: '', line2: '', city: '', state: '', postalCode: '', country: 'CA'
   });
+  const [removeTarget, setRemoveTarget] = useState(null);
 
   useEffect(() => {
     const detected = detectCountryCode(shippingAddress.postalCode);
@@ -358,10 +360,10 @@ export default function Cart() {
                       </Link>
                     )}
                     <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => setRemoveTarget(item)}
                     className="text-fog/40 hover:text-kinetic transition-colors p-1"
                     aria-label={`Remove ${item.name}`}>
-                    
+
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -555,6 +557,15 @@ export default function Cart() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title="Remove this listing?"
+        description={`${removeTarget?.name || 'This item'} will be removed from your cart.`}
+        confirmLabel="Remove"
+        onConfirm={() => { removeItem(removeTarget.id); setRemoveTarget(null); }}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </div>);
 
 }
