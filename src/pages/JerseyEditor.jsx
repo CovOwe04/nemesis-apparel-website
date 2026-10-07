@@ -76,6 +76,7 @@ export default function JerseyEditor() {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [genProgress, setGenProgress] = useState('');
+  const [alertDialog, setAlertDialog] = useState(null);
 
   useEffect(() => {
     if (!jerseyId) return;
@@ -107,7 +108,7 @@ export default function JerseyEditor() {
       setLoading(false);
     }).catch(() => {
       setLoading(false);
-      alert('Listing not found.');
+      setAlertDialog({ title: 'Listing not found', description: 'This listing could not be loaded.' });
       navigate('/nexus-control');
     });
   }, [jerseyId]);
@@ -141,11 +142,11 @@ export default function JerseyEditor() {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.team || !form.price || !hasImages) {
-      alert('Name, team, price, and at least 1 color with images are required.');
+      setAlertDialog({ title: 'Missing details', description: 'Name, team, price, and at least 1 color with images are required.' });
       return;
     }
     if (form.use_existing_merchize_product && !form.merchize_existing_product_id?.trim()) {
-      alert('Enter the Existing Product ID or turn off “Use an existing product” to choose a catalog product.');
+      setAlertDialog({ title: 'Merchize product required', description: 'Enter the Existing Product ID or turn off “Use an existing product” to choose a catalog product.' });
       return;
     }
     setSaving(true);
@@ -195,7 +196,7 @@ export default function JerseyEditor() {
         }
       }
     } catch (err) {
-      alert('Save failed: ' + (err?.message || 'unknown error'));
+      setAlertDialog({ title: 'Save failed', description: err?.message || 'unknown error' });
     } finally {
       setSaving(false);
     }
@@ -464,6 +465,15 @@ export default function JerseyEditor() {
           </div>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={!!alertDialog}
+        title={alertDialog?.title}
+        description={alertDialog?.description}
+        alertMode
+        onConfirm={() => setAlertDialog(null)}
+        onCancel={() => setAlertDialog(null)}
+      />
 
       {pendingGenerateId && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
