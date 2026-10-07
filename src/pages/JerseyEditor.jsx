@@ -298,7 +298,7 @@ export default function JerseyEditor() {
 
       {/* Form */}
       <div className="mx-auto max-w-4xl px-5 sm:px-8 py-8">
-        <form onSubmit={submit} className="space-y-5">
+        <form onSubmit={submit} noValidate className="space-y-5">
           <Section title="BASIC INFORMATION">
             <div className="grid sm:grid-cols-2 gap-4">
               <div><label className={labelCls}>LISTING NAME</label>
