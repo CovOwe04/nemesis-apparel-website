@@ -111,6 +111,16 @@ export default function JerseyEditor() {
     });
   }, [jerseyId]);
 
+  // Build the save-listing payload from the current form state.
+  function buildPayload(f) {
+    const firstColorImages = f.colors.find((c) => c.images && c.images.length > 0)?.images || [];
+    const front_image = firstColorImages[0]?.url || '';
+    const back_image = firstColorImages[1]?.url || firstColorImages[0]?.url || '';
+    const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
+    const firstColorWithImages = f.colors.find((c) => c.images?.length > 0);
+    return { ...f, front_image, back_image, images, price: Number(f.price), static_display: (firstColorWithImages?.images?.length || 0) <= 1 };
+  }
+
   const styleKey = designerTab === 'name' ? 'name_style' : 'number_style';
   const currentStyle = form[styleKey] || {};
   const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -139,50 +149,48 @@ export default function JerseyEditor() {
     }
     setSaving(true);
     try {
-      const firstColorImages = form.colors.find((c) => c.images && c.images.length > 0)?.images || [];
-      const front_image = firstColorImages[0]?.url || '';
-      const back_image = firstColorImages[1]?.url || firstColorImages[0]?.url || '';
-      const images = firstColorImages.map((img) => ({ url: img.url, name: '', number: '' }));
-      const firstColorWithImages = form.colors.find((c) => c.images?.length > 0);
-      const payload = { ...form, front_image, back_image, images, price: Number(form.price), static_display: (firstColorWithImages?.images?.length || 0) <= 1 };
-      const result = await base44.functions.invoke('save-listing', {
-        jerseyId: jerseyId || undefined,
-        listing: payload,
-        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
-      });
-      if (result.data?.error) throw new Error(result.data.error);
-      const savedId = result.data?.id || jerseyId;
-      if (!savedId) throw new Error('Listing was saved but no listing ID was returned.');
+      const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       if (form.use_existing_merchize_product) {
+        // Existing-product mode: save and navigate immediately (no pop-up).
+        const result = await base44.functions.invoke('save-listing', {
+          jerseyId: jerseyId || undefined,
+          listing: buildPayload(form),
+          passcode,
+        });
+        if (result.data?.error) throw new Error(result.data.error);
         navigate('/nexus-control');
       } else {
-        // Verify stored Merchize products still exist — a product deleted in
-        // Merchize should be offered for regeneration, not treated as generated.
-        const synced = buildSyncedIds(form.colors, form.name_number_combos, payload.variant_merchize_ids);
-        const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
+        // Catalog-product mode: check for missing variants WITHOUT saving.
+        // The listing is only saved when the user explicitly clicks
+        // "Add/Update Listing" (this path) or "Generate" (runGenerate).
+        const synced = buildSyncedIds(form.colors, form.name_number_combos, form.variant_merchize_ids);
         let cleared = synced;
-        if (storedIds.length > 0) {
-          const verifyRes = await base44.functions.invoke('verify-merchize-products', {
-            productIds: storedIds,
-            passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
-          });
-          const missingIds = verifyRes.data?.missing || [];
-          if (missingIds.length > 0) {
-            cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
-              ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
-              : v);
-            await base44.functions.invoke('save-listing', {
-              jerseyId: savedId,
-              listing: { variant_merchize_ids: cleared },
-              passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
-            });
+        if (jerseyId) {
+          const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
+          if (storedIds.length > 0) {
+            const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
+            const missingIds = verifyRes.data?.missing || [];
+            if (missingIds.length > 0) {
+              cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
+                ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
+                : v);
+            }
           }
         }
         const missing = cleared.filter((v) => !v.merchize_product_id);
-        if (missing.length === 0) navigate('/nexus-control');
-        else {
+        if (missing.length === 0) {
+          // All variants already have products — save and navigate.
+          const result = await base44.functions.invoke('save-listing', {
+            jerseyId: jerseyId || undefined,
+            listing: buildPayload(form),
+            passcode,
+          });
+          if (result.data?.error) throw new Error(result.data.error);
+          navigate('/nexus-control');
+        } else {
+          // Show pop-up WITHOUT saving — neither Generate nor Skip saves here.
           setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
-          setPendingGenerateId(savedId);
+          setPendingGenerateId(jerseyId || null);
         }
       }
     } catch (err) {
@@ -205,8 +213,24 @@ export default function JerseyEditor() {
         };
         return acc;
       }, {});
+      // New listings (no jerseyId yet) must be saved first so Merchize can
+      // link the generated products to a real listing. Existing listings
+      // already have an ID, so no save is needed to generate.
+      let genJerseyId = pendingGenerateId;
+      if (!genJerseyId) {
+        const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+        const result = await base44.functions.invoke('save-listing', {
+          jerseyId: undefined,
+          listing: buildPayload(form),
+          passcode,
+        });
+        if (result.data?.error) throw new Error(result.data.error);
+        genJerseyId = result.data?.id;
+        if (!genJerseyId) throw new Error('Could not save the listing before generating.');
+        setPendingGenerateId(genJerseyId);
+      }
       const { updatedIds, results, error } = await generateMerchizeVariants({
-        jerseyId: pendingGenerateId,
+        jerseyId: genJerseyId,
         colors: form.colors,
         combos: form.name_number_combos,
         variantMerchizeIds: form.variant_merchize_ids,
@@ -444,7 +468,7 @@ export default function JerseyEditor() {
           <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
             <div className="font-heading text-fog text-sm uppercase">Generate products in Merchize?</div>
             <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
-              Create Merchize products for this listing's variants now, or skip and generate later from the editor. Generated IDs stay in the form — click "Update listing" to save them.
+              Create Merchize products for this listing's variants now, or skip and generate later from the editor. This may take several minutes. The listing is not saved until you click "Add/Update Listing".
             </p>
             {genError && <p className="mono-label text-kinetic text-[0.65rem]">{genError}</p>}
             {genProgress && <p className="mono-label text-fog/50 text-[0.65rem]">{genProgress}</p>}
@@ -453,7 +477,7 @@ export default function JerseyEditor() {
                 className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
                 {generating ? 'Generating…' : 'Generate'}
               </button>
-              <button type="button" onClick={() => navigate('/nexus-control')}
+              <button type="button" onClick={() => setPendingGenerateId(null)}
                 className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs">
                 Skip
               </button>
