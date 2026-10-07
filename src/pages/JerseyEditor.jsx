@@ -14,7 +14,7 @@ import { buildSyncedIds, generateMerchizeVariants } from '@/lib/generateMerchize
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
-  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NAME_HORIZ_POS, vert_pos: 40, font_size: 8
+  arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NAME_HORIZ_POS, vert_pos: 40, font_size: 10
 };
 const DEFAULT_NUMBER_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
