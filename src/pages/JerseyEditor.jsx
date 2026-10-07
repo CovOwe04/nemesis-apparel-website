@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Plus, Save, ArrowLeft } from 'lucide-react';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
 import ColorsEditor from '@/components/admin/ColorsEditor';
 import NameNumberCombosEditor from '@/components/admin/NameNumberCombosEditor';

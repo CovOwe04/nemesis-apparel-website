@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { Trash2, Plus, Save, X, Tag } from 'lucide-react';
 
 const EMPTY_PROMO = {
@@ -31,6 +32,8 @@ export default function PromoCodeManager() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(/** @type {PromoForm} */ (EMPTY_PROMO));
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -99,22 +102,26 @@ export default function PromoCodeManager() {
     }
   };
 
-  const remove = async (id) => {
-    if (!confirm('Delete this promo code?')) return;
+  const remove = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
       const res = await base44.functions.invoke('save-promo-code', {
-        promoId: id, action: 'delete', passcode,
+        promoId: deleteTarget, action: 'delete', passcode,
       });
       if (res.data?.error) throw new Error(res.data.error);
       toast({ title: 'Promo code deleted' });
       fetchData();
+      setDeleteTarget(null);
     } catch (err) {
       toast({
         title: 'Delete failed',
         description: err?.message || 'Unknown error',
         variant: 'destructive',
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -255,7 +262,7 @@ export default function PromoCodeManager() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={() => startEdit(promo)} className="mono-label text-fog/50 hover:text-kinetic transition-colors px-3 py-2 border border-steel rounded-[6px]">EDIT</button>
-                      <button onClick={() => remove(promo.id)} className="text-fog/40 hover:text-kinetic transition-colors p-2"><Trash2 size={16} /></button>
+                      <button onClick={() => setDeleteTarget(promo.id)} className="text-fog/40 hover:text-kinetic transition-colors p-2"><Trash2 size={16} /></button>
                     </div>
                   </div>
                 ))}
@@ -264,6 +271,16 @@ export default function PromoCodeManager() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete this promo code?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={remove}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -1,51 +1,50 @@
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
-
+// Reusable modal matching the Merchize generate pop-up aesthetic.
+// Supports two modes:
+//   confirm (default) — two buttons: confirm + cancel
+//   alertMode         — single OK button (for informational/error alerts)
 export default function ConfirmDialog({
   open,
-  title = 'Confirm action',
-  description = 'This action cannot be undone.',
+  title,
+  description,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
   loading = false,
+  error = '',
+  alertMode = false,
 }) {
+  if (!open) return null;
   return (
-    <AlertDialog open={open} onOpenChange={(v) => { if (!v && !loading) onCancel?.(); }}>
-      <AlertDialogContent className="rounded-[6px] border-steel bg-card max-w-md p-6 gap-5">
-        <AlertDialogHeader className="space-y-2">
-          <AlertDialogTitle className="font-heading uppercase tracking-wide text-fog text-base">
-            {title}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-fog/60 text-sm font-body">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
+        {title && <div className="font-heading text-fog text-sm uppercase">{title}</div>}
+        {description && (
+          <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
             {description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="sm:space-x-2">
-          <AlertDialogCancel
-            disabled={loading}
-            className="mono-label border border-steel text-fog/70 hover:text-fog hover:border-fog/50 bg-transparent rounded-[4px] px-5 py-2.5 mt-0"
-          >
-            {cancelLabel}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={loading}
-            onClick={(e) => { e.preventDefault(); onConfirm?.(); }}
-            className="mono-label bg-kinetic text-void hover:bg-fog rounded-[4px] px-5 py-2.5 mt-0"
-          >
-            {loading ? 'DELETING…' : confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </p>
+        )}
+        {error && <p className="mono-label text-kinetic text-[0.65rem]">{error}</p>}
+        <div className="flex gap-2 pt-2">
+          {alertMode ? (
+            <button type="button" onClick={onConfirm || onCancel} disabled={loading}
+              className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
+              {loading ? 'Processing…' : 'OK'}
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={onConfirm} disabled={loading}
+                className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
+                {loading ? 'Processing…' : confirmLabel}
+              </button>
+              <button type="button" onClick={onCancel} disabled={loading}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs">
+                {cancelLabel}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

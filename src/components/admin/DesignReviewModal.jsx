@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 import { X, Check, Loader2, Mail, User, Shirt, Palette } from 'lucide-react';
 import JerseyDisplayPreview from '@/components/JerseyDisplayPreview';
 import ArtworkNameOverlay from '@/components/admin/ArtworkNameOverlay';
@@ -18,6 +19,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [progress, setProgress] = useState('');
 
   const items = (() => {
@@ -161,7 +163,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
   };
 
   const handleReject = async () => {
-    if (!confirm('Reject this order and issue a full refund? The customer will be emailed.')) return;
+    setShowRejectConfirm(false);
     setProcessing(true);
     setError('');
     try {
@@ -320,7 +322,7 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
           {canApprove ? (
             <div className="flex gap-3">
               <button
-                onClick={handleReject}
+                onClick={() => setShowRejectConfirm(true)}
                 disabled={processing}
                 className="inline-flex items-center gap-2 border border-steel px-5 py-2.5 font-heading uppercase text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors rounded-[6px] disabled:opacity-60 text-xs"
               >
@@ -353,6 +355,15 @@ export default function DesignReviewModal({ order, onClose, onAction }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showRejectConfirm}
+        title="Reject this order?"
+        description="The order will be rejected and a full refund issued. The customer will be emailed."
+        confirmLabel="Reject & Refund"
+        onConfirm={handleReject}
+        onCancel={() => setShowRejectConfirm(false)}
+      />
     </div>
   );
 }
