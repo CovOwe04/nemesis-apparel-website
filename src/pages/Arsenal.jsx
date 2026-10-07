@@ -79,14 +79,14 @@ export default function Arsenal() {
       {/* Grid */}
       <div className="mx-auto max-w-7xl px-5 sm:px-8 pb-10">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-4 flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-3 bg-background border border-steel rounded-[6px] px-4 py-3 transition-colors focus-within:border-kinetic">
+          <div className="flex-1 flex items-center gap-3 bg-background border border-steel rounded-[6px] px-4 transition-colors focus-within:border-kinetic">
             <Search size={18} className="text-fog/50 shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search listings by name or team"
-              className="min-w-0 flex-1 !bg-transparent !text-fog placeholder:!text-fog/40 font-display uppercase tracking-wider text-sm !outline-none focus-visible:!outline-none focus-visible:ring-0"
+              className="min-w-0 flex-1 !bg-transparent !text-fog placeholder:!text-fog/40 font-display uppercase tracking-wider text-sm !outline-none focus-visible:!outline-none focus-visible:ring-0 py-3"
             />
           </div>
           <div className="flex items-center gap-1 bg-steel/40 border border-steel rounded-[6px] p-1">
