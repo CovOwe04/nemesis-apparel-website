@@ -353,6 +353,7 @@ export default function JerseyEditor() {
           {form.enable_customization &&
             <DesignerPanel
               form={form}
+              setForm={setForm}
               setField={setField}
               setStyle={setStyle}
               currentStyle={currentStyle}

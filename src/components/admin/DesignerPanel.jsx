@@ -30,12 +30,15 @@ function ColorSwatch({ label, color, onChange }) {
 }
 
 export default function DesignerPanel({
-  form, setField, setStyle, currentStyle, designerTab, setDesignerTab, staticDisplay, jerseyId,
+  form, setForm, setField, setStyle, currentStyle, designerTab, setDesignerTab, staticDisplay, jerseyId,
 }) {
   const previewImageUrl = form.colors.find((c) => c.images?.length > 0)?.images?.[0]?.url;
 
   const updateColor = (index, updates) => {
-    setField('colors', form.colors.map((c, i) => (i === index ? { ...c, ...updates } : c)));
+    setForm((f) => ({
+      ...f,
+      colors: f.colors.map((c, i) => (i === index ? { ...c, ...updates } : c)),
+    }));
   };
 
   return (

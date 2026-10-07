@@ -55,7 +55,12 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
 
   const setColorStyle = (styleType, field, value) => {
     const current = color[styleType] || {};
-    updateColor(colorIndex, { [styleType]: { ...current, [field]: value } });
+    const updated = { ...current, [field]: value };
+    // Setting a stroke color implies the outline should be on.
+    if (field === 'outline_color' && current.outline === undefined) {
+      updated.outline = true;
+    }
+    updateColor(colorIndex, { [styleType]: updated });
   };
   const setArtworkVertPos = (key, value) => updateColor(colorIndex, { [key]: value });
 
@@ -122,6 +127,10 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
                 <div className="flex items-center gap-3">
                   <ColorSwatch label="FILL" color={nameStyle.color} onChange={(v) => setColorStyle('name_style', 'color', v)} />
                   <ColorSwatch label="STROKE" color={nameStyle.outline_color} onChange={(v) => setColorStyle('name_style', 'outline_color', v)} />
+                  <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
+                    <input type="checkbox" checked={nameStyle.outline ?? true} onChange={(e) => setColorStyle('name_style', 'outline', e.target.checked)} className="accent-kinetic w-3.5 h-3.5" />
+                    <span className="mono-label text-fog/50 text-[0.5rem]">OUTLINE</span>
+                  </label>
                 </div>
                 <HorizontalSlider label="THICKNESS" value={nameStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('name_style', 'outline_thickness', v)} />
               </div>
@@ -135,6 +144,10 @@ export default function ColorArtworkDesigner({ color, colorIndex, form, updateCo
                 <div className="flex items-center gap-3">
                   <ColorSwatch label="FILL" color={numberStyle.color} onChange={(v) => setColorStyle('number_style', 'color', v)} />
                   <ColorSwatch label="STROKE" color={numberStyle.outline_color} onChange={(v) => setColorStyle('number_style', 'outline_color', v)} />
+                  <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
+                    <input type="checkbox" checked={numberStyle.outline ?? true} onChange={(e) => setColorStyle('number_style', 'outline', e.target.checked)} className="accent-kinetic w-3.5 h-3.5" />
+                    <span className="mono-label text-fog/50 text-[0.5rem]">OUTLINE</span>
+                  </label>
                 </div>
                 <HorizontalSlider label="THICKNESS" value={numberStyle.outline_thickness} min={0} max={5} step={0.1} onChange={(v) => setColorStyle('number_style', 'outline_thickness', v)} />
               </div>
