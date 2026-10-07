@@ -73,6 +73,8 @@ export default function JerseyEditor() {
   const [designerTab, setDesignerTab] = useState('name');
   const [showCatalogMerchizePicker, setShowCatalogMerchizePicker] = useState(false);
   const [pendingGenerateId, setPendingGenerateId] = useState(null);
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
   const [genProgress, setGenProgress] = useState('');
@@ -201,6 +203,8 @@ export default function JerseyEditor() {
           // Show pop-up WITHOUT saving — neither Generate nor Skip saves here.
           setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
           setPendingGenerateId(effectiveId || null);
+          setGenError('');
+          setShowGenerate(true);
         }
       }
     } catch (err) {
@@ -238,6 +242,7 @@ export default function JerseyEditor() {
         genJerseyId = result.data?.id;
         if (!genJerseyId) throw new Error('Could not save the listing before generating.');
         setPendingGenerateId(genJerseyId);
+        setSavedId(genJerseyId);
       }
       const { updatedIds, results, error } = await generateMerchizeVariants({
         jerseyId: genJerseyId,
@@ -266,12 +271,37 @@ export default function JerseyEditor() {
         setGenError(`${failed.length} variant(s) failed: ${failed[0].error}`);
       } else {
         setPendingGenerateId(null);
+        setShowGenerate(false);
+        setAlertDialog({ title: 'Products generated', description: 'Merchize products were created. Click "Update listing" to save them to this listing.', success: true });
       }
     } catch (err) {
       setGenError(err?.message || 'Generation failed');
     } finally {
       setGenerating(false);
       setGenProgress('');
+    }
+  };
+
+  // Skip generating: save the listing as-is so it's added, generate later.
+  const skipGenerate = async () => {
+    setSkipping(true);
+    setGenError('');
+    try {
+      const wasUpdate = Boolean(effectiveId);
+      const result = await base44.functions.invoke('save-listing', {
+        jerseyId: effectiveId || undefined,
+        listing: buildPayload(form),
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (result.data?.error) throw new Error(result.data.error);
+      if (!wasUpdate && result.data?.id) setSavedId(result.data.id);
+      setShowGenerate(false);
+      setPendingGenerateId(null);
+      setAlertDialog({ title: 'Listing saved', description: wasUpdate ? 'Your changes have been updated.' : 'The new listing has been added.', success: true });
+    } catch (err) {
+      setGenError(err?.message || 'Could not save listing');
+    } finally {
+      setSkipping(false);
     }
   };
 
@@ -484,23 +514,23 @@ export default function JerseyEditor() {
         onCancel={() => setAlertDialog(null)}
       />
 
-      {pendingGenerateId && (
+      {showGenerate && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
             <div className="font-heading text-fog text-sm uppercase">Generate products in Merchize?</div>
             <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
-              Create Merchize products for this listing's variants now, or skip and generate later from the editor. This may take several minutes. The listing is not saved until you click "Add/Update Listing".
+              Create Merchize products for this listing's variants now, or skip to save the listing and generate later from the editor. Generating may take several minutes.
             </p>
             {genError && <p className="mono-label text-kinetic text-[0.65rem]">{genError}</p>}
             {genProgress && <p className="mono-label text-fog/50 text-[0.65rem]">{genProgress}</p>}
             <div className="flex gap-2 pt-2">
-              <button type="button" onClick={runGenerate} disabled={generating}
+              <button type="button" onClick={runGenerate} disabled={generating || skipping}
                 className="inline-flex items-center gap-1.5 bg-kinetic px-4 py-2 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60">
                 {generating ? 'Generating…' : 'Generate'}
               </button>
-              <button type="button" onClick={() => setPendingGenerateId(null)}
-                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs">
-                Skip
+              <button type="button" onClick={skipGenerate} disabled={generating || skipping}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs disabled:opacity-60">
+                {skipping ? 'Saving…' : 'Skip'}
               </button>
             </div>
           </div>
