@@ -43,7 +43,11 @@ export default function ProductManager() {
     const updates = reordered.map((j, i) => ({ id: j.id, sort_order: i }));
     setJerseys(reordered);
     try {
-      await base44.entities.Jersey.bulkUpdate(updates);
+      const res = await base44.functions.invoke('reorder-listings', {
+        updates,
+        passcode: sessionStorage.getItem('nemesis-admin-passcode') || '',
+      });
+      if (res.data?.error) throw new Error(res.data.error);
     } catch {
       loadJerseys();
     }
