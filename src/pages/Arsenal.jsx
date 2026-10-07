@@ -92,13 +92,13 @@ export default function Arsenal() {
           <div className="flex items-center gap-1 bg-steel/40 border border-steel rounded-[6px] p-1">
             <button
               onClick={() => setCurrency('USD')}
-              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'USD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'USD' ? 'bg-kinetic text-white' : 'text-fog/70 hover:text-fog'}`}
             >
               USD
             </button>
             <button
               onClick={() => setCurrency('CAD')}
-              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'CAD' ? 'bg-white text-black' : 'text-fog/60 hover:text-fog'}`}
+              className={`mono-label px-3 py-2 rounded-[6px] transition-colors ${currency === 'CAD' ? 'bg-kinetic text-white' : 'text-fog/70 hover:text-fog'}`}
             >
               CAD
             </button>
@@ -120,7 +120,7 @@ export default function Arsenal() {
               <button
                 onClick={unlockClub}
                 disabled={unlocking || !codeInput.trim()}
-                className="mono-label border border-steel px-3 py-2 rounded-[6px] text-fog/60 hover:text-kinetic hover:border-kinetic transition-colors disabled:opacity-50"
+                className="mono-label border border-steel bg-steel px-3 py-2 rounded-[6px] text-fog hover:bg-kinetic hover:text-white hover:border-kinetic transition-colors disabled:opacity-50"
               >
                 {unlocking ? 'CHECKING…' : 'UNLOCK'}
               </button>
