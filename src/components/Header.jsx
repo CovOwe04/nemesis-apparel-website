@@ -1,7 +1,8 @@
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, LogOut } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
+import { useAdminAuth } from '@/components/admin/AdminLogin';
 import ThemeToggle from '@/components/ThemeToggle';
 
 function Logo() {
@@ -18,11 +19,11 @@ function Logo() {
 
 export default function Header() {
   const { count } = useCart();
+  const { authed: adminAuthed, logout: adminLogout } = useAdminAuth();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [adminAuthed, setAdminAuthed] = useState(() => sessionStorage.getItem('nemesis-admin-auth') === '1');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -34,12 +35,6 @@ export default function Header() {
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const sync = () => setAdminAuthed(sessionStorage.getItem('nemesis-admin-auth') === '1');
-    window.addEventListener('admin-auth-change', sync);
-    return () => window.removeEventListener('admin-auth-change', sync);
-  }, []);
 
   const onNexus = location.pathname === '/nexus-control';
   const onAdminPage = location.pathname.startsWith('/nexus-control');
@@ -125,6 +120,15 @@ export default function Header() {
                   </span>
                 )}
               </Link>
+            )}
+            {onAdminPage && adminAuthed && (
+              <button
+                onClick={adminLogout}
+                className="btn-solid gap-1.5 px-4 py-2 rounded-[6px] mono-label"
+                aria-label="Logout"
+              >
+                <LogOut size={16} /> <span className="hidden sm:inline">LOGOUT</span>
+              </button>
             )}
             {(!onNexus || adminAuthed) && (
               <button

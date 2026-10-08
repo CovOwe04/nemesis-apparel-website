@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { ShieldCheck, LogOut } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import AdminLogin, { useAdminAuth } from '@/components/admin/AdminLogin';
 import ProductManager from '@/components/admin/ProductManager';
 import OrderManager from '@/components/admin/OrderManager';
@@ -7,7 +7,7 @@ import PromoCodeManager from '@/components/admin/PromoCodeManager';
 import ClubsManager from '@/components/admin/ClubsManager';
 
 export default function NexusControl() {
-  const { authed, login, logout } = useAdminAuth();
+  const { authed, login } = useAdminAuth();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'products';
 
@@ -24,10 +24,6 @@ export default function NexusControl() {
             <ShieldCheck size={20} className="text-kinetic" />
             <h1 className="font-heading text-xl uppercase text-fog">Nexus Control</h1>
           </div>
-          <button onClick={logout}
-            className="btn-solid gap-1.5 px-4 py-2 rounded-[6px] mono-label">
-            <LogOut size={14} /> LOGOUT
-          </button>
         </div>
       </div>
 

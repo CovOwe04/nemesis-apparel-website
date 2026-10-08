@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -6,6 +6,13 @@ const AUTH_KEY = 'nemesis-admin-auth';
 
 export function useAdminAuth() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === '1');
+
+  useEffect(() => {
+    const sync = () => setAuthed(sessionStorage.getItem(AUTH_KEY) === '1');
+    window.addEventListener('admin-auth-change', sync);
+    return () => window.removeEventListener('admin-auth-change', sync);
+  }, []);
+
   const login = async (code) => {
     try {
       const res = await base44.functions.invoke('verify-admin-passcode', { passcode: code });
