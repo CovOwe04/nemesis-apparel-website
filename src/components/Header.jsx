@@ -92,7 +92,7 @@ export default function Header() {
                   {t.label}
                 </button>
               ))
-            ) : (
+            ) : onNexus ? null : (
               navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -123,13 +123,15 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            <button
-              className="md:hidden p-2 text-white/80 hover:text-kinetic transition-colors rounded-[6px]"
-              onClick={() => setOpen((o) => !o)}
-              aria-label="Toggle menu"
-            >
-              {open ? <X size={22} /> : <Menu size={22} />}
-            </button>
+            {(!onNexus || adminAuthed) && (
+              <button
+                className="md:hidden p-2 text-white/80 hover:text-kinetic transition-colors rounded-[6px]"
+                onClick={() => setOpen((o) => !o)}
+                aria-label="Toggle menu"
+              >
+                {open ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            )}
           </div>
         </div>
 
