@@ -153,15 +153,29 @@ export default function JerseyEditor() {
       setAlertDialog({ title: 'Missing details', description: 'Name, team, price, and at least 1 color with images are required.' });
       return;
     }
-    if (form.use_existing_merchize_product && !form.merchize_existing_product_id?.trim()) {
-      setAlertDialog({ title: 'Merchize product required', description: 'Enter the Existing Product ID or turn off “Use an existing product” to choose a catalog product.' });
-      return;
-    }
     setSaving(true);
     try {
       const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
-      if (form.use_existing_merchize_product) {
-        // Existing-product mode: save in place and confirm with a dialog.
+      // Catalog-product mode: check for missing variants WITHOUT saving.
+      // The listing is only saved when the user explicitly clicks
+      // "Add/Update Listing" (this path) or "Generate" (runGenerate).
+      const synced = buildSyncedIds(form.colors, form.name_number_combos, form.variant_merchize_ids);
+      let cleared = synced;
+      if (effectiveId) {
+        const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
+        if (storedIds.length > 0) {
+          const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
+          const missingIds = verifyRes.data?.missing || [];
+          if (missingIds.length > 0) {
+            cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
+              ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
+              : v);
+          }
+        }
+      }
+      const missing = cleared.filter((v) => !v.merchize_product_id);
+      if (missing.length === 0) {
+        // All variants already have products — save in place and confirm.
         const wasUpdate = Boolean(effectiveId);
         const result = await base44.functions.invoke('save-listing', {
           jerseyId: effectiveId || undefined,
@@ -172,42 +186,11 @@ export default function JerseyEditor() {
         if (!wasUpdate && result.data?.id) setSavedId(result.data.id);
         setAlertDialog({ title: 'Listing saved', description: wasUpdate ? 'Your changes have been updated.' : 'The new listing has been added.', success: true });
       } else {
-        // Catalog-product mode: check for missing variants WITHOUT saving.
-        // The listing is only saved when the user explicitly clicks
-        // "Add/Update Listing" (this path) or "Generate" (runGenerate).
-        const synced = buildSyncedIds(form.colors, form.name_number_combos, form.variant_merchize_ids);
-        let cleared = synced;
-        if (effectiveId) {
-          const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
-          if (storedIds.length > 0) {
-            const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
-            const missingIds = verifyRes.data?.missing || [];
-            if (missingIds.length > 0) {
-              cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
-                ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
-                : v);
-            }
-          }
-        }
-        const missing = cleared.filter((v) => !v.merchize_product_id);
-        if (missing.length === 0) {
-          // All variants already have products — save in place and confirm.
-          const wasUpdate = Boolean(effectiveId);
-          const result = await base44.functions.invoke('save-listing', {
-            jerseyId: effectiveId || undefined,
-            listing: buildPayload(form),
-            passcode,
-          });
-          if (result.data?.error) throw new Error(result.data.error);
-          if (!wasUpdate && result.data?.id) setSavedId(result.data.id);
-          setAlertDialog({ title: 'Listing saved', description: wasUpdate ? 'Your changes have been updated.' : 'The new listing has been added.', success: true });
-        } else {
-          // Show pop-up WITHOUT saving — neither Generate nor Skip saves here.
-          setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
-          setPendingGenerateId(effectiveId || null);
-          setGenError('');
-          setShowGenerate(true);
-        }
+        // Show pop-up WITHOUT saving — neither Generate nor Skip saves here.
+        setForm((f) => ({ ...f, variant_merchize_ids: cleared }));
+        setPendingGenerateId(effectiveId || null);
+        setGenError('');
+        setShowGenerate(true);
       }
     } catch (err) {
       setAlertDialog({ title: 'Save failed', description: err?.message || 'unknown error' });
@@ -414,79 +397,58 @@ export default function JerseyEditor() {
           </Section>
 
           <Section title="MERCHIZE FULFILLMENT">
-            <Toggle
-              checked={form.use_existing_merchize_product}
-              onChange={(value) => setField('use_existing_merchize_product', value)}
-              label="USE AN EXISTING PRODUCT"
-            />
-
-            {form.use_existing_merchize_product ? (
-              <div>
-                <label className={labelCls}>EXISTING PRODUCT ID</label>
-                <input
-                  type="text"
-                  value={form.merchize_existing_product_id || ''}
-                  onChange={(e) => setField('merchize_existing_product_id', e.target.value)}
-                  placeholder="Enter the Merchize product ID"
-                  className={inputCls}
-                />
+            <div>
+              <label className={labelCls}>CATALOG PRODUCT ID</label>
+              <div className="flex gap-2">
+                <input value={form.merchize_product_title || ''} readOnly
+                placeholder="Browse for a catalog product" className={`${inputCls} read-only:cursor-pointer`} aria-label="Selected catalog product title" />
+                <button type="button" onClick={() => setShowCatalogMerchizePicker(true)}
+                className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
+                  Browse
+                </button>
               </div>
-            ) : (
-              <>
-                <div>
-                  <label className={labelCls}>CATALOG PRODUCT ID</label>
-                  <div className="flex gap-2">
-                    <input value={form.merchize_product_title || ''} readOnly
-                    placeholder="Browse for a catalog product" className={`${inputCls} read-only:cursor-pointer`} aria-label="Selected catalog product title" />
-                    <button type="button" onClick={() => setShowCatalogMerchizePicker(true)}
-                    className="shrink-0 inline-flex items-center gap-1.5 bg-kinetic px-4 py-3 font-heading uppercase text-void text-sm hover:bg-fog transition-colors rounded-[6px] whitespace-nowrap">
-                      Browse
-                    </button>
+            </div>
+            <div>
+              <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((size) => (
+                  <div key={size}>
+                    <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
+                    <input value={form.merchize_variants?.[size] || ''}
+                      onChange={(e) => setField('merchize_variants', { ...(form.merchize_variants || {}), [size]: e.target.value })}
+                      placeholder="SKU" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-2 text-xs focus:border-kinetic outline-none" />
                   </div>
-                </div>
-                <div>
-                  <label className={labelCls}>VARIANT SKUS (BY SIZE)</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'].map((size) => (
-                      <div key={size}>
-                        <span className="mono-label text-fog/40 text-[0.6rem] block mb-1">{size}</span>
-                        <input value={form.merchize_variants?.[size] || ''}
-                          onChange={(e) => setField('merchize_variants', { ...(form.merchize_variants || {}), [size]: e.target.value })}
-                          placeholder="SKU" className="w-full bg-white text-black border border-steel rounded-[4px] px-2 py-2 text-xs focus:border-kinetic outline-none" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <VariantMerchizeIdsEditor
-                  colors={form.colors}
-                  combos={form.name_number_combos}
-                  variantMerchizeIds={form.variant_merchize_ids}
-                  onChange={(ids) => setField('variant_merchize_ids', ids)}
-                  jerseyId={jerseyId}
-                  merchizeProductId={form.merchize_product_id}
-                  merchizeVariants={form.merchize_variants}
-                  colorArtwork={form.colors.reduce((acc, c) => {
-                    acc[c.name || 'Default'] = {
-                      front: c.artwork_front || '',
-                      back: c.artwork_back || '',
-                      sleeve: c.artwork_sleeve || '',
-                      hood: c.artwork_hood || '',
-                    };
-                    return acc;
-                  }, {})}
-                  nameStyle={form.name_style}
-                  numberStyle={form.number_style}
-                  customFontUrl={form.custom_font_url}
-                  customFontName={form.custom_font_name}
-                  fontId={form.font_id}
-                  enableName={form.enable_name}
-                  enableNumber={form.enable_number}
-                />
-              </>
-            )}
+                ))}
+              </div>
+            </div>
+            <VariantMerchizeIdsEditor
+              colors={form.colors}
+              combos={form.name_number_combos}
+              variantMerchizeIds={form.variant_merchize_ids}
+              onChange={(ids) => setField('variant_merchize_ids', ids)}
+              jerseyId={jerseyId}
+              merchizeProductId={form.merchize_product_id}
+              merchizeVariants={form.merchize_variants}
+              colorArtwork={form.colors.reduce((acc, c) => {
+                acc[c.name || 'Default'] = {
+                  front: c.artwork_front || '',
+                  back: c.artwork_back || '',
+                  sleeve: c.artwork_sleeve || '',
+                  hood: c.artwork_hood || '',
+                };
+                return acc;
+              }, {})}
+              nameStyle={form.name_style}
+              numberStyle={form.number_style}
+              customFontUrl={form.custom_font_url}
+              customFontName={form.custom_font_name}
+              fontId={form.font_id}
+              enableName={form.enable_name}
+              enableNumber={form.enable_number}
+            />
           </Section>
 
-          {showCatalogMerchizePicker && !form.use_existing_merchize_product && (
+          {showCatalogMerchizePicker && (
             <MerchizeCatalogPicker
               onSelect={({ merchize_product_id, merchize_variants, productTitle }) => {
                 setField('merchize_product_id', merchize_product_id);
