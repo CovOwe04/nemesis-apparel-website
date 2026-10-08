@@ -13,6 +13,7 @@ export function useAdminAuth() {
         sessionStorage.setItem(AUTH_KEY, '1');
         sessionStorage.setItem('nemesis-admin-passcode', code);
         setAuthed(true);
+        window.dispatchEvent(new Event('admin-auth-change'));
         return true;
       }
     } catch {
@@ -24,6 +25,7 @@ export function useAdminAuth() {
     sessionStorage.removeItem(AUTH_KEY);
     sessionStorage.removeItem('nemesis-admin-passcode');
     setAuthed(false);
+    window.dispatchEvent(new Event('admin-auth-change'));
   };
   return { authed, login, logout };
 }
