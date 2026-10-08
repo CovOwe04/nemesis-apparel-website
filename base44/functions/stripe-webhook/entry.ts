@@ -165,6 +165,7 @@ export default async function(req) {
       const cartItems = JSON.parse(order.items_json || '[]');
       const customerName = order.customer_name || '';
       const customerEmail = session.customer_email || session.customer_details?.email || order.customer_email || '';
+      const customerPhone = order.customer_phone || session.metadata?.customer_phone || '';
 
       const addrLines = [shippingAddress.line1, shippingAddress.line2].filter(Boolean).join(', ');
       const addrStr = [addrLines, shippingAddress.city, shippingAddress.state, shippingAddress.postalCode, shippingAddress.country]
@@ -386,7 +387,7 @@ export default async function(req) {
 
           if (merchizeItems.length > 0) {
             const merchizeData = await createMerchizeOrder(baseUrl, merchizeToken, merchizeKey, {
-              orderId, customerName, customerEmail, shippingAddress, items: merchizeItems,
+              orderId, customerName, customerEmail, customerPhone, shippingAddress, items: merchizeItems,
             });
             if (merchizeData.success && merchizeData.data?._id && merchizeData.artwork_import?.success === false) {
               await base44.asServiceRole.entities.Order.update(orderId, {

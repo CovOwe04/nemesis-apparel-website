@@ -13,13 +13,13 @@ function getClientIp(req) {
 export default async function(req) {
   try {
     const body = await req.json();
-    const { items, customerName, customerEmail, shippingAddress } = body;
+    const { items, customerName, customerEmail, customerPhone, shippingAddress } = body;
 
     if (!items || !items.length) {
       return Response.json({ error: 'Cart is empty' }, { status: 400 });
     }
-    if (!customerName || !customerEmail) {
-      return Response.json({ error: 'Name and email are required' }, { status: 400 });
+    if (!customerName || !customerEmail || !customerPhone) {
+      return Response.json({ error: 'Name, email, and phone number are required' }, { status: 400 });
     }
 
     // Validate item quantities are positive integers
@@ -168,6 +168,7 @@ export default async function(req) {
       items_json: JSON.stringify(verifiedItems),
       customer_name: customerName,
       customer_email: customerEmail,
+      customer_phone: customerPhone,
       status: 'pending',
       total: totalUsd,
       item_count: itemCount,
@@ -265,6 +266,7 @@ export default async function(req) {
     params.append('metadata[hst_usd]', String(hstUsd));
     params.append('metadata[promo_code_id]', promoCodeId);
     params.append('metadata[promo_discount_usd]', String(promoDiscountUsd));
+    params.append('metadata[customer_phone]', customerPhone);
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

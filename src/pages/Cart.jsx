@@ -67,6 +67,7 @@ export default function Cart() {
   });
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [renderRefreshError, setRenderRefreshError] = useState('');
@@ -238,35 +239,46 @@ export default function Cart() {
   }
 
   const checkout = async () => {
-    if (!customerName.trim() || !customerEmail.trim()) {
-      setFormError('Name and email are required.');
+    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
+      setFormError('Name, email, and phone number are required.');
       return;
     }
     if (!shippingAddress.line1.trim() || !shippingAddress.city.trim() || !shippingAddress.postalCode.trim()) {
       setFormError('Shipping address is required to calculate shipping and fulfill your order.');
       return;
     }
-    if (window.self !== window.top) {
-      alert('Checkout works only from the published app. Please open the app in a new tab to complete your purchase.');
-      return;
-    }
     setFormError('');
     setSubmitting(true);
+    const isFramed = window.self !== window.top;
+    const checkoutTab = isFramed ? window.open('', '_blank') : null;
+    if (isFramed && !checkoutTab) {
+      setFormError('Allow popups to continue to checkout.');
+      setSubmitting(false);
+      return;
+    }
+    if (checkoutTab) checkoutTab.opener = null;
     try {
       const res = await base44.functions.invoke('create-checkout-session', {
         items,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
         shippingAddress,
         currency,
         promoCode: appliedPromo ? appliedPromo.code : ''
       });
       if (res.data?.url) {
-        window.location.href = res.data.url;
+        if (checkoutTab) {
+          checkoutTab.location.replace(res.data.url);
+        } else {
+          window.location.assign(res.data.url);
+        }
       } else {
+        checkoutTab?.close();
         setFormError(res.data?.error || 'Could not start checkout. Please try again.');
       }
     } catch (err) {
+      checkoutTab?.close();
       setFormError(err?.response?.data?.error || err?.message || 'Checkout failed. Please try again.');
     } finally {
       setSubmitting(false);
@@ -475,6 +487,16 @@ export default function Cart() {
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   placeholder="you@email.com"
+                  className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
+                
+              </div>
+              <div>
+                <label className="mono-label text-fog/50 block mb-1.5">PHONE</label>
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="Phone number for fulfillment"
                   className="w-full bg-white text-black border border-steel rounded-[6px] px-4 py-3 text-sm placeholder:text-black/40 focus:border-kinetic outline-none" />
                 
               </div>

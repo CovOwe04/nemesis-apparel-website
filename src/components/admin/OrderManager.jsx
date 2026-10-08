@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Eye, Mail, User, Package, Trash2 } from 'lucide-react';
+import { Eye, Mail, Phone, User, Package, Trash2 } from 'lucide-react';
 import DesignReviewModal from '@/components/admin/DesignReviewModal';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
@@ -162,8 +162,9 @@ export default function OrderManager() {
                 {/* Expanded details */}
                 {isOpen && (
                   <div className="border-t border-steel p-4 space-y-4">
-                    <div className="flex items-center gap-2 text-fog/60 text-sm">
-                      <Mail size={14} className="text-fog/40" /> {o.customer_email}
+                    <div className="flex items-center gap-4 text-fog/60 text-sm">
+                      <span className="flex items-center gap-1.5"><Mail size={14} className="text-fog/40" /> {o.customer_email}</span>
+                      {o.customer_phone && <span className="flex items-center gap-1.5"><Phone size={14} className="text-fog/40" /> {o.customer_phone}</span>}
                     </div>
 
                     {/* Items */}

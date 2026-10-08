@@ -398,9 +398,9 @@ export async function createMerchizeOrder(
   baseUrl: string,
   token: string,
   apiKey: string,
-  opts: { orderId: string; customerName: string; customerEmail: string; shippingAddress: any; items: any[] },
+  opts: { orderId: string; customerName: string; customerEmail: string; customerPhone: string; shippingAddress: any; items: any[] },
 ) {
-  const { orderId, customerName, customerEmail, shippingAddress, items } = opts;
+  const { orderId, customerName, customerEmail, customerPhone, shippingAddress, items } = opts;
   const identifier = 'nemesis-apparel.base44.app';
 
   // Do not create a fulfillment order that cannot carry its print files. The
@@ -444,7 +444,7 @@ export async function createMerchizeOrder(
         postcode: shippingAddress.postalCode || '',
         country: shippingAddress.country || 'US',
         email: customerEmail,
-        phone: '',
+        phone: customerPhone || '',
       },
       items: items.map(({ order_artwork, requires_custom_artwork_front, rendered_image_version: _renderedImageVersion, ...item }) => item),
     }),

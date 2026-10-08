@@ -348,6 +348,16 @@ export default function IdentityLab() {
             <div>
               <div className="mono-label text-fog/50 mb-1.5">PRESETS</div>
               <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => { setName(''); setNumber(''); setSelectedPreset(null); }}
+                  className={`mono-label px-3 py-1.5 border rounded-[6px] text-[0.65rem] transition-colors ${
+                    selectedPreset === null
+                      ? 'border-kinetic bg-kinetic/10 text-kinetic'
+                      : 'border-steel text-fog/60 hover:text-fog hover:border-kinetic'
+                  }`}
+                >
+                  NONE
+                </button>
                 {combos.map((combo, i) => (
                   <button
                     key={i}
