@@ -25,7 +25,7 @@ export default function NexusControl() {
             <h1 className="font-heading text-xl uppercase text-fog">Nexus Control</h1>
           </div>
           <button onClick={logout}
-            className="inline-flex items-center gap-1.5 mono-label border border-kinetic text-kinetic px-4 py-2 rounded-[6px] hover:bg-kinetic hover:text-void transition-colors">
+            className="btn-solid gap-1.5 px-4 py-2 rounded-[6px] mono-label">
             <LogOut size={14} /> LOGOUT
           </button>
         </div>
