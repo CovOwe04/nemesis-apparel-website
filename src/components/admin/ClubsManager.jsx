@@ -218,11 +218,10 @@ export default function ClubsManager() {
                 {(() => {
                   const q = listingSearch.trim().toLowerCase();
                   const visible = jerseys.filter((j) =>
-                    (j.is_private || selectedIds.has(j.id)) &&
-                    (!q || (j.name || '').toLowerCase().includes(q))
+                    !q || (j.name || '').toLowerCase().includes(q)
                   );
                   if (visible.length === 0) {
-                    return <p className="mono-label text-fog/30 py-4 text-center">No private listings match.</p>;
+                    return <p className="mono-label text-fog/30 py-4 text-center">No listings match.</p>;
                   }
                   return (
                     <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -234,7 +233,10 @@ export default function ClubsManager() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-display font-bold text-fog text-xs uppercase truncate tracking-wide">{j.name}</div>
-                            <div className="mono-label text-fog/40 text-[0.6rem]">{j.team} · {j.category || 'Jersey'}</div>
+                            <div className="mono-label text-fog/40 text-[0.6rem] flex items-center gap-1.5">
+                              {j.team} · {j.category || 'Jersey'}
+                              {j.is_private && <span className="text-kinetic">PRIVATE</span>}
+                            </div>
                           </div>
                           {selectedIds.has(j.id) && <Check size={16} className="text-kinetic shrink-0" />}
                         </button>
