@@ -56,6 +56,7 @@ export default function IdentityLab() {
   const [numberOn, setNumberOn] = useState(true);
   const [rendering, setRendering] = useState(false);
   const [renderError, setRenderError] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState(null);
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -117,6 +118,11 @@ export default function IdentityLab() {
   const canCustomizeNumber = canCustomize && jersey.enable_number !== false;
   const colors = getColors(jersey);
   const combos = getCombos(jersey);
+  const hasPresets = combos.length > 0;
+  const presetActive = selectedPreset !== null;
+  const nameActive = (canCustomizeName && nameOn) || presetActive;
+  const numberActive = (canCustomizeNumber && numberOn) || presetActive;
+  const stylingActive = nameActive || numberActive;
   const availableSizes = getAvailableSizes(jersey);
   const currentColor = colors[Math.min(selectedColor, colors.length - 1)];
   const currentImages = currentColor?.images || [];
@@ -127,9 +133,12 @@ export default function IdentityLab() {
     setSelectedImageIdx(0);
   };
 
-  const selectCombo = (combo) => {
-    if (canCustomizeName && nameOn) setName(combo.name || '');
-    if (canCustomizeNumber && numberOn) setNumber(combo.number || '');
+  const selectCombo = (combo, idx) => {
+    setName(combo.name || '');
+    setNumber(combo.number || '');
+    setNameOn(true);
+    setNumberOn(true);
+    setSelectedPreset(idx);
   };
 
   const handleAdd = async () => {
@@ -137,8 +146,8 @@ export default function IdentityLab() {
     setRenderError('');
     let renderedImage = '';
     let renderedArtworkFront = '';
-    const renderedName = canCustomizeName && nameOn ? name.toUpperCase() : '';
-    const renderedNumber = canCustomizeNumber && numberOn ? number : '';
+    const renderedName = nameActive ? name.toUpperCase() : '';
+    const renderedNumber = numberActive ? number : '';
     if (renderedName || renderedNumber) {
       try {
         const blob = await renderJerseyDisplayToBlob({
@@ -149,8 +158,8 @@ export default function IdentityLab() {
           customNumber: renderedNumber,
           fontId,
           letterSpacing,
-          enableName: canCustomizeName && nameOn,
-          enableNumber: canCustomizeNumber && numberOn,
+          enableName: nameActive,
+          enableNumber: numberActive,
         });
         if (!blob) throw new Error('Could not encode the rendered preview.');
         const file = new File([blob], 'custom-jersey.png', { type: 'image/png' });
@@ -193,8 +202,8 @@ export default function IdentityLab() {
           fontFam,
           customFontUrl: jersey.custom_font_url || '',
           customFontName: jersey.custom_font_name || '',
-          enableName: canCustomizeName && nameOn,
-          enableNumber: canCustomizeNumber && numberOn,
+          enableName: nameActive,
+          enableNumber: numberActive,
           staticDisplay: jersey.static_display,
           isArtwork: true,
           aspectRatio: image.naturalWidth / image.naturalHeight,
@@ -224,14 +233,14 @@ export default function IdentityLab() {
       back_image: selectedImage,
       colorName: currentColor?.name || '',
       static_display: jersey.static_display,
-      customName: canCustomizeName && nameOn ? name.toUpperCase() : '',
-      customNumber: canCustomizeNumber && numberOn ? number : '',
-      fontId: canCustomize ? fontId : '',
-      nameStyle: canCustomize ? resolveNameStyle(jersey, currentColor) : null,
-      numberStyle: canCustomize ? resolveNumberStyle(jersey, currentColor) : null,
-      customFontUrl: canCustomize ? (jersey.custom_font_url || '') : '',
-      customFontName: canCustomize ? (jersey.custom_font_name || '') : '',
-      letterSpacing: canCustomize ? letterSpacing : 0,
+      customName: nameActive ? name.toUpperCase() : '',
+      customNumber: numberActive ? number : '',
+      fontId: stylingActive ? fontId : '',
+      nameStyle: stylingActive ? resolveNameStyle(jersey, currentColor) : null,
+      numberStyle: stylingActive ? resolveNumberStyle(jersey, currentColor) : null,
+      customFontUrl: stylingActive ? (jersey.custom_font_url || '') : '',
+      customFontName: stylingActive ? (jersey.custom_font_name || '') : '',
+      letterSpacing: stylingActive ? letterSpacing : 0,
       shirtSize,
       quantity: qty,
       rendered_image: renderedName || renderedNumber ? renderedImage : selectedImage,
@@ -271,19 +280,19 @@ export default function IdentityLab() {
               imageUrl={selectedImage}
               jersey={jersey}
               color={currentColor}
-              customName={canCustomizeName && nameOn ? name.toUpperCase() : ''}
-              customNumber={canCustomizeNumber && numberOn ? number : ''}
+              customName={nameActive ? name.toUpperCase() : ''}
+              customNumber={numberActive ? number : ''}
               fontId={fontId}
               letterSpacing={letterSpacing}
-              enableName={canCustomizeName && nameOn}
-              enableNumber={canCustomizeNumber && numberOn}
+              enableName={nameActive}
+              enableNumber={numberActive}
               showNamePlaceholder={canCustomize && canCustomizeName && nameOn}
               showNumberPlaceholder={canCustomize && canCustomizeNumber && numberOn}
               className={`rounded-[12px] ${jersey.static_display ? 'aspect-square' : 'aspect-[3/4]'}`}
             />
           </div>
           <div className="mt-4 text-center mono-label text-fog/40">
-            {canCustomize ? (jersey.static_display ? 'LIVE PREVIEW — LEFT SIDE' : 'LIVE PREVIEW — UPPER BACK') : 'CUSTOMIZATION DISABLED FOR THIS KIT'}
+            {stylingActive ? (jersey.static_display ? 'LIVE PREVIEW — LEFT SIDE' : 'LIVE PREVIEW — UPPER BACK') : 'CUSTOMIZATION DISABLED FOR THIS KIT'}
           </div>
         </div>
 
@@ -335,15 +344,19 @@ export default function IdentityLab() {
           )}
 
           {/* PRESETS */}
-          {canCustomize && combos.length > 0 && (
+          {combos.length > 0 && (
             <div>
               <div className="mono-label text-fog/50 mb-1.5">PRESETS</div>
               <div className="flex flex-wrap gap-2">
                 {combos.map((combo, i) => (
                   <button
                     key={i}
-                    onClick={() => selectCombo(combo)}
-                    className="mono-label px-3 py-1.5 border rounded-[6px] text-[0.65rem] border-steel text-fog/60 hover:text-fog hover:border-kinetic transition-colors"
+                    onClick={() => selectCombo(combo, i)}
+                    className={`mono-label px-3 py-1.5 border rounded-[6px] text-[0.65rem] transition-colors ${
+                      selectedPreset === i
+                        ? 'border-kinetic bg-kinetic/10 text-kinetic'
+                        : 'border-steel text-fog/60 hover:text-fog hover:border-kinetic'
+                    }`}
                   >
                     {combo.name || combo.number || `COMBO ${i + 1}`}
                   </button>
@@ -412,7 +425,7 @@ export default function IdentityLab() {
             </div>
           </div>
 
-          {!canCustomize ? (
+          {!canCustomize && !presetActive && (
             <div className="border border-steel rounded-[6px] p-3">
               <p className="mono-label text-kinetic mb-1">LAB LOCKED</p>
               <p className="text-fog/60 text-sm">
@@ -420,7 +433,21 @@ export default function IdentityLab() {
                 or pick a 'Lab-enabled' kit from the arsenal to add your name.
               </p>
             </div>
-          ) : (
+          )}
+
+          {!canCustomize && presetActive && (
+            <div className="border border-steel rounded-[6px] p-3">
+              <p className="mono-label text-kinetic mb-1">PRESET SELECTED</p>
+              <p className="text-fog/60 text-sm">
+                {nameActive && <span className="text-fog">{name.toUpperCase()}</span>}
+                {nameActive && numberActive && <span className="text-fog/40"> · </span>}
+                {numberActive && <span className="text-fog">#{number}</span>}
+                {!canCustomize && ' — custom name entry is not available for this kit.'}
+              </p>
+            </div>
+          )}
+
+          {canCustomize && (
             <>
               {/* NAME */}
               {canCustomizeName && (
@@ -434,7 +461,7 @@ export default function IdentityLab() {
                         id="name-input"
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value.slice(0, 20))}
+                        onChange={(e) => { setName(e.target.value.slice(0, 20)); setSelectedPreset(null); }}
                         placeholder="ENTER NAME"
                         disabled={!nameOn}
                         className={`w-full bg-white text-black border border-steel rounded-[6px] px-4 py-2 pr-12 font-display text-base uppercase tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!nameOn ? 'opacity-40' : ''}`}
@@ -474,7 +501,7 @@ export default function IdentityLab() {
                       type="text"
                       inputMode="numeric"
                       value={number}
-                      onChange={(e) => setNumber(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                      onChange={(e) => { setNumber(e.target.value.replace(/\D/g, '').slice(0, 3)); setSelectedPreset(null); }}
                       placeholder="0–999"
                       disabled={!numberOn}
                       className={`flex-1 bg-white text-black border border-steel rounded-[6px] px-4 py-2 font-display text-base tracking-wider placeholder:text-black/40 focus:border-kinetic outline-none transition-all ${!numberOn ? 'opacity-40' : ''}`}

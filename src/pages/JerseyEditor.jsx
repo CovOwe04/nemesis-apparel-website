@@ -144,6 +144,8 @@ export default function JerseyEditor() {
   // Once a brand-new listing is saved, switch the editor into update mode in
   // place (no page switch) so re-clicking updates instead of creating duplicates.
   const effectiveId = jerseyId || savedId;
+  const hasPresets = (form.name_number_combos || []).length > 0;
+  const designerEnabled = hasImages && (form.enable_customization || hasPresets);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -362,7 +364,7 @@ export default function JerseyEditor() {
             <NameNumberCombosEditor combos={form.name_number_combos} onChange={(c) => setField('name_number_combos', c)} />
           </Section>
 
-          <Section title="IDENTITY LAB">
+          <Section title="NAME & NUMBER">
             <Toggle
               checked={form.enable_customization}
               onChange={(v) => {
@@ -370,27 +372,30 @@ export default function JerseyEditor() {
                 setField('enable_customization', v);
               }}
               disabled={!hasImages}
-              label="ENABLE IDENTITY LAB" />
+              label="ENABLE CUSTOM INPUT (IDENTITY LAB)" />
             
             {!hasImages &&
-            <p className="mono-label text-fog/30">Add at least 1 color with images to enable Identity Lab.</p>
+            <p className="mono-label text-fog/30">Add at least 1 color with images to enable name & number design.</p>
             }
-            {form.enable_customization &&
+            {designerEnabled &&
             <>
                 <Toggle
                 checked={form.enable_name}
                 onChange={(v) => setField('enable_name', v)}
-                label="ENABLE NAME CUSTOMIZATION" />
+                label="ENABLE NAME" />
               
                 <Toggle
                 checked={form.enable_number}
                 onChange={(v) => setField('enable_number', v)}
-                label="ENABLE NUMBER CUSTOMIZATION" />
+                label="ENABLE NUMBER" />
               </>
+            }
+            {designerEnabled &&
+              <p className="mono-label text-fog/30">Design the name & number below — they apply to both presets and custom Identity Lab input.</p>
             }
           </Section>
 
-          {form.enable_customization &&
+          {designerEnabled &&
             <DesignerPanel
               form={form}
               setForm={setForm}
