@@ -482,7 +482,7 @@ export default function JerseyEditor() {
       />
 
       {showGenerate && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all duration-300 ${generating || skipping ? 'bg-black/80 backdrop-blur-md' : 'bg-black/70'}`}>
           <div className="bg-card border border-steel rounded-[6px] p-6 max-w-sm space-y-4">
             <div className="font-heading text-fog text-sm uppercase">Generate products in Merchize?</div>
             <p className="mono-label text-fog/50 text-[0.65rem] leading-relaxed normal-case tracking-normal">
