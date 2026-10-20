@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Eye, Mail, Phone, User, Package, Trash2 } from 'lucide-react';
+import { Eye, Mail, Phone, User, Package, Trash2, Undo2 } from 'lucide-react';
 import DesignReviewModal from '@/components/admin/DesignReviewModal';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import RefundOrderDialog from '@/components/admin/RefundOrderDialog';
 
 const STATUS_STYLES = {
   pending_approval: 'text-kinetic border-kinetic',
   approved: 'text-fog border-fog',
   rejected: 'text-fog/40 border-steel',
   fulfilled: 'text-fog/60 border-fog/40',
+  refunded: 'text-kinetic border-kinetic',
+  cancelled: 'text-fog/40 border-steel',
 };
 
 export default function OrderManager() {
@@ -22,6 +25,7 @@ export default function OrderManager() {
   const [syncMessage, setSyncMessage] = useState(null);
   const [deletingId, setDeletingId] = useState('');
   const [confirmOrder, setConfirmOrder] = useState(null);
+  const [refundOrder, setRefundOrder] = useState(null);
 
   const deleteOrder = async (order) => {
     setDeletingId(order.id);
@@ -82,11 +86,14 @@ export default function OrderManager() {
 
   const filtered = orders.filter((o) => filter === 'all' ? true : o.status === filter);
 
+  // Orders that still hold money are refundable; rejected/refunded/cancelled ones are settled.
+  const canRefund = (o) => !['rejected', 'refunded', 'cancelled'].includes(o.status);
+
   return (
     <div>
       {/* Show all checkouts; only pending-approval orders expose approval actions. */}
       <div className="flex items-center gap-2 mb-6">
-        {['pending_approval', 'approved', 'fulfilled', 'rejected', 'all'].map((s) => (
+        {['pending_approval', 'approved', 'fulfilled', 'refunded', 'rejected', 'all'].map((s) => (
           <button key={s} onClick={() => setFilter(s)}
             className={`mono-label px-4 py-2 border rounded-[6px] transition-colors ${filter === s ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/50 hover:text-fog'}`}>
             {s === 'pending_approval' ? 'PENDING' : s.toUpperCase()}
@@ -144,6 +151,15 @@ export default function OrderManager() {
                     >
                       <Eye size={12} /> {o.status === 'pending_approval' ? 'View & Approve Design' : 'View Order'}
                     </button>
+                    {canRefund(o) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setRefundOrder(o); }}
+                        title={o.stripe_payment_id ? 'Refund / cancel order' : 'Cancel order'}
+                        className="inline-flex items-center justify-center border border-steel text-fog/50 hover:text-kinetic hover:border-kinetic/50 px-2.5 py-2 rounded-[4px] transition-colors"
+                      >
+                        <Undo2 size={14} />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmOrder(o); }}
                       disabled={deletingId === o.id}
@@ -202,6 +218,17 @@ export default function OrderManager() {
         loading={!!deletingId}
         onConfirm={() => confirmOrder && deleteOrder(confirmOrder)}
         onCancel={() => setConfirmOrder(null)}
+      />
+
+      {/* Refund / cancel action */}
+      <RefundOrderDialog
+        order={refundOrder}
+        onClose={() => setRefundOrder(null)}
+        onDone={(message) => {
+          setSyncMessage({ orderId: refundOrder?.id, message });
+          setRefundOrder(null);
+          loadOrders();
+        }}
       />
 
       {/* Design Review Modal */}

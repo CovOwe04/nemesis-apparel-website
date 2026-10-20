@@ -31,7 +31,9 @@
         "pending_approval",
         "approved",
         "rejected",
-        "fulfilled"
+        "fulfilled",
+        "refunded",
+        "cancelled"
       ],
       "default": "pending",
       "title": "Order Status"
@@ -69,6 +71,33 @@
       "type": "string",
       "default": "",
       "title": "Shipping Address (JSON)"
+    },
+    "refund_id": {
+      "type": "string",
+      "default": "",
+      "title": "Last Stripe Refund ID"
+    },
+    "refund_amount_usd": {
+      "type": "number",
+      "default": 0,
+      "title": "Total Refunded (USD)"
+    },
+    "refund_reason": {
+      "type": "string",
+      "default": "",
+      "title": "Refund / Cancellation Reason"
+    },
+    "refunded_at": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Refunded At"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "default": "",
+      "title": "Cancelled At"
     }
   },
   "required": [

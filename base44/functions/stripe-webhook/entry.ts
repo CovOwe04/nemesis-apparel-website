@@ -3,6 +3,7 @@ import { secrets } from 'base44:runtime';
 import Stripe from 'npm:stripe@17.7.0';
 import { createMerchizeOrder, createCustomProductForItem, buildCustomOrderItem, findPresetMatch, buildPresetOrderItem, orderItemAttributes } from '../../shared/merchize.ts';
 import { isSafeImageUrl } from '../../shared/security.ts';
+import { sendRefundNotice } from '../../shared/refundNotice.ts';
 
 const CAD_RATE = 1.36;
 const LOGO_URL = 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/65e457e18_Asset63x.png';
@@ -141,6 +142,18 @@ export default async function(req) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
+
+      // Base44's own self-test payment and unpaid sessions are not customer
+      // orders — fulfilling them would ship gear that was never paid for.
+      if (session.metadata?.base44_test_checkout === 'true') {
+        console.log('Ignoring Base44 self-test checkout session');
+        return Response.json({ received: true, test_checkout: true });
+      }
+      if (session.payment_status !== 'paid') {
+        console.log(`Ignoring unpaid session ${session.id} (payment_status=${session.payment_status})`);
+        return Response.json({ received: true, unpaid: true });
+      }
+
       const orderId = session.metadata?.order_id;
       const shippingAddress = JSON.parse(session.metadata?.shipping_address || '{}');
       const shippingCostUsd = Number(session.metadata?.shipping_cost_usd || 0);
@@ -418,6 +431,58 @@ export default async function(req) {
       }
 
       console.log(`Order ${orderId} processed for ${customerEmail}, total $${totalUsd}`);
+    }
+
+    // A refund issued straight from the Stripe dashboard must reconcile to the
+    // order, otherwise the app keeps showing it as paid and fulfilled after the
+    // money went back. Refunds our own admin action already recorded are skipped.
+    if (event.type === 'charge.refunded') {
+      const charge: any = event.data.object;
+      const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : '';
+      if (!paymentIntentId) return Response.json({ received: true });
+
+      const matches = await base44.asServiceRole.entities.Order.filter({ stripe_payment_id: paymentIntentId }, '-created_date', 5);
+      const refundedOrder = (matches || [])[0];
+      if (!refundedOrder) {
+        console.log(`No order matches refunded payment ${paymentIntentId}`);
+        return Response.json({ received: true });
+      }
+
+      const lastRefundId = charge.refunds?.data?.[0]?.id || '';
+      const handledByApp = Boolean(
+        refundedOrder.refund_id && charge.refunds?.data?.some((r: any) => r.id === refundedOrder.refund_id)
+      );
+      const fullyRefunded = Number(charge.amount_refunded || 0) >= Number(charge.amount || 0);
+      if (handledByApp || (fullyRefunded && refundedOrder.status === 'refunded')) {
+        console.log(`Refund for order ${refundedOrder.id} already recorded — skipping`);
+        return Response.json({ received: true, duplicate: true });
+      }
+
+      const currency = (charge.currency || 'usd').toLowerCase();
+      const refundedMinor = Number(charge.amount_refunded || 0);
+      const refundedUsd = currency === 'cad'
+        ? Math.round((refundedMinor / 100 / CAD_RATE) * 100) / 100
+        : Math.round(refundedMinor) / 100;
+
+      await base44.asServiceRole.entities.Order.update(refundedOrder.id, {
+        status: fullyRefunded ? 'refunded' : refundedOrder.status,
+        refund_id: lastRefundId || refundedOrder.refund_id || '',
+        refund_amount_usd: refundedUsd,
+        refunded_at: new Date().toISOString(),
+        admin_notes: `${refundedOrder.admin_notes || ''}\nRefund recorded from Stripe: ${lastRefundId || 'refund'} — ${currency.toUpperCase()} ${(refundedMinor / 100).toFixed(2)}`.trim(),
+      });
+
+      await sendRefundNotice({
+        to: refundedOrder.customer_email,
+        customerName: refundedOrder.customer_name,
+        orderId: refundedOrder.id,
+        refundedUsd,
+        fullRefund: fullyRefunded,
+        cancelled: fullyRefunded,
+      });
+
+      console.log(`Order ${refundedOrder.id} reconciled: ${fullyRefunded ? 'full' : 'partial'} refund of $${refundedUsd}`);
+      return Response.json({ received: true, reconciled: true });
     }
 
     return Response.json({ received: true });
