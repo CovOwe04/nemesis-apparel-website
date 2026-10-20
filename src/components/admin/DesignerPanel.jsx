@@ -88,9 +88,7 @@ export default function DesignerPanel({
           {form.colors.length === 0 ? (
             <p className="mono-label text-fog/30 py-4 text-center">Add colors first to crop the 3D mockup.</p>
           ) : (
-            form.colors.map((color, ci) => (
-              <MockupCropDesigner key={ci} color={color} colorIndex={ci} updateColor={updateColor} />
-            ))
+            <MockupCropDesigner colors={form.colors} updateColor={updateColor} />
           )}
         </div>
       ) : (

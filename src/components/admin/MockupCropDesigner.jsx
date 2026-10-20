@@ -4,23 +4,31 @@ import { getMockupImageUrl, resolveMockupCrop } from '@/lib/jerseyStyle';
 
 const MIN_SIZE = 0.05;
 const CORNERS = ['nw', 'ne', 'sw', 'se'];
+const FULL_CROP = { x: 0, y: 0, w: 1, h: 1 };
 
 function clamp01(n) {
   return Math.min(1, Math.max(0, n));
 }
 
-// Per-color crop editor for the 3D mockup image. The saved crop rect is applied
-// when the mockup is rendered for Merchize, so the admin frames the exact image
-// that gets uploaded.
-export default function MockupCropDesigner({ color, colorIndex, updateColor }) {
+// One crop applied to every color of the listing: the same framing is uploaded
+// as the Merchize 3D mockup for the whole listing. A color's image can be
+// previewed while cropping, but the result is written to all colors.
+export default function MockupCropDesigner({ colors = [], updateColor }) {
   const boxRef = useRef(null);
   const dragRef = useRef(null);
   const [natural, setNatural] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [selected, setSelected] = useState(() => {
+    const withImage = colors.findIndex((c) => getMockupImageUrl(c));
+    return withImage === -1 ? 0 : withImage;
+  });
 
-  const imageUrl = getMockupImageUrl(color);
-  const crop = resolveMockupCrop(color);
-  const commit = (next) => updateColor(colorIndex, { mockup_crop: next });
+  const displayIndex = selected < colors.length ? selected : 0;
+  const displayColor = colors[displayIndex] || {};
+  const imageUrl = getMockupImageUrl(displayColor);
+  const crop = resolveMockupCrop(displayColor);
+
+  const commit = (next) => colors.forEach((_, i) => updateColor(i, { mockup_crop: next }));
 
   const startDrag = (mode, event) => {
     event.preventDefault();
@@ -89,19 +97,31 @@ export default function MockupCropDesigner({ color, colorIndex, updateColor }) {
 
   return (
     <div className="border border-steel rounded-[4px] p-3">
-      <div className="flex items-center justify-between mb-3">
-        <span className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full border border-steel" style={{ backgroundColor: color.hex || '#000' }} />
-          <span className="mono-label text-fog/60 text-[0.65rem]">{(color.name || 'DEFAULT').toUpperCase()} 3D MOCKUP</span>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <span className="mono-label text-fog/60 text-[0.65rem] truncate">
+          {(displayColor.name || 'DEFAULT').toUpperCase()} &middot; APPLIES TO ALL COLORS
         </span>
-        <button type="button" onClick={() => commit({ x: 0, y: 0, w: 1, h: 1 })}
-          className="inline-flex items-center gap-1 mono-label text-fog/50 hover:text-kinetic transition-colors text-[0.6rem]">
-          <RotateCcw size={11} /> RESET
-        </button>
+        <span className="flex items-center gap-2 shrink-0">
+          {colors.length > 1 &&
+            colors.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setSelected(i)}
+                title={`Preview ${c.name || `color ${i + 1}`}`}
+                className={`w-5 h-5 rounded-full border transition-colors ${i === displayIndex ? 'border-kinetic' : 'border-steel hover:border-fog'}`}
+                style={{ backgroundColor: c.hex || '#000' }}
+              />
+            ))}
+          <button type="button" onClick={() => commit(FULL_CROP)}
+            className="inline-flex items-center gap-1 mono-label text-fog/50 hover:text-kinetic transition-colors text-[0.6rem]">
+            <RotateCcw size={11} /> RESET
+          </button>
+        </span>
       </div>
 
       {!imageUrl ? (
-        <p className="mono-label text-fog/30 py-6 text-center text-[0.6rem]">Add an image to this color to crop its 3D mockup.</p>
+        <p className="mono-label text-fog/30 py-6 text-center text-[0.6rem]">Add an image to a color to crop the 3D mockup.</p>
       ) : (
         <div className="grid lg:grid-cols-2 gap-3">
           {/* Crop editor */}
@@ -141,7 +161,9 @@ export default function MockupCropDesigner({ color, colorIndex, updateColor }) {
                 ))}
               </div>
             </div>
-            <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">Drag the box or a corner to frame the 3D mockup.</p>
+            <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">
+              Drag the box or a corner to frame the 3D mockup. Use the swatches to check another color's image.
+            </p>
           </div>
 
           {/* Cropped result */}
@@ -163,7 +185,9 @@ export default function MockupCropDesigner({ color, colorIndex, updateColor }) {
                 }}
               />
             </div>
-            <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">This cropped image is uploaded as the 3D mockup for this color.</p>
+            <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">
+              This crop is uploaded as the 3D mockup for every color.
+            </p>
           </div>
         </div>
       )}
