@@ -87,9 +87,10 @@ export async function generateMerchizeVariants({
         fontId,
         enableName,
         enableNumber,
+        mockup: true,
       });
       if (blob) {
-        const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.png`, { type: 'image/png' });
+        const file = new File([blob], `combo-${v.color_name}-${v.combo_name}-${v.combo_number}.jpg`, { type: 'image/jpeg' });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         renderedImages[`${v.color_name}|${v.combo_name}|${v.combo_number}`] = file_url;
       }

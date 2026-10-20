@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { Check, RotateCcw } from 'lucide-react';
 import { getMockupImageUrl, resolveMockupCrop } from '@/lib/jerseyStyle';
 
 const MIN_SIZE = 0.05;
@@ -18,6 +18,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
   const dragRef = useRef(null);
   const [natural, setNatural] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [cropSet, setCropSet] = useState(false);
   const [selected, setSelected] = useState(() => {
     const withImage = colors.findIndex((c) => getMockupImageUrl(c));
     return withImage === -1 ? 0 : withImage;
@@ -29,6 +30,12 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
   const crop = resolveMockupCrop(displayColor);
 
   const commit = (next) => colors.forEach((_, i) => updateColor(i, { mockup_crop: next }));
+
+  // "SET" writes the framed crop to every color and confirms it is applied.
+  const applyCrop = () => {
+    commit(resolveMockupCrop(displayColor));
+    setCropSet(true);
+  };
 
   const startDrag = (mode, event) => {
     event.preventDefault();
@@ -82,6 +89,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
         next = { x, y, w, h };
       }
       commit(next);
+      setCropSet(false);
     };
 
     const onUp = () => {
@@ -113,9 +121,13 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
                 style={{ backgroundColor: c.hex || '#000' }}
               />
             ))}
-          <button type="button" onClick={() => commit(FULL_CROP)}
+          <button type="button" onClick={() => { commit(FULL_CROP); setCropSet(false); }}
             className="inline-flex items-center gap-1 mono-label text-fog/50 hover:text-kinetic transition-colors text-[0.6rem]">
             <RotateCcw size={11} /> RESET
+          </button>
+          <button type="button" onClick={applyCrop}
+            className={`inline-flex items-center gap-1.5 font-heading uppercase text-[0.7rem] px-3 py-1 rounded-[4px] transition-colors ${cropSet ? 'bg-void text-kinetic border border-kinetic' : 'bg-kinetic text-void hover:bg-fog'}`}>
+            {cropSet ? <><Check size={12} /> SET</> : 'SET'}
           </button>
         </span>
       </div>
@@ -186,7 +198,9 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
               />
             </div>
             <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">
-              This crop is uploaded as the 3D mockup for every color.
+              {cropSet
+                ? 'Crop set for every color. Generate the Merchize products again to apply it.'
+                : 'Press SET to apply this crop to every color — it is uploaded as the 3D mockup.'}
             </p>
           </div>
         </div>

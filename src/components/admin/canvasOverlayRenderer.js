@@ -266,6 +266,8 @@ export async function renderOverlayToBlob({
   renderW,
   renderH,
   superSample = 2,
+  mimeType = 'image/png',
+  quality,
 }) {
   const SUPER = superSample; // supersampling factor for crisp output
   const canvas = document.createElement('canvas');
@@ -468,8 +470,8 @@ export async function renderOverlayToBlob({
     ctx.restore();
   }
 
-  // 8. Return PNG blob
-  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  // 8. Return the encoded blob (PNG by default, compact JPEG for Merchize mockups)
+  return new Promise((resolve) => canvas.toBlob(resolve, mimeType, quality));
 }
 
 export function renderJerseyDisplayToBlob({
@@ -483,15 +485,19 @@ export function renderJerseyDisplayToBlob({
   enableName = true,
   enableNumber = true,
   preview = false,
+  mockup = false,
 }) {
   if (!imageUrl) throw new Error('Jersey display image is missing.');
 
   const staticDisplay = Boolean(jersey?.static_display);
   // Live preview uses a smaller canvas with no supersampling for speed;
   // full-res 2x render is reserved for the final cart artwork upload.
-  const renderW = preview ? (staticDisplay ? 600 : 480) : (staticDisplay ? 1200 : 900);
-  const renderH = preview ? 600 : 1200;
-  const superSample = preview ? 1 : 2;
+  // Merchize mockups go up as a compact JPEG: the oversized supersampled PNG
+  // uploads were rejected by Merchize, so generated products came out with no
+  // image at all.
+  const renderW = mockup ? (staticDisplay ? 1000 : 900) : preview ? (staticDisplay ? 600 : 480) : (staticDisplay ? 1200 : 900);
+  const renderH = mockup ? (staticDisplay ? 1000 : 1200) : preview ? 600 : 1200;
+  const superSample = mockup || preview ? 1 : 2;
   const font = FONTS.find((entry) => entry.id === fontId) || FONTS[0];
   const fontFam = jersey?.custom_font_name
     ? `'${jersey.custom_font_name}', ${font.family}`
@@ -517,5 +523,7 @@ export function renderJerseyDisplayToBlob({
     renderW,
     renderH,
     superSample,
+    mimeType: mockup ? 'image/jpeg' : 'image/png',
+    quality: mockup ? 0.9 : undefined,
   });
 }
