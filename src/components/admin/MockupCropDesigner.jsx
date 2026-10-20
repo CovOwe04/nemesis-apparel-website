@@ -19,6 +19,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
   const [natural, setNatural] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [cropSet, setCropSet] = useState(false);
+  const [draftCrop, setDraftCrop] = useState(null);
   const [selected, setSelected] = useState(() => {
     const withImage = colors.findIndex((c) => getMockupImageUrl(c));
     return withImage === -1 ? 0 : withImage;
@@ -27,13 +28,18 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
   const displayIndex = selected < colors.length ? selected : 0;
   const displayColor = colors[displayIndex] || {};
   const imageUrl = getMockupImageUrl(displayColor);
-  const crop = resolveMockupCrop(displayColor);
+  // Framing changes stay in a local draft so an accidental drag never reaches
+  // the listing (and the Merchize mockup upload). SET is the save action.
+  const storedCrop = resolveMockupCrop(displayColor);
+  const crop = draftCrop || storedCrop;
+  const unsaved = draftCrop !== null;
 
   const commit = (next) => colors.forEach((_, i) => updateColor(i, { mockup_crop: next }));
 
-  // "SET" writes the framed crop to every color and confirms it is applied.
+  // "SET" saves the framed crop to every color.
   const applyCrop = () => {
-    commit(resolveMockupCrop(displayColor));
+    commit(crop);
+    setDraftCrop(null);
     setCropSet(true);
   };
 
@@ -88,7 +94,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
         }
         next = { x, y, w, h };
       }
-      commit(next);
+      setDraftCrop(next);
       setCropSet(false);
     };
 
@@ -121,7 +127,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
                 style={{ backgroundColor: c.hex || '#000' }}
               />
             ))}
-          <button type="button" onClick={() => { commit(FULL_CROP); setCropSet(false); }}
+          <button type="button" onClick={() => { setDraftCrop(FULL_CROP); setCropSet(false); }}
             className="inline-flex items-center gap-1 mono-label text-fog/50 hover:text-kinetic transition-colors text-[0.6rem]">
             <RotateCcw size={11} /> RESET
           </button>
@@ -174,7 +180,7 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
               </div>
             </div>
             <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">
-              Drag the box or a corner to frame the 3D mockup. Use the swatches to check another color's image.
+              Drag the box or a corner to frame the 3D mockup, then press SET to save it. Use the swatches to check another color's image.
             </p>
           </div>
 
@@ -198,9 +204,11 @@ export default function MockupCropDesigner({ colors = [], updateColor }) {
               />
             </div>
             <p className="mono-label text-fog/30 mt-2 text-[0.55rem] leading-relaxed">
-              {cropSet
-                ? 'Crop set for every color. Generate the Merchize products again to apply it.'
-                : 'Press SET to apply this crop to every color — it is uploaded as the 3D mockup.'}
+              {unsaved
+                ? 'Not saved yet — press SET to apply this crop to every color.'
+                : cropSet
+                  ? 'Crop saved for every color. Generate the Merchize products again to apply it.'
+                  : 'Press SET to save this crop to every color — it is uploaded as the 3D mockup.'}
             </p>
           </div>
         </div>
