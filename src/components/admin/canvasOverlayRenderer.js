@@ -268,21 +268,12 @@ export async function renderOverlayToBlob({
   superSample = 2,
   mimeType = 'image/png',
   quality,
+  matchCropAspect = false,
 }) {
   const SUPER = superSample; // supersampling factor for crisp output
-  const canvas = document.createElement('canvas');
-  canvas.width = renderW * SUPER;
-  canvas.height = renderH * SUPER;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(SUPER, SUPER);
 
-  // 1. Fill background for static display (matches StaticNameOverlay bg-black)
-  if (staticDisplay && !isArtwork) {
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, renderW, renderH);
-  }
-
-  // 2. Load and draw image
+  // 1. Load the source image first — the canvas size depends on it when the
+  //    crop's own ratio is used.
   const img = new Image();
   img.crossOrigin = 'anonymous';
   await new Promise((resolve, reject) => {
@@ -302,10 +293,38 @@ export async function renderOverlayToBlob({
     img.src = imageUrl;
   });
 
+  // 2. Canvas. matchCropAspect matches the canvas ratio to the cropped source
+  //    region, so a contained image fills it exactly — no black bars.
+  let outW = renderW;
+  let outH = renderH;
+  if (matchCropAspect) {
+    const { sw, sh } = cropSourceRect(img, crop);
+    const ratio = (sw / sh) || (renderW / renderH);
+    if (ratio >= renderW / renderH) {
+      outW = renderW;
+      outH = Math.round(renderW / ratio);
+    } else {
+      outH = renderH;
+      outW = Math.round(renderH * ratio);
+    }
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = outW * SUPER;
+  canvas.height = outH * SUPER;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SUPER, SUPER);
+
+  // Fill background for static display (matches StaticNameOverlay bg-black)
+  if (staticDisplay && !isArtwork) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, outW, outH);
+  }
+
+  // 3. Draw image
   if (imageFit === 'cover') {
-    drawImageCover(ctx, img, renderW, renderH, crop);
+    drawImageCover(ctx, img, outW, outH, crop);
   } else {
-    drawImageContain(ctx, img, renderW, renderH, crop);
+    drawImageContain(ctx, img, outW, outH, crop);
   }
 
   // 3. Resolve per-element fonts (name and number can differ). Falls back to
@@ -379,7 +398,7 @@ export async function renderOverlayToBlob({
     nameRiseCenterX = cx;
     numRiseCenterX = cx;
   } else if (staticDisplay) {
-    const staticAspect = renderW / renderH || 1;
+    const staticAspect = outW / outH || 1;
     viewBoxW = Math.round(400 * staticAspect);
     viewBoxH = 400;
     fontScale = 4 / 3;
@@ -408,7 +427,7 @@ export async function renderOverlayToBlob({
     numRiseCenterX = viewBoxW / 2;
   }
 
-  const scale = renderW / viewBoxW; // viewBox → canvas scale
+  const scale = outW / viewBoxW; // viewBox → canvas scale
 
   // 6. Draw name
   if (displayName) {
@@ -520,6 +539,9 @@ export function renderJerseyDisplayToBlob({
     enableName,
     enableNumber,
     staticDisplay,
+    // Merchize mockups of static (single-image) colors take the crop's own
+    // ratio, so the uploaded product image has no letterboxed black lines.
+    matchCropAspect: mockup && staticDisplay,
     renderW,
     renderH,
     superSample,
