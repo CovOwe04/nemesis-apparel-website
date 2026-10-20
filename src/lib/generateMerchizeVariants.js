@@ -59,10 +59,13 @@ export async function generateMerchizeVariants({
   }
 
   const renderedImages = {};
-  const needsRender = missing.filter((v) => v.combo_name || v.combo_number);
-  for (let i = 0; i < needsRender.length; i++) {
-    const v = needsRender[i];
-    onProgress?.(`Rendering ${i + 1}/${needsRender.length}…`);
+  // Render a display image for every variant — color-only ones included — so the
+  // color's 3D mockup crop is applied to the image Merchize shows for it.
+  // (Only variants carrying a name/number need the artwork composite below.)
+  const combosToRender = missing.filter((v) => v.combo_name || v.combo_number);
+  for (let i = 0; i < missing.length; i++) {
+    const v = missing[i];
+    onProgress?.(`Rendering ${i + 1}/${missing.length}…`);
     const colorObj = (colors || []).find((c) => c.name === v.color_name);
     const images = colorObj?.images || [];
     if (images.length === 0) continue;
@@ -96,9 +99,9 @@ export async function generateMerchizeVariants({
   }
 
   const renderedArtwork = {};
-  for (let i = 0; i < needsRender.length; i++) {
-    const v = needsRender[i];
-    onProgress?.(`Compositing artwork ${i + 1}/${needsRender.length}…`);
+  for (let i = 0; i < combosToRender.length; i++) {
+    const v = combosToRender[i];
+    onProgress?.(`Compositing artwork ${i + 1}/${combosToRender.length}…`);
     const colorObj = (colors || []).find((c) => c.name === v.color_name);
     const resolvedNameStyle = resolveArtworkNameStyle({ name_style: nameStyle }, colorObj);
     const resolvedNumberStyle = resolveArtworkNumberStyle({ number_style: numberStyle }, colorObj);
