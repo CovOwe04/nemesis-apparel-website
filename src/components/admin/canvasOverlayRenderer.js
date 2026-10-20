@@ -16,6 +16,7 @@ import {
   resolveNameStyle,
   resolveNumberStyle,
   resolveFont,
+  resolveMockupCrop,
 } from '@/lib/jerseyStyle';
 import { FONTS } from '@/lib/fonts';
 
@@ -176,34 +177,56 @@ function drawTextOnPath(ctx, text, path, scale, fill, strokeColor, strokeWidth, 
 
 // ===== Image drawing =====
 
-function drawImageCover(ctx, img, w, h) {
-  if (!img.naturalWidth || !img.naturalHeight) {
-    ctx.drawImage(img, 0, 0, w, h);
-    return;
+// Source rectangle inside the natural image, honoring an optional normalized
+// crop rect ({x, y, w, h} as fractions of the image). No crop → the whole image.
+function cropSourceRect(img, crop) {
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  if (!crop || !(crop.w > 0) || !(crop.h > 0)) {
+    return { sx: 0, sy: 0, sw: nw, sh: nh };
   }
-  const imgRatio = img.naturalWidth / img.naturalHeight;
-  const canvasRatio = w / h;
-  let sx, sy, sw, sh;
-  if (imgRatio > canvasRatio) {
-    sh = img.naturalHeight;
-    sw = sh * canvasRatio;
-    sx = (img.naturalWidth - sw) / 2;
-    sy = 0;
-  } else {
-    sw = img.naturalWidth;
-    sh = sw / canvasRatio;
-    sx = 0;
-    sy = (img.naturalHeight - sh) / 2;
-  }
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+  const x = Math.min(Math.max(crop.x || 0, 0), 1);
+  const y = Math.min(Math.max(crop.y || 0, 0), 1);
+  const w = Math.min(crop.w, 1 - x);
+  const h = Math.min(crop.h, 1 - y);
+  return {
+    sx: x * nw,
+    sy: y * nh,
+    sw: Math.max(w, 0.01) * nw,
+    sh: Math.max(h, 0.01) * nh,
+  };
 }
 
-function drawImageContain(ctx, img, w, h) {
+function drawImageCover(ctx, img, w, h, crop) {
   if (!img.naturalWidth || !img.naturalHeight) {
     ctx.drawImage(img, 0, 0, w, h);
     return;
   }
-  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const { sx, sy, sw, sh } = cropSourceRect(img, crop);
+  const imgRatio = sw / sh;
+  const canvasRatio = w / h;
+  let dx, dy, dw, dh;
+  if (imgRatio > canvasRatio) {
+    dh = sh;
+    dw = sh * canvasRatio;
+    dx = sx + (sw - dw) / 2;
+    dy = sy;
+  } else {
+    dw = sw;
+    dh = sw / canvasRatio;
+    dx = sx;
+    dy = sy + (sh - dh) / 2;
+  }
+  ctx.drawImage(img, dx, dy, dw, dh, 0, 0, w, h);
+}
+
+function drawImageContain(ctx, img, w, h, crop) {
+  if (!img.naturalWidth || !img.naturalHeight) {
+    ctx.drawImage(img, 0, 0, w, h);
+    return;
+  }
+  const { sx, sy, sw, sh } = cropSourceRect(img, crop);
+  const imgRatio = sw / sh;
   const canvasRatio = w / h;
   let dw, dh, dx, dy;
   if (imgRatio > canvasRatio) {
@@ -217,7 +240,7 @@ function drawImageContain(ctx, img, w, h) {
     dy = 0;
     dx = (w - dw) / 2;
   }
-  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, dw, dh);
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
 // ===== Main render function =====
@@ -225,6 +248,7 @@ function drawImageContain(ctx, img, w, h) {
 export async function renderOverlayToBlob({
   imageUrl,
   imageFit = 'cover',
+  crop,
   customName,
   customNumber = '',
   nameStyle = {},
@@ -277,9 +301,9 @@ export async function renderOverlayToBlob({
   });
 
   if (imageFit === 'cover') {
-    drawImageCover(ctx, img, renderW, renderH);
+    drawImageCover(ctx, img, renderW, renderH, crop);
   } else {
-    drawImageContain(ctx, img, renderW, renderH);
+    drawImageContain(ctx, img, renderW, renderH, crop);
   }
 
   // 3. Resolve per-element fonts (name and number can differ). Falls back to
@@ -476,6 +500,8 @@ export function renderJerseyDisplayToBlob({
   return renderOverlayToBlob({
     imageUrl,
     imageFit: staticDisplay ? 'contain' : 'cover',
+    // The per-color 3D mockup crop frames the source image used for this render.
+    crop: resolveMockupCrop(color),
     customName,
     customNumber,
     nameStyle: resolveNameStyle(jersey, color),

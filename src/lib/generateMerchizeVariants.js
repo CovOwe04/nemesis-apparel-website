@@ -1,6 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
-import { resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
+import { resolveArtworkNameStyle, resolveArtworkNumberStyle, getMockupImageUrl } from '@/lib/jerseyStyle';
 
 // Same variant list the "Generate in Merchize" button builds: one color-only
 // row per color, then one row per color × name/number combo.
@@ -67,7 +67,7 @@ export async function generateMerchizeVariants({
     const images = colorObj?.images || [];
     if (images.length === 0) continue;
     const isStatic = images.length <= 1;
-    const imageUrl = isStatic ? images[0].url : images[images.length - 1].url;
+    const imageUrl = getMockupImageUrl(colorObj);
     try {
       const blob = await renderJerseyDisplayToBlob({
         imageUrl,

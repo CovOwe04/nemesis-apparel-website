@@ -1,6 +1,7 @@
 import TextWarpPreview from '@/components/admin/TextWarpPreview';
 import FontUploader from '@/components/admin/FontUploader';
 import ColorArtworkDesigner from '@/components/admin/ColorArtworkDesigner';
+import MockupCropDesigner from '@/components/admin/MockupCropDesigner';
 import { FONTS } from '@/lib/fonts';
 
 function HorizontalSlider({ label, value, min, max, step = 0.1, onChange }) {
@@ -63,6 +64,10 @@ export default function DesignerPanel({
           className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'artwork' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
           ARTWORK
         </button>
+        <button type="button" onClick={() => setDesignerTab('mockup')}
+          className={`mono-label px-3 py-1.5 border rounded-[4px] text-[0.65rem] transition-colors ${designerTab === 'mockup' ? 'bg-kinetic text-void border-kinetic' : 'border-steel text-fog/60 hover:text-fog'}`}>
+          MOCKUP
+        </button>
       </div>
 
       {designerTab === 'artwork' ? (
@@ -77,6 +82,16 @@ export default function DesignerPanel({
           )}
 
 
+        </div>
+      ) : designerTab === 'mockup' ? (
+        <div className="p-4 space-y-4">
+          {form.colors.length === 0 ? (
+            <p className="mono-label text-fog/30 py-4 text-center">Add colors first to crop the 3D mockup.</p>
+          ) : (
+            form.colors.map((color, ci) => (
+              <MockupCropDesigner key={ci} color={color} colorIndex={ci} updateColor={updateColor} />
+            ))
+          )}
         </div>
       ) : (
         <div className="grid lg:grid-cols-2">

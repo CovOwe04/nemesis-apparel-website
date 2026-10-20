@@ -5,6 +5,35 @@ import { FONTS } from '@/lib/fonts';
 export const MOCKUP_NAME_HORIZ_POS = 30.2;
 export const MOCKUP_NUMBER_HORIZ_POS = 30.2;
 
+// Default 3D mockup crop covers the whole source image (no crop).
+export const DEFAULT_MOCKUP_CROP = { x: 0, y: 0, w: 1, h: 1 };
+
+// The source image the 3D mockup render is built from: the only image for
+// static-display colors, otherwise the last uploaded image.
+export function getMockupImageUrl(color) {
+  const images = color?.images || [];
+  if (images.length === 0) return '';
+  const chosen = images.length <= 1 ? images[0] : images[images.length - 1];
+  return chosen?.url || '';
+}
+
+// Normalize a saved crop rect (fractions of the source image) with safe fallbacks.
+export function resolveMockupCrop(color) {
+  const saved = color?.mockup_crop;
+  if (!saved || typeof saved !== 'object') return DEFAULT_MOCKUP_CROP;
+  const x = Number(saved.x);
+  const y = Number(saved.y);
+  const w = Number(saved.w);
+  const h = Number(saved.h);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return DEFAULT_MOCKUP_CROP;
+  return {
+    x: Number.isFinite(x) ? Math.min(Math.max(x, 0), 1) : 0,
+    y: Number.isFinite(y) ? Math.min(Math.max(y, 0), 1) : 0,
+    w: Math.min(w, 1),
+    h: Math.min(h, 1),
+  };
+}
+
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
   arch: 0, rise: 0, flag: 0, horiz_pos: MOCKUP_NAME_HORIZ_POS, vert_pos: 40, font_size: 8,
