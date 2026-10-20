@@ -111,6 +111,10 @@ export default async function (req) {
 
     await base44.asServiceRole.entities.Order.update(orderId, {
       status: 'rejected',
+      refund_id: refundId,
+      refund_amount_usd: order.total || 0,
+      refund_reason: reason || 'Custom design not approved',
+      refunded_at: new Date().toISOString(),
       admin_notes: (order.admin_notes || '') + `\nRejected & refunded: ${refundId}${reason ? ` — ${reason}` : ''}`,
     });
 
