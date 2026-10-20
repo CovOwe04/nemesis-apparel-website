@@ -280,6 +280,14 @@ export default function JerseyEditor() {
     }
   };
 
+  // Back out of the generate pop-up without saving, generating, or changing the listing.
+  const cancelGenerate = () => {
+    setShowGenerate(false);
+    setPendingGenerateId(null);
+    setGenError('');
+    setGenProgress('');
+  };
+
   if (!authed) return <AdminLogin onLogin={login} />;
   if (loading) return (
     <div className="bg-void min-h-screen flex items-center justify-center">
@@ -488,6 +496,10 @@ export default function JerseyEditor() {
               <button type="button" onClick={skipGenerate} disabled={generating || skipping}
                 className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs disabled:opacity-60">
                 {skipping ? 'Saving…' : 'Skip'}
+              </button>
+              <button type="button" onClick={cancelGenerate} disabled={generating || skipping}
+                className="mono-label text-fog/50 hover:text-fog transition-colors px-4 py-2 border border-steel rounded-[4px] text-xs disabled:opacity-60">
+                CANCEL
               </button>
             </div>
           </div>
