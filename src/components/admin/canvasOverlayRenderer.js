@@ -13,6 +13,7 @@ import {
   ARTWORK_TEXT_SCALE_ADJUSTMENT,
   MOCKUP_NAME_HORIZ_POS,
   MOCKUP_NUMBER_HORIZ_POS,
+  MOCKUP_CROP_RATIO,
   resolveNameStyle,
   resolveNumberStyle,
   resolveFont,
@@ -293,13 +294,23 @@ export async function renderOverlayToBlob({
     img.src = imageUrl;
   });
 
-  // 2. Canvas. matchCropAspect matches the canvas ratio to the cropped source
-  //    region, so a contained image fills it exactly — no black bars.
+  // 2. Canvas. matchCropAspect renders into the Merchize product frame: the
+  //    canvas takes the frame's ratio and the (square) crop is fitted to it, so
+  //    the image fills it edge to edge — no letterboxed bars.
   let outW = renderW;
   let outH = renderH;
+  let drawCrop = crop;
   if (matchCropAspect) {
-    const { sw, sh } = cropSourceRect(img, crop);
-    const ratio = (sw / sh) || (renderW / renderH);
+    const { sx, sy, sw, sh } = cropSourceRect(img, crop);
+    const ratio = MOCKUP_CROP_RATIO;
+    const tw = sw / sh > ratio ? sh * ratio : sw;
+    const th = sw / sh > ratio ? sh : sw / ratio;
+    drawCrop = {
+      x: (sx + (sw - tw) / 2) / img.naturalWidth,
+      y: (sy + (sh - th) / 2) / img.naturalHeight,
+      w: tw / img.naturalWidth,
+      h: th / img.naturalHeight,
+    };
     if (ratio >= renderW / renderH) {
       outW = renderW;
       outH = Math.round(renderW / ratio);
@@ -322,9 +333,9 @@ export async function renderOverlayToBlob({
 
   // 3. Draw image
   if (imageFit === 'cover') {
-    drawImageCover(ctx, img, outW, outH, crop);
+    drawImageCover(ctx, img, outW, outH, drawCrop);
   } else {
-    drawImageContain(ctx, img, outW, outH, crop);
+    drawImageContain(ctx, img, outW, outH, drawCrop);
   }
 
   // 3. Resolve per-element fonts (name and number can differ). Falls back to
@@ -539,8 +550,8 @@ export function renderJerseyDisplayToBlob({
     enableName,
     enableNumber,
     staticDisplay,
-    // Merchize mockups of static (single-image) colors take the crop's own
-    // ratio, so the uploaded product image has no letterboxed black lines.
+    // Merchize product images render into the square product frame, so the
+    // uploaded mockup has no letterboxed bars.
     matchCropAspect: mockup && staticDisplay,
     renderW,
     renderH,

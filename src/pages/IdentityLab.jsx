@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { base44 } from '@/api/base44Client';
 import { FONTS } from '@/lib/fonts';
 import JerseyDisplayPreview from '@/components/JerseyDisplayPreview';
+import RenderOverlay from '@/components/RenderOverlay';
 import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { resolveNameStyle, resolveNumberStyle, resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
@@ -606,6 +607,13 @@ export default function IdentityLab() {
           {renderError && <p role="alert" className="mono-label text-kinetic text-sm">{renderError}</p>}
         </div>
       </div>
+
+      {rendering && (
+        <RenderOverlay
+          title="Rendering your jersey…"
+          message="Preparing your personalized preview for fulfillment. This can take a few seconds."
+        />
+      )}
     </div>
   );
 }

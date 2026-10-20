@@ -8,6 +8,10 @@ export const MOCKUP_NUMBER_HORIZ_POS = 30.2;
 // Default 3D mockup crop covers the whole source image (no crop).
 export const DEFAULT_MOCKUP_CROP = { x: 0, y: 0, w: 1, h: 1 };
 
+// The Merchize product frame is square. The mockup crop is locked to this ratio
+// so the generated product image fills the frame with no letterboxed bars.
+export const MOCKUP_CROP_RATIO = 1;
+
 // The source image the 3D mockup render is built from: the only image for
 // static-display colors, otherwise the last uploaded image.
 export function getMockupImageUrl(color) {
