@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Menu, X, LogOut } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
@@ -36,9 +36,12 @@ export default function Header() {
     setOpen(false);
   }, [location.pathname]);
 
+  const navigate = useNavigate();
   const onNexus = location.pathname === '/nexus-control';
   const onAdminPage = location.pathname.startsWith('/nexus-control');
-  const showAdminTabs = onNexus && adminAuthed;
+  // Every admin route (dashboard and the Add/Edit Listing editor) keeps the
+  // admin tabs instead of falling back to the storefront nav.
+  const showAdminTabs = onAdminPage && adminAuthed;
   const adminTab = searchParams.get('tab') || 'products';
 
   const navItems = [
@@ -55,7 +58,8 @@ export default function Header() {
   ];
 
   const setAdminTab = (id) => {
-    setSearchParams({ tab: id }, { replace: true });
+    if (onNexus) setSearchParams({ tab: id }, { replace: true });
+    else navigate(`/nexus-control?tab=${id}`);
     setOpen(false);
   };
 
@@ -88,7 +92,7 @@ export default function Header() {
                   {t.label}
                 </button>
               ))
-            ) : onNexus ? null : (
+            ) : onAdminPage ? null : (
               navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -162,7 +166,7 @@ export default function Header() {
                   {t.label}
                 </button>
               ))
-            ) : (
+            ) : onAdminPage ? null : (
               navItems.map((item) => (
                 <Link
                   key={item.path}
