@@ -448,21 +448,25 @@ export default async function(req) {
         return Response.json({ received: true });
       }
 
+      const refundedMinor = Number(charge.amount_refunded || 0);
+      const currency = (charge.currency || 'usd').toLowerCase();
+      const refundedUsd = currency === 'cad'
+        ? Math.round((refundedMinor / 100 / CAD_RATE) * 100) / 100
+        : Math.round(refundedMinor) / 100;
       const lastRefundId = charge.refunds?.data?.[0]?.id || '';
+      const fullyRefunded = refundedMinor >= Number(charge.amount || 0);
+
+      // Skip refunds our own admin action already recorded — it emailed the
+      // customer itself, so reconciling again would double-handle the refund.
       const handledByApp = Boolean(
-        refundedOrder.refund_id && charge.refunds?.data?.some((r: any) => r.id === refundedOrder.refund_id)
+        refundedOrder.refund_id
+        && (charge.refunds?.data?.some((r: any) => r.id === refundedOrder.refund_id)
+          || Math.abs(Number(refundedOrder.refund_amount_usd || 0) - refundedUsd) < 0.01)
       );
-      const fullyRefunded = Number(charge.amount_refunded || 0) >= Number(charge.amount || 0);
       if (handledByApp || (fullyRefunded && refundedOrder.status === 'refunded')) {
         console.log(`Refund for order ${refundedOrder.id} already recorded — skipping`);
         return Response.json({ received: true, duplicate: true });
       }
-
-      const currency = (charge.currency || 'usd').toLowerCase();
-      const refundedMinor = Number(charge.amount_refunded || 0);
-      const refundedUsd = currency === 'cad'
-        ? Math.round((refundedMinor / 100 / CAD_RATE) * 100) / 100
-        : Math.round(refundedMinor) / 100;
 
       await base44.asServiceRole.entities.Order.update(refundedOrder.id, {
         status: fullyRefunded ? 'refunded' : refundedOrder.status,
