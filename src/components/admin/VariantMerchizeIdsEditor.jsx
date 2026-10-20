@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2, Zap, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
-import { generateVariants, buildSyncedIds, generateMerchizeVariants } from '@/lib/generateMerchizeVariants';
+import { generateVariants, buildSyncedIds, generateMerchizeVariants, clearMissingMerchizeProducts } from '@/lib/generateMerchizeVariants';
 
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
 
@@ -14,6 +14,7 @@ function sortSizes(entries) {
 
 export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchizeIds, onChange, jerseyId, merchizeProductId, merchizeVariants, colorArtwork, nameStyle, numberStyle, customFontUrl, customFontName, fontId, enableName, enableNumber }) {
   const [generating, setGenerating] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [renderProgress, setRenderProgress] = useState('');
@@ -35,6 +36,31 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
       i === index ? { ...v, skus: { ...v.skus, [size]: value } } : v
     );
     onChange(updated);
+  };
+
+  // Same existence check "Update Listing" runs: products deleted in Merchize are
+  // cleared so the variant can be generated again. If every stored product still
+  // exists, generation is not offered.
+  const startGenerate = async () => {
+    if (!jerseyId) {
+      setError('Save the jersey first, then generate.');
+      return;
+    }
+    setChecking(true);
+    setError('');
+    try {
+      const cleared = await clearMissingMerchizeProducts(syncedIds);
+      if (cleared.filter((v) => !v.merchize_product_id).length === 0) {
+        setError('All variants already have product IDs.');
+        return;
+      }
+      onChange(cleared);
+      setShowConfirm(true);
+    } catch (err) {
+      setError(err?.message || 'Could not check Merchize products');
+    } finally {
+      setChecking(false);
+    }
   };
 
   const generate = async () => {
@@ -79,12 +105,12 @@ export default function VariantMerchizeIdsEditor({ colors, combos, variantMerchi
         <div className="mono-label text-fog/50">PER-VARIANT MERCHIZE IDs ({allVariants.length})</div>
         <button
           type="button"
-          onClick={() => setShowConfirm(true)}
-          disabled={generating}
+          onClick={startGenerate}
+          disabled={generating || checking}
           className="inline-flex items-center gap-1.5 bg-kinetic px-3 py-1.5 font-heading uppercase text-void text-xs hover:bg-fog transition-colors rounded-[4px] disabled:opacity-60"
         >
-          {generating ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-          {generating ? 'Generating…' : 'Generate in Merchize'}
+          {generating || checking ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+          {generating ? 'Generating…' : checking ? 'Checking…' : 'Generate in Merchize'}
         </button>
       </div>
       {error && <p className="mono-label text-kinetic text-[0.65rem]">{error}</p>}

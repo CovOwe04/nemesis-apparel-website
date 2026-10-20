@@ -44,6 +44,23 @@ export function buildSyncedIds(colors, combos, variantMerchizeIds) {
   });
 }
 
+// Ask Merchize which stored product IDs still exist (Merchize soft-deletes them)
+// and clear the mapping for any that are gone, so those variants can be
+// generated again. Used by both Update Listing and the Generate button.
+export async function clearMissingMerchizeProducts(syncedIds) {
+  const storedIds = [...new Set(syncedIds.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
+  if (storedIds.length === 0) return syncedIds;
+
+  const passcode = sessionStorage.getItem('nemesis-admin-passcode') || '';
+  const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
+  const missingIds = verifyRes.data?.missing || [];
+  if (missingIds.length === 0) return syncedIds;
+
+  return syncedIds.map((v) => missingIds.includes(v.merchize_product_id)
+    ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
+    : v);
+}
+
 // Shared generation flow used by both the "Generate in Merchize" button and the
 // Update Listing pop-up. Renders display + artwork for missing combo variants,
 // calls create-merchize-products, and returns the updated variant list.

@@ -10,7 +10,7 @@ import MerchizeCatalogPicker from '@/components/admin/MerchizeCatalogPicker';
 import VariantMerchizeIdsEditor from '@/components/admin/VariantMerchizeIdsEditor';
 import DesignerPanel from '@/components/admin/DesignerPanel';
 import { MOCKUP_NAME_HORIZ_POS, MOCKUP_NUMBER_HORIZ_POS } from '@/lib/jerseyStyle';
-import { buildSyncedIds, generateMerchizeVariants } from '@/lib/generateMerchizeVariants';
+import { buildSyncedIds, generateMerchizeVariants, clearMissingMerchizeProducts } from '@/lib/generateMerchizeVariants';
 
 const DEFAULT_NAME_STYLE = {
   color: '#F5F5F7', outline: true, outline_color: '#0A0A0A', outline_thickness: 1.4,
@@ -160,19 +160,9 @@ export default function JerseyEditor() {
       // The listing is only saved when the user explicitly clicks
       // "Add/Update Listing" (this path) or "Generate" (runGenerate).
       const synced = buildSyncedIds(form.colors, form.name_number_combos, form.variant_merchize_ids);
-      let cleared = synced;
-      if (effectiveId) {
-        const storedIds = [...new Set(synced.filter((v) => v.merchize_product_id).map((v) => v.merchize_product_id))];
-        if (storedIds.length > 0) {
-          const verifyRes = await base44.functions.invoke('verify-merchize-products', { productIds: storedIds, passcode });
-          const missingIds = verifyRes.data?.missing || [];
-          if (missingIds.length > 0) {
-            cleared = synced.map((v) => missingIds.includes(v.merchize_product_id)
-              ? { ...v, merchize_product_id: '', external_product_id: '', variant_ids: {}, skus: {}, title: '', manually_set: false }
-              : v);
-          }
-        }
-      }
+      // A product deleted in Merchize is detected here and cleared so the
+      // variant is offered for regeneration.
+      const cleared = effectiveId ? await clearMissingMerchizeProducts(synced) : synced;
       const missing = cleared.filter((v) => !v.merchize_product_id);
       if (missing.length === 0) {
         // All variants already have products — save in place and confirm.
