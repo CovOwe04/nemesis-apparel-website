@@ -9,6 +9,8 @@ import WeGetItDone from '@/components/WeGetItDone';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import CustomerOpinion from '@/components/CustomerOpinion';
 import SectionDivider from '@/components/SectionDivider';
+import CurrencyToggle from '@/components/CurrencyToggle';
+import { getCurrency } from '@/lib/currency';
 
 const HERO_URL =
 'https://media.base44.com/images/public/6a95dbf0d98672e2f49452f4/a001f6046_240901_ROUNDNET-WORLDS-24_Corentin-Bureau_yellowballcult_581.jpg';
@@ -21,6 +23,7 @@ const fadeUp = {
 export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState(() => getCurrency());
 
   useEffect(() => {
     base44.entities.Jersey.list('-created_date', 50).
@@ -126,12 +129,15 @@ export default function Landing() {
                 Featured listings
               </h2>
             </div>
-            <Link
-              to="/arsenal"
-              className="mono-label hidden sm:inline-flex items-center gap-2 text-fog hover:text-kinetic transition-colors">
-              
-              View all <ArrowRight size={14} />
-            </Link>
+            <div className="flex items-center gap-4">
+              <CurrencyToggle value={currency} onChange={setCurrency} />
+              <Link
+                to="/arsenal"
+                className="mono-label hidden sm:inline-flex items-center gap-2 text-fog hover:text-kinetic transition-colors">
+                
+                View all <ArrowRight size={14} />
+              </Link>
+            </div>
           </div>
 
           {loading ?
@@ -145,7 +151,7 @@ export default function Landing() {
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((j) =>
-            <JerseyCard key={j.id} jersey={j} />
+            <JerseyCard key={j.id} jersey={j} currency={currency} />
             )}
             </div>
           }

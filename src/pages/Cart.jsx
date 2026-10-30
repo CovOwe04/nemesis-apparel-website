@@ -6,6 +6,7 @@ import StaticNameOverlay from '@/components/StaticNameOverlay';
 import { renderJerseyDisplayToBlob } from '@/components/admin/canvasOverlayRenderer';
 import { useCart } from '@/lib/CartContext';
 import { formatPrice, getCurrency } from '@/lib/currency';
+import CurrencyToggle from '@/components/CurrencyToggle';
 import { Plus, Minus, Trash2, Pencil, ShoppingBag, ArrowRight, Check } from 'lucide-react';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
@@ -135,7 +136,7 @@ export default function Cart() {
 
   const hasStalePersonalizedRender = stalePersonalizedItems.length > 0;
 
-  const currency = getCurrency();
+  const [currency, setCurrency] = useState(() => getCurrency());
   const jerseyCount = items.reduce((s, i) => s + i.quantity, 0);
   const shippingUsd = SHIPPING_RATES[getShipRegion(shippingAddress.country)] * jerseyCount;
 
@@ -430,9 +431,7 @@ export default function Cart() {
           <div className="border border-steel rounded-[6px] p-6 lg:sticky lg:top-24">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-heading text-xl uppercase text-fog">Summary</h2>
-              <span className="mono-label text-fog/50 border border-steel rounded-[4px] px-2.5 py-1">
-                {currency}
-              </span>
+              <CurrencyToggle value={currency} onChange={setCurrency} />
             </div>
             <div className="flex items-center justify-between text-fog/70 mb-3">
               <span className="mono-label">SUBTOTAL</span>
