@@ -8,7 +8,6 @@ import { renderJerseyDisplayToBlob, renderOverlayToBlob } from '@/components/adm
 import { resolveNameStyle, resolveNumberStyle, resolveArtworkNameStyle, resolveArtworkNumberStyle } from '@/lib/jerseyStyle';
 import { useCart } from '@/lib/CartContext';
 import { formatPrice, getCurrency } from '@/lib/currency';
-import CurrencyToggle from '@/components/CurrencyToggle';
 import { ArrowLeft, Plus, Minus, Check, Loader2 } from 'lucide-react';
 
 function getColors(jersey) {
@@ -59,7 +58,6 @@ export default function IdentityLab() {
   const [rendering, setRendering] = useState(false);
   const [renderError, setRenderError] = useState('');
   const [selectedPreset, setSelectedPreset] = useState(null);
-  const [currency, setCurrency] = useState(() => getCurrency());
 
   useEffect(() => {
     base44.entities.Jersey.get(jerseyId)
@@ -271,10 +269,7 @@ export default function IdentityLab() {
           <Link to="/arsenal" className="mono-label text-fog/60 hover:text-kinetic inline-flex items-center gap-2 transition-colors">
             <ArrowLeft size={14} /> ARSENAL
           </Link>
-          <div className="flex items-center gap-3">
-            <CurrencyToggle value={currency} onChange={setCurrency} />
-            <div className="mono-label text-kinetic">IDENTITY LAB</div>
-          </div>
+          <div className="mono-label text-kinetic">IDENTITY LAB</div>
         </div>
       </div>
 
@@ -605,7 +600,7 @@ export default function IdentityLab() {
                   <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>
               ) : (
-                <>{editId ? 'Update cart' : 'Add to cart'} — {formatPrice(jersey.price, currency)}</>
+                <>{editId ? 'Update cart' : 'Add to cart'} — {formatPrice(jersey.price, getCurrency())}</>
               )}
             </button>
           </div>
