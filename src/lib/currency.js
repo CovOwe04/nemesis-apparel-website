@@ -18,5 +18,5 @@ export function formatPrice(priceUsd, currency = getCurrency()) {
   const cur = currency || 'USD';
   const value = cur === 'CAD' ? priceUsd * CAD_RATE : priceUsd;
   const formatted = Number(value).toFixed(2);
-  return `$${formatted} ${cur}`;
+  return `${cur} $${formatted}`;
 }
