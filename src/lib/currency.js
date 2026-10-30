@@ -14,9 +14,10 @@ export function setCurrency(currency) {
   }
 }
 
-export function formatPrice(priceUsd, currency = getCurrency()) {
+export function formatPrice(priceUsd, currency = getCurrency(), withCode = false) {
   const cur = currency || 'USD';
   const value = cur === 'CAD' ? priceUsd * CAD_RATE : priceUsd;
   const formatted = Number(value).toFixed(2);
+  if (withCode) return `$${formatted} ${cur}`;
   return cur === 'CAD' ? `CA$${formatted}` : `$${formatted}`;
 }

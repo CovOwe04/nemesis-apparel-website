@@ -600,7 +600,7 @@ export default function IdentityLab() {
                   <Check size={18} /> {editId ? 'Updated — heading to cart' : 'Added — heading to cart'}
                 </>
               ) : (
-                <>{editId ? 'Update cart' : 'Add to cart'} — {formatPrice(jersey.price, getCurrency())}</>
+                <>{editId ? 'Update cart' : 'Add to cart'} — {formatPrice(jersey.price, getCurrency(), true)}</>
               )}
             </button>
           </div>
